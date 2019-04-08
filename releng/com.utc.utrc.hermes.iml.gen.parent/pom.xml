@@ -13,6 +13,30 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		    <!-- this will be overridden in jacoco profile with tycho.testArgLine, 
+		which, in turn, will be set by Jacoco prepare-agent goal. This property can 
+		then be used in argLine for custom tycho-surefire configuration, both when 
+		Jacoco is used and when it is not used. -->
+		<additionalTestArgLine></additionalTestArgLine>
+		<jacoco-version>0.8.3</jacoco-version>
+		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+
+		<!-- Workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=397015 
+		<sonar.sources></sonar.sources>
+		<sonar.tests></sonar.tests>-->
+		<!-- Always refer to the corresponding tests project (if it exists) otherwise 
+			Sonarqube won't be able to collect code coverage. For example, when analyzing 
+			project foo it wouldn't find code coverage information if it doesn't use 
+			foo.tests jacoco.exec. -->
+		<sonar.jacoco.reportPaths>
+			../com.utc.utrc.hermes.iml.gen.report/target/jacoco.exec
+		</sonar.jacoco.reportPaths>
+		<sonar.test.inclusions>**/*Test*/**, **/tests/**</sonar.test.inclusions>
+		<sonar.exclusions>**/*Test*/**, **/src-gen/**, **/tests/**</sonar.exclusions>
+		<jacoco.destFile>../com.utc.utrc.hermes.iml.gen.report/target/jacoco.exec</jacoco.destFile>
+		<sonar.junit.reportPaths>
+			../../com.utc.utrc.hermes.iml.gen.smt.tests/target/surefire-reports/
+		</sonar.junit.reportPaths>
 	</properties>
 
 	<build>
@@ -355,5 +379,6 @@
 		<module>../../com.utc.utrc.hermes.iml.gen.smt</module>
 		<module>../../com.utc.utrc.hermes.iml.gen.smt.tests</module>
 		<module>../com.utc.utrc.hermes.iml.gen.target</module>
+		<module> ../com.utc.utrc.hermes.iml.gen.report</module>
 	</modules>
 </project>
