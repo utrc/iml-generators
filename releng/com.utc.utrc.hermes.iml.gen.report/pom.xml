@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>com.utc.utrc.hermes.iml.gen.report</artifactId>
   <parent>
-    <groupId>com.utc.utrc.hermes</groupId>
+    <groupId>com.utc.utrc.hermes.iml.gen</groupId>
   	<artifactId>com.utc.utrc.hermes.iml.gen.parent</artifactId>
   	<version>1.0.0-SNAPSHOT</version>
   	<relativePath>../com.utc.utrc.hermes.iml.gen.parent</relativePath>
