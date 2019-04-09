@@ -38,19 +38,19 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.utc.utrc.hermes</groupId>
+      <groupId>com.utc.utrc.hermes.iml.gen</groupId>
       <artifactId>com.utc.utrc.hermes.iml.gen.smt</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.utc.utrc.hermes</groupId>
+      <groupId>com.utc.utrc.hermes.iml.gen</groupId>
       <artifactId>com.utc.utrc.hermes.iml.gen.smt.tests</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.utc.utrc.hermes</groupId>
+      <groupId>com.utc.utrc.hermes.iml.gen</groupId>
       <artifactId>com.utc.utrc.hermes.iml.gen.nusmv</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
