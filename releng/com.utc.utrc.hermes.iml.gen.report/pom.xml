@@ -14,7 +14,7 @@
     <profile>
       <id>jacoco</id>
       <activation>
-        <activeByDefault>false</activeByDefault>s
+        <activeByDefault>false</activeByDefault>
       </activation>
       <build>
         <plugins>
