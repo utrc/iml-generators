@@ -1,4 +1,5 @@
 package GenericServiceEvents_pkg ;
+
 import UxASNodeLibEvents.* ;
 import iml.software.* ;
 import iml.ports.* ;
@@ -14,17 +15,13 @@ type [Thread] GenericLastService {
 	
 
 	gmonitor : responds_once ;
-	c1 : Connector < Bool > := 
-	<Bool>connect(CmdRequest_in.event,gmonitor.b);
-	c2 : Connector < Bool > := 
-	<Bool>connect(CmdResponse_out.event,gmonitor.a);
+	c1 : Connector < Bool > := connect<Bool>(CmdRequest_in.event, gmonitor.b);
+	c2 : Connector < Bool > := connect<Bool>(CmdResponse_out.event, gmonitor.a);
 	
-	d1 : delay ;
-	c5 : Connector < FlowPath > := 
-	<FlowPath>connect(processing_path,d1.f);
-	c6 : Connector < Int > := 
-	<Int>connect(1,d1.n);
+	d1 : iml.ports.delay ;
+	c5 : Connector < FlowPath > := connect<FlowPath>(processing_path, d1.f);
+	c6 : Connector < Int > := connect<Int>(1, d1.n);
 	
-	[Guarantee,Output] g : Bool := {gmonitor.holds  && d1.holds}  ;
+	[Guarantee,Output] g : Bool := {gmonitor.holds && d1.holds}  ;
 	
 }
