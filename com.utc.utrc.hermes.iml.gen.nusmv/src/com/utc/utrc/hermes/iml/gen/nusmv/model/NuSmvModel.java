@@ -8,11 +8,13 @@ public class NuSmvModel {
 	private static int last_id = 0 ;
 	public static NuSmvModule Bool = new NuSmvModule("iml.lang.Bool");
 	public static NuSmvModule Int = new NuSmvModule("iml.lang.Int");
+	public static NuSmvModule Real = new NuSmvModule("iml.lang.Real");
 	
 	public NuSmvModel() {
 		modules = new HashMap<>();
 		modules.put(Bool.getName(), Bool);
 		modules.put(Int.getName(), Int);
+		modules.put(Real.getName(), Real);
 	}
 	public Map<String, NuSmvModule> getModules() {
 		return modules;
