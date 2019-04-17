@@ -30,16 +30,16 @@ public class FsmTranslationTest {
 		ResourceSet resourceSet = new ResourceSetImpl();
 
 		// Standard libraries
-		resourceSet.getResource(URI.createURI("models/iml-common/lang.iml"), true);
-		resourceSet.getResource(URI.createURI("models/iml-common/software.iml"), true);
-		resourceSet.getResource(URI.createURI("models/iml-common/connectivity.iml"), true);
-		resourceSet.getResource(URI.createURI("models/iml-common/contracts.iml"), true);
-		resourceSet.getResource(URI.createURI("models/iml-common/ports.iml"), true);
-		resourceSet.getResource(URI.createURI("models/iml-common/fsm.iml"), true);
-
-		//resourceSet.getResource(URI.createURI("models/fromaadl/UxASNodeLibEvents.iml"), true);
-		//resourceSet.getResource(URI.createURI("models/fromaadl/GenericService.iml"), true);
-		//resourceSet.getResource(URI.createURI("models/fromaadl/GenericLastService.iml"), true);
+	    resourceSet.getResource(URI.createURI("../../iml/com.utc.utrc.hermes.iml.lib/src/iml/lang.iml"), true);
+		resourceSet.getResource(URI.createURI("../../iml/com.utc.utrc.hermes.iml.lib/src/iml/software.iml"), true);
+		resourceSet.getResource(URI.createURI("../../iml/com.utc.utrc.hermes.iml.lib/src/iml/connectivity.iml"), true);
+		resourceSet.getResource(URI.createURI("../../iml/com.utc.utrc.hermes.iml.lib/src/iml/contracts.iml"), true);
+		resourceSet.getResource(URI.createURI("../../iml/com.utc.utrc.hermes.iml.lib/src/iml/ports.iml"), true);
+		resourceSet.getResource(URI.createURI("../../iml/com.utc.utrc.hermes.iml.lib/src/iml/fsm.iml"), true);		
+		
+//		resourceSet.getResource(URI.createURI("models/fromaadl/UxASNodeLibEvents.iml"), true);
+//		resourceSet.getResource(URI.createURI("models/fromaadl/GenericService.iml"), true);
+//		resourceSet.getResource(URI.createURI("models/fromaadl/GenericLastService.iml"), true);
 		
 		
 		Resource translationunit = resourceSet.getResource(URI.createURI("models/fromaadl/UxASRespondsEvents_pkg.iml"), true);

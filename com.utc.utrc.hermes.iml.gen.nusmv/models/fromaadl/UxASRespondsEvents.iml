@@ -1,6 +1,7 @@
 package UxASRespondsEvents_pkg ;
-import UxASNodeLibEvents.*;
-import GenericServiceEvents_pkg.*;
+
+//import UxASNodeLibEvents.*;
+//import GenericServiceEvents_pkg.*;
 import GenericLastServiceEvents_pkg.* ;
 import iml.software.* ;
 import iml.ports.* ;
@@ -16,29 +17,21 @@ type [Process] UxAS_responds {
 	adelaymonitor : one_request_at_a_time ;
 	gmonitor : responds_once ;
 	
-	c1 : Connector < Bool > := 
-	<Bool>connect(AutomationRequest_in.event,amonitor.b);
-	c2 : Connector < Bool > := 
-	<Bool>connect(AutomationResponse_out.event,amonitor.a);
+	c1 : Connector < Bool > := connect<Bool>(AutomationRequest_in.event, amonitor.b);
+	c2 : Connector < Bool > := connect<Bool>(AutomationResponse_out.event,amonitor.a);
 	
-	c11 : Connector < Bool > := 
-	<Bool>connect(AutomationRequest_in.flowpoint.event,adelaymonitor.b);
-	c21 : Connector < Bool > := 
-	<Bool>connect(AutomationResponse_out.flowpoint.event,adelaymonitor.a);
+	c11 : Connector < Bool > := connect<Bool>(AutomationRequest_in.flowpoint.event,adelaymonitor.b);
+	c21 : Connector < Bool > := connect<Bool>(AutomationResponse_out.flowpoint.event,adelaymonitor.a);
 	
-	c3 : Connector < Bool > := 
-	<Bool>connect(AutomationRequest_in.event,gmonitor.b);
-	c4 : Connector < Bool > := 
-	<Bool>connect(AutomationResponse_out.event,gmonitor.a);
+	c3 : Connector < Bool > := connect<Bool>(AutomationRequest_in.event,gmonitor.b);
+	c4 : Connector < Bool > := connect<Bool>(AutomationResponse_out.event,gmonitor.a);
 	
 	processing_path : FlowPath ;
 	assert {processing_path.start = AutomationRequest_in.flowpoint && processing_path.end = AutomationResponse_out.flowpoint} ;
 	
 	d : delay;
-	c5 : Connector < FlowPath > := 
-	<FlowPath>connect(processing_path,d.f);
-	c6 : Connector < Int > := 
-	<Int>connect(8,d.n);
+	c5 : Connector < FlowPath > := connect<FlowPath>(processing_path,d.f);
+	c6 : Connector < Int > := connect<Int>(8,d.n);
 	
 	
 	[Assumption,Output] a : Bool := {amonitor.holds && adelaymonitor.holds};
@@ -54,32 +47,25 @@ type [Process] UxAS_responds_dot_i extends ([Implementation] UxAS_responds){
 	[Component] RouteAggregator: GenericService;
 	[Component] Planner: GenericLastService;
 	
-	conn001: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(AutomationRequest_in,AutomationRequestValidator.CmdRequest_in);
+	conn001: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(AutomationRequest_in, AutomationRequestValidator.CmdRequest_in);
 	
-	conn002: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(AutomationRequestValidator.CmdResponse_out,AutomationResponse_out);
+	conn002: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(AutomationRequestValidator.CmdResponse_out, AutomationResponse_out);
 	
-	conn011: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(AutomationRequestValidator.SubRequest_out,PlanBuilder.CmdRequest_in);
+	conn011: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(AutomationRequestValidator.SubRequest_out, PlanBuilder.CmdRequest_in);
     
-    conn012: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(PlanBuilder.CmdResponse_out, AutomationRequestValidator.SubResponse_in);
+    conn012: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(PlanBuilder.CmdResponse_out, AutomationRequestValidator.SubResponse_in);
     
-    conn021: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(PlanBuilder.SubRequest_out, TaskServiceBase.CmdRequest_in);
-    conn022: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(TaskServiceBase.CmdResponse_out, PlanBuilder.SubResponse_in);
+    conn021: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(PlanBuilder.SubRequest_out, TaskServiceBase.CmdRequest_in);
     
-    conn031: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(TaskServiceBase.SubRequest_out, RouteAggregator.CmdRequest_in);
-    conn032: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(RouteAggregator.CmdResponse_out, TaskServiceBase.SubResponse_in);
+    conn022: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(TaskServiceBase.CmdResponse_out, PlanBuilder.SubResponse_in);
     
-    conn041: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(RouteAggregator.SubRequest_out, Planner.CmdRequest_in);
-    conn042: Connector<EventDataPort<Bool>> :=
-	<EventDataPort<Bool>>connect(Planner.CmdResponse_out, RouteAggregator.SubResponse_in);
+    conn031: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(TaskServiceBase.SubRequest_out, RouteAggregator.CmdRequest_in);
+    
+    conn032: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(RouteAggregator.CmdResponse_out, TaskServiceBase.SubResponse_in);
+    
+    conn041: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(RouteAggregator.SubRequest_out, Planner.CmdRequest_in);
+    
+    conn042: Connector<EventDataPort<Bool>> := connect<EventDataPort<Bool>>(Planner.CmdResponse_out, RouteAggregator.SubResponse_in);
 
 //    f : EndToEndFlow :=
 //    source(AutomationRequestValidator.processing_path0).append(conn001.flow).

@@ -1,4 +1,5 @@
 package UxASNodeLibEvents ;
+
 import iml.connectivity.*;
 import iml.fsm.*;
 import iml.ports.*;
@@ -32,7 +33,7 @@ type [Fsm] one_request_at_a_time  {
 	[Input]  a : Bool ;
 	[Input]  b : Bool ;
 	s : PrimedVar<RespondsState> ;
-	[Init] s_init : Bool := {s = RespondsState.s0 } ;
+	[Init] s_init : Bool := {s.current = RespondsState.s0 } ;
 	[Transition] s_trans : Bool := { 
 		s.next = 
 			case {
@@ -50,14 +51,14 @@ type [Fsm] delay {
 	[Input] n : Int ;
 	state : PrimedVar<RespondsState>  ;
 	i : PrimedVar<Int> ;
-	[Init] state_i_init : Bool := (i = 1) && (state = RespondsState.s0) ;
+	[Init] state_i_init : Bool := (i.current = 1) && (state.current = RespondsState.s0) ;
 	[Transition] s_trans : Bool := {
 		state.next = 
 			case {
 				state.current = RespondsState.s0 && f.end.event : RespondsState.s2;
 				state.current = RespondsState.s0 && f.start.event : RespondsState.s1 ;
 				state.current = RespondsState.s1 && f.end.event : RespondsState.s0 ;
-				state.current = RespondsState.s1 && i >= n : RespondsState.s2 ;
+				state.current = RespondsState.s1 && i.current >= n : RespondsState.s2 ;
 				true : state.current ;
 			}
 	};
