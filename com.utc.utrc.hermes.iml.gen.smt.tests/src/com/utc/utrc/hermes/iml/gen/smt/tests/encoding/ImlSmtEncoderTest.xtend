@@ -117,33 +117,6 @@ class ImlSmtEncoderTest {
 		)
 	}
 	
-	@Test
-	def void testFunctionTypeEncoder() {
-		val model = 
-		encode('''
-			package p1;
-			type T1 {
-				var1: Int -> Real;
-			}
-		''', "T1")
-		
-		print(encoder.toString)
-		
-		
-		val t1Sort = assertAndGetSort(model.findSymbol("T1"))
-		val intSort =  assertAndGetSort(model.eResource.resourceSet.findSymbol("Int"))
-		val realSort =  assertAndGetSort(model.eResource.resourceSet.findSymbol("Real"))
-		val var1 = (model.findSymbol("T1") as NamedType).findSymbol("var1") as SymbolDeclaration;
-		val funSort = assertAndGetSort(var1.type)
-		
-		assertEquals(intSort, funSort.domain)
-		assertEquals(realSort, funSort.range)
-		
-		val var1Fun = assertAndGetFuncDecl(
-			var1, #[t1Sort], funSort 
-		)
-	}
-	
 	
 	@Test
 	def void testArrayTypeEncoder() {

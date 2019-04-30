@@ -1,9 +1,9 @@
-package com.utc.utrc.hermes.iml.gen.smt.sexpr;
+package com.utc.utrc.hermes.sexpr;
 
 import java.util.List;
 
-import com.utc.utrc.hermes.iml.gen.smt.sexpr.SExpr.Seq;
-import com.utc.utrc.hermes.iml.gen.smt.sexpr.SExpr.Token;
+import com.utc.utrc.hermes.sexpr.SExpr.Seq;
+import com.utc.utrc.hermes.sexpr.SExpr.Token;
 
 public class SExprTokens {
 

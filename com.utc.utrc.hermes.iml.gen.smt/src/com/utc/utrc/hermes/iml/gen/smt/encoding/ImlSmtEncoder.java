@@ -752,7 +752,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		} else {
 			throw new SMTEncodingException("Unsupported formula: " + formula);
 		}
-		throw new SMTEncodingException("Couldn't encode the formula to SMT!");
+		throw new SMTEncodingException("Couldn't encode the formula to SMT!" + formula);
 	}
 	
 	private boolean isConnect(Symbol symbol) {
