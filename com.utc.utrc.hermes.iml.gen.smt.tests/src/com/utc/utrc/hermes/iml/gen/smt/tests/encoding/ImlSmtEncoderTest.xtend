@@ -611,4 +611,38 @@ class ImlSmtEncoderTest {
 			println(encoder.toString)
 	}
 	
+	@Test
+	def void testEncodingWithInstanceConstructor() {
+		val model = encode('''
+			package p;
+			type T1 {
+				x : Int;
+			}
+			
+			type T2 {
+				a : T1 := some(t: T1) { t.x = 5 } ;
+			}
+			
+		''', "T2");
+			
+			println(encoder.toString)
+	}
+	
+	@Test
+	def void testEncodingWithInstanceConstructorWithScope() {
+		val model = encode('''
+			package p;
+			type T1 {
+				x : Int;
+			}
+			
+			type T2 {
+				a : Int -> T1 := fun(p1 : Int) { some(t: T1) { t.x = p1 } };
+			}
+			
+		''', "T2");
+			
+			println(encoder.toString)
+	}
+	
 }

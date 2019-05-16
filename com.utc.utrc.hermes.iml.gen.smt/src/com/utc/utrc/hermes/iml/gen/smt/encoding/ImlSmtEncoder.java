@@ -626,7 +626,6 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			} else if (tail instanceof TupleConstructor) {
 				List<FormulaT> paramFormulas = new ArrayList<>();
 				paramFormulas.add(leftFormula);
-				((TupleConstructor) tail).getElements().forEach(element -> paramFormulas.add(null));
 				for (FolFormula element : ((TupleConstructor) tail).getElements()) {
 					paramFormulas.add(encodeFormula(element, context, inst, scope));
 				}
@@ -694,26 +693,47 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			}
 			return symbolRefFormula;*/
 		} else if (formula instanceof InstanceConstructor) {
-			// TODO handle some instance constructor
-//			if (formula instanceof ImplicitInstanceConstructor) {
-//				ImplicitInstanceConstructor instanceConstructor = (ImplicitInstanceConstructor) formula;
-//				SimpleTypeReference constructedType = (SimpleTypeReference) instanceConstructor.getRef();
-//				SymbolDeclaration containerSymbol = EcoreUtil2.getContainerOfType(formula, SymbolDeclaration.class);
-//				SortT inputSort = symbolTable.getSort(context);
-//				SortT outputSort = symbolTable.getSort(constructedType);
-//				
-////				String funName = getUniqueName(containerSymbol) + "_" + getUniqueName(constructedType.getType());
-//				String funName = getUniqueName(formula);
-//				FuncDeclT instanceConstructorFun = smtModelProvider.createFuncDecl(funName, Arrays.asList(inputSort), outputSort);
-//				symbolTable.addFunDecl(context, formula, instanceConstructorFun);
-//				
-//				// TODO to complete
-////				encodeFormula(instanceConstructor.getDefinition(), constructedType, inst, scope)
-//				
-//			} else { 
-//				
-//			}
+			InstanceConstructor instanceConstructor = (InstanceConstructor) formula;
+			SymbolDeclaration instanceRef = instanceConstructor.getRef();
+			SortT contextSort = symbolTable.getSort(context);
+			SortT outputSort = symbolTable.getSort(instanceRef.getType());
 			
+			// Create a function for the instance constructor inside the same context
+			List<SortT> inputSorts = new ArrayList<>();
+			if (contextSort != null) {
+				inputSorts.add(contextSort);
+			}
+			inputSorts.addAll(scope.stream().map(symbol -> symbolTable.getSort(symbol.getType())).collect(Collectors.toList()));
+			
+			String funName = getUniqueName(formula);
+			FuncDeclT instanceConstructorFun = smtModelProvider.createFuncDecl(funName, inputSorts, outputSort);
+			symbolTable.addFunDecl(context, instanceRef, instanceConstructorFun);
+			
+			// Add assertion for the created function with the encoded definition if InstanceConstructor
+			List<FormulaT> forallScope = new ArrayList<>();
+			if (contextSort != null) {
+				forallScope.add(smtModelProvider.createFormula(INST_NAME, contextSort));
+			}
+			forallScope.addAll(scope.stream().map(symbol -> smtModelProvider.createFormula(
+					symbol.getName(), symbolTable.getSort(symbol.getType()))).collect(Collectors.toList()));
+			
+			String newInst = ((inst != null)? inst + " " : "") + scope.stream().map(symbol -> symbol.getName()).reduce((curr, acc) -> acc + " " + curr).get(); // TODO really bad hack, need better solution
+			
+			FormulaT instanceConsDef = encodeFormula(instanceConstructor.getDefinition(), context, smtModelProvider.createFormula(newInst), scope);
+			instanceConsDef = smtModelProvider.createFormula(OperatorType.ASSERT, 
+								Arrays.asList(smtModelProvider.createFormula(OperatorType.FOR_ALL, Arrays.asList(
+								smtModelProvider.createFormula(forallScope)
+								, instanceConsDef))));
+			
+			symbolTable.addFormula(context, instanceRef, instanceConsDef);
+			
+			// Return the created instance function declaration
+			List<FormulaT> params = new ArrayList<>();
+			if (inst != null) {
+				params.add(inst);
+			}
+			params.addAll(scope.stream().map(symbol -> smtModelProvider.createFormula(symbol.getName())).collect(Collectors.toList()));
+			return smtModelProvider.createFormula(instanceConstructorFun, params);
 		} else if (formula instanceof IteTermExpression) {
 			FolFormula condition = ((IteTermExpression) formula).getCondition();
 			FormulaT conditionFormua = encodeFormula(condition, context, inst, scope);
