@@ -116,7 +116,11 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 		return null;
 	}
 
-	public void addFormula(EObject container, SymbolDeclaration symbol, FormulaT assertion) {
+	public Map<EncodedId, Map<EncodedId, FunDeclT>> getFunDeclsMap() {
+		return funDecls;
+	}
+
+	public void addFormula(EObject container, EObject symbol, FormulaT assertion) {
 		EncodedId containerId = encodedIdFactory.createEncodedId(container);
 		EncodedId symbolId = encodedIdFactory.createEncodedId(symbol);
 		Map<EncodedId, FormulaT> containerAssertions = assertions.get(containerId);

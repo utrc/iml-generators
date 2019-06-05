@@ -7,9 +7,6 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 
 import com.google.inject.Inject;
-import com.utc.utrc.hermes.iml.iml.Extension;
-import com.utc.utrc.hermes.iml.iml.ImlType;
-import com.utc.utrc.hermes.iml.iml.Relation;
 
 
 /**
@@ -23,6 +20,7 @@ public class EncodedIdFactory {
 	@Inject IQualifiedNameProvider qnp ;
 	int lastId = 0;
 	
+	// For objects that don't have standard unique name
 	Map<EObject, EncodedId> specialIdList = new HashMap<>();
 	
 	public EncodedId createEncodedId(EObject imlObject) {
