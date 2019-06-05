@@ -1,19 +1,23 @@
 package com.utc.utrc.hermes.iml.gen.smt.encoding;
 
+
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.naming.QualifiedName;
 
+import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.AtomicRelation;
+import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.InstanceConstructorWithBinding;
+import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.SymbolWithContext;
 import com.utc.utrc.hermes.iml.iml.Alias;
 import com.utc.utrc.hermes.iml.iml.Assertion;
 import com.utc.utrc.hermes.iml.iml.NamedType;
-import com.utc.utrc.hermes.iml.iml.Extension;
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.Inclusion;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
+import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 /**
  * Encodes IML types in a way that guarantee that each unique type has a unique ID
@@ -65,7 +69,7 @@ public class EncodedId {
 			container = qnp.getFullyQualifiedName(((AtomicRelation) imlEObject).getRelation().eContainer());
 			if (((AtomicRelation) imlEObject).getRelation() instanceof Alias) {
 				name = "alias_" + ImlUtil.getTypeNameManually(((AtomicRelation) imlEObject).getRelatedType(), qnp);
-			} else if (((AtomicRelation) imlEObject).getRelation() instanceof Extension) {
+			} else if (((AtomicRelation) imlEObject).getRelation() instanceof Inclusion) {
 				name = "extends_" + ImlUtil.getTypeNameManually(((AtomicRelation) imlEObject).getRelatedType(), qnp);
 			} else {
 				// TODO handle traits
@@ -88,11 +92,33 @@ public class EncodedId {
 			} else {
 				name = ((SymbolDeclaration) imlEObject).getName();
 			}
-		} 
-//		else if (imlEObject instanceof ImplicitInstanceConstructor) {
-//			container = qnp.getFullyQualifiedName(EcoreUtil2.getContainerOfType(imlEObject, SymbolDeclaration.class));
-//			name = "__oneof_" + ImlUtil.getTypeName((SimpleTypeReference) ((ImplicitInstanceConstructor) imlObject).getRef(), qnp);
-//		}
+		} else if (imlEObject instanceof SymbolReferenceTerm) {
+			container = qnp.getFullyQualifiedName(((SymbolReferenceTerm) imlEObject).getSymbol().eContainer());
+			name = ((SymbolReferenceTerm) imlEObject).getSymbol().getName();
+			if (!((SymbolReferenceTerm) imlEObject).getTypeBinding().isEmpty()) { // Add the symbolref type binding to the name
+				name = name + "<";
+				name = name + ((SymbolReferenceTerm) imlEObject).getTypeBinding().stream()
+					.map(type -> ImlUtil.getTypeName(type, qnp))
+					.reduce((curr, acc) ->  acc + ", " +  curr).get();
+				name = name + ">";
+			}
+		} else if (imlEObject instanceof InstanceConstructorWithBinding) {
+			container = DEFAULT_CONTAINER;
+			name = "__some_" + ImlUtil.getTypeName(((InstanceConstructorWithBinding) imlEObject).getInstanceSTR(), qnp) 
+				+ "_" + System.identityHashCode(((InstanceConstructorWithBinding) imlEObject).getInstanceConstructor()); // Use hashcode to identify each some
+		} else if (imlEObject instanceof SymbolWithContext) {
+			if (((SymbolWithContext) imlEObject).getContext() != null)
+				container = qnp.getFullyQualifiedName(((SymbolWithContext) imlEObject).getContext().getType());
+			SymbolReferenceTerm symbolRef = ((SymbolWithContext) imlEObject).getSymbol();
+			name = symbolRef.getSymbol().getName();
+			if (!symbolRef.getTypeBinding().isEmpty()) { // Add the symbolref type binding to the name
+				name = name + "<";
+				name = name + symbolRef.getTypeBinding().stream()
+					.map(type -> ImlUtil.getTypeName(type, qnp))
+					.reduce((curr, acc) ->  acc + ", " +  curr).get();
+				name = name + ">";
+			}
+		}
 	}
 	
 	public EObject getImlObject() {

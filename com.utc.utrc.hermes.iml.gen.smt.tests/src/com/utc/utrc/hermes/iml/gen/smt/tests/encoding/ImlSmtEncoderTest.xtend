@@ -3,7 +3,6 @@ package com.utc.utrc.hermes.iml.gen.smt.tests.encoding
 import org.eclipse.xtext.testing.XtextRunner
 import org.junit.runner.RunWith
 import org.eclipse.xtext.testing.InjectWith
-import org.eclipse.xtext.testing.util.ParseHelper
 import com.utc.utrc.hermes.iml.iml.Model
 import com.google.inject.Inject
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
@@ -24,12 +23,13 @@ import com.utc.utrc.hermes.iml.typing.TypingServices
 import com.utc.utrc.hermes.iml.iml.ImlType
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference
 import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSmtFormula
-import com.utc.utrc.hermes.iml.gen.smt.encoding.AtomicRelation
-import com.utc.utrc.hermes.iml.iml.Extension
 import com.utc.utrc.hermes.iml.iml.Alias
 import com.utc.utrc.hermes.iml.gen.smt.encoding.SMTEncodingException
 import com.utc.utrc.hermes.iml.gen.smt.tests.SmtTestInjectorProvider
 import com.utc.utrc.hermes.iml.ImlParseHelper
+import com.utc.utrc.hermes.iml.iml.Inclusion
+import com.utc.utrc.hermes.iml.typing.TypingEnvironment
+import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.AtomicRelation
 
 @RunWith(XtextRunner)
 @InjectWith(SmtTestInjectorProvider)
@@ -85,16 +85,15 @@ class ImlSmtEncoderTest {
 		val model = 
 		encode('''
 			package p1;
-			type T1 extends (T2);
+			type T1 includes (T2);
 			type T2;
 		''', "T1")
 		
 		val t1Sort = assertAndGetSort(model.findSymbol("T1"))
 		val t2Sort =  assertAndGetSort(model.findSymbol("T2"))
-		
-		val extensionRelation = (model.findSymbol("T1") as NamedType).relations.get(0) as Extension;
+		val inclusionRelation = (model.findSymbol("T1") as NamedType).relations.get(0) as Inclusion;
 		val extensionFun = assertAndGetFuncDecl(
-			new AtomicRelation(extensionRelation, extensionRelation.extensions.get(0).type),
+			new AtomicRelation(inclusionRelation, inclusionRelation.inclusions.get(0).type),
 			#[t1Sort], t2Sort
 		)
 	}
@@ -114,33 +113,6 @@ class ImlSmtEncoderTest {
 		val extensionFun = assertAndGetFuncDecl(
 			new AtomicRelation(aliasRelation, aliasRelation.type.type),
 			#[t1Sort], t2Sort 
-		)
-	}
-	
-	@Test
-	def void testFunctionTypeEncoder() {
-		val model = 
-		encode('''
-			package p1;
-			type T1 {
-				var1: Int -> Real;
-			}
-		''', "T1")
-		
-		print(encoder.toString)
-		
-		
-		val t1Sort = assertAndGetSort(model.findSymbol("T1"))
-		val intSort =  assertAndGetSort(model.eResource.resourceSet.findSymbol("Int"))
-		val realSort =  assertAndGetSort(model.eResource.resourceSet.findSymbol("Real"))
-		val var1 = (model.findSymbol("T1") as NamedType).findSymbol("var1") as SymbolDeclaration;
-		val funSort = assertAndGetSort(var1.type)
-		
-		assertEquals(intSort, funSort.domain)
-		assertEquals(realSort, funSort.range)
-		
-		val var1Fun = assertAndGetFuncDecl(
-			var1, #[t1Sort], funSort 
 		)
 	}
 	
@@ -206,7 +178,7 @@ class ImlSmtEncoderTest {
 		''', "T2")
 		val intSort = assertAndGetSort(model.eResource.resourceSet.findSymbol("Int"))
 		val realSort = assertAndGetSort(model.eResource.resourceSet.findSymbol("Real"))
-		assertNull(encoder.getSort(model.findSymbol("T1"))) // T<type T, type P> should not be encoded
+		assertNull(encoder.getOrCreateSort(model.findSymbol("T1"), new TypingEnvironment())) // T<type T, type P> should not be encoded
 		val T2Sort = assertAndGetSort(model.findSymbol("T2"))
 		
 		// Test new types for binding
@@ -218,14 +190,14 @@ class ImlSmtEncoderTest {
 		assertSame(t1IntReal, t1IntReal2)  // Same sort for same binding
 		
 		// Make sure we create concurrent sorts for T -> P
-		val intToRealType = imlTypeProvider.getType(
+		val intToRealType = imlTypeProvider.getSymbolType(
 			(model.findSymbol("T1") as NamedType).findSymbol("vart") as SymbolDeclaration,
-			model.getSymbolType("T2", "var1") as SimpleTypeReference
+			 new TypingEnvironment(model.getSymbolType("T2", "var1") as SimpleTypeReference)
 		)
 		
-		val intToIntType = imlTypeProvider.getType(
+		val intToIntType = imlTypeProvider.getSymbolType(
 			(model.findSymbol("T1") as NamedType).findSymbol("vart") as SymbolDeclaration,
-			model.getSymbolType("T2", "var2") as SimpleTypeReference
+			new TypingEnvironment(model.getSymbolType("T2", "var2") as SimpleTypeReference)
 		)
 		
 		val intToRealSort = assertAndGetSort(intToRealType)
@@ -271,14 +243,14 @@ class ImlSmtEncoderTest {
 	}
 	
 	def assertAndGetSort(EObject type) {
-		val sort = encoder.getSort(type)
+		val sort = encoder.getOrCreateSort(type, new TypingEnvironment())
 		assertNotNull(sort)
 		assertNotNull(sort.name)
 		return sort;
 	}
 	
 	def assertSorts(EObject ... types) {
-		assertContainTheSameElements(types.map[encoder.getSort(it)], encoder.allSorts)
+		assertContainTheSameElements(types.map[encoder.getOrCreateSort(it, new TypingEnvironment())], encoder.allSorts)
 	}
 	
 	def assertContainTheSameElements(List list1, List list2) {
@@ -337,7 +309,7 @@ class ImlSmtEncoderTest {
 		'''
 			package p;
 			
-			type T1 extends (T2) {
+			type T1 includes (T2) {
 				a : Int;
 				b : Int -> T2;
 				c : (Int, Real);
@@ -375,7 +347,7 @@ class ImlSmtEncoderTest {
 		val model = 
 		'''
 			package p;
-			type T1 extends (T2);
+			type T1 includes (T2);
 			type T2;
 		'''.parse
 		model.assertNoErrors
@@ -434,7 +406,7 @@ class ImlSmtEncoderTest {
 		val varT = (model.findSymbol("varT") as SymbolDeclaration).type as SimpleTypeReference
 		val definition = ((model.findSymbol("T1") as NamedType).findSymbol("var1") as SymbolDeclaration).definition
 		
-		val formulaEncoding = encoder.encodeFormula(definition, varT, new SimpleSmtFormula("inst"), null);
+		val formulaEncoding = encoder.encodeFormula(definition, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 		
 		print(formulaEncoding);
 	}
@@ -458,7 +430,7 @@ class ImlSmtEncoderTest {
 		val varT = (model.findSymbol("varT") as SymbolDeclaration).type as SimpleTypeReference
 		val definition = ((model.findSymbol("T2") as NamedType).findSymbol("var3") as SymbolDeclaration).definition
 		
-		val formulaEncoding = encoder.encodeFormula(definition, varT, new SimpleSmtFormula("inst"), null);
+		val formulaEncoding = encoder.encodeFormula(definition, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 		
 		print(formulaEncoding);
 	}
@@ -471,7 +443,7 @@ class ImlSmtEncoderTest {
 			type T1 {
 				var1 : Int;
 			}
-			type T2 extends (T1) {
+			type T2 includes (T1) {
 				var2: Int := var1;
 			}
 			varT : T2;
@@ -481,7 +453,7 @@ class ImlSmtEncoderTest {
 		val varT = (model.findSymbol("varT") as SymbolDeclaration).type as SimpleTypeReference
 		val definition = ((model.findSymbol("T2") as NamedType).findSymbol("var2") as SymbolDeclaration).definition
 		
-		val formulaEncoding = encoder.encodeFormula(definition, varT, new SimpleSmtFormula("inst"), null);
+		val formulaEncoding = encoder.encodeFormula(definition, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 		
 		print(formulaEncoding);
 	}
@@ -501,7 +473,7 @@ class ImlSmtEncoderTest {
 		val varT = (model.findSymbol("varT") as SymbolDeclaration).type as SimpleTypeReference
 		val definition = ((model.findSymbol("T1") as NamedType).findSymbol("var1") as SymbolDeclaration).definition
 		
-		val formulaEncoding = encoder.encodeFormula(definition, varT, new SimpleSmtFormula("inst"), null);
+		val formulaEncoding = encoder.encodeFormula(definition, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 		
 		print(formulaEncoding);
 	}
@@ -524,8 +496,8 @@ class ImlSmtEncoderTest {
 		val definitionExists = ((model.findSymbol("T1") as NamedType).findSymbol("var2") as SymbolDeclaration).definition
 		
 		
-		val formulaEncoding = encoder.encodeFormula(definitionForAll, varT, new SimpleSmtFormula("inst"), null);
-		val formulaEncoding2 = encoder.encodeFormula(definitionExists, varT, new SimpleSmtFormula("inst"), null);
+		val formulaEncoding = encoder.encodeFormula(definitionForAll, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
+		val formulaEncoding2 = encoder.encodeFormula(definitionExists, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 		
 		println(formulaEncoding);
 		println(formulaEncoding2);
@@ -547,7 +519,7 @@ class ImlSmtEncoderTest {
 		val varT = (model.findSymbol("varT") as SymbolDeclaration).type as SimpleTypeReference
 		val definition = ((model.findSymbol("T1") as NamedType).findSymbol("var2") as SymbolDeclaration).definition
 		
-		val formulaEncoding = encoder.encodeFormula(definition, varT, new SimpleSmtFormula("inst"), null);
+		val formulaEncoding = encoder.encodeFormula(definition, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 		
 		println(encoder.toString)
 		println(formulaEncoding);
@@ -567,7 +539,7 @@ class ImlSmtEncoderTest {
 			val varT = (model.findSymbol("varT") as SymbolDeclaration).type as SimpleTypeReference
 			
 			val definition = ((model.findSymbol("T1") as NamedType).findSymbol("var2") as SymbolDeclaration).definition
-			val formulaEncoding = encoder.encodeFormula(definition, varT, new SimpleSmtFormula("inst"), null);
+			val formulaEncoding = encoder.encodeFormula(definition, new TypingEnvironment(varT), new SimpleSmtFormula("inst"), null);
 			
 			println(encoder.toString)
 			println(formulaEncoding);
@@ -636,6 +608,324 @@ class ImlSmtEncoderTest {
 		''', "T1");
 			
 			println(encoder.toString)
+	}
+	
+	@Test
+	def void testEncodingWithInstanceConstructor() {
+		val model = encode('''
+			package p;
+			type T1 {
+				x : Int;
+			}
+			
+			type T2 {
+				a : T1 := some(t: T1) { t.x = 5 } ;
+			}
+			
+		''', "T2");
+			
+			println(encoder.toString)
+	}
+	
+	@Test
+	def void testEncodingWithInstanceConstructorWithScope() {
+		val model = encode('''
+			package p;
+			type T1 {
+				x : Int;
+			}
+			
+			type T2 {
+				a : Int -> T1 := fun(p1 : Int) { some(t: T1) { t.x = p1 } };
+			}
+			
+		''', "T2");
+			
+			println(encoder.toString)
+	}
+	
+	@Test
+	def void testPublicSymbolEncoding() {
+		val model = encode('''
+			package p;
+			
+			a : T1;
+			f : Int -> Real; 
+			
+			
+			type T1 {
+				x : Real := f(5);
+				y : Real := f(10);
+			}
+		''', "T1")
+		
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testSymbolEncodingWithDifferentTypeBinding() {
+		val model = encode('''
+			package p;
+						
+			type T1<T> {
+				x : T;
+			}
+			
+			type T2 {
+				a : T1<Int>;
+				b : T1<Real>;
+			}
+		''', "T2")
+		
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testRelationWithTemplates() {
+		val model = encode('''
+			package p;
+			
+			type T1<T> {
+				a : T;	
+			}
+			
+			type T3 {
+				
+			}
+			
+			type T2 includes(T1<Int>, T3) {
+				b : Real;
+			}
+			
+		''', "T2")
+		
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testRelationWithTemplates2() {
+		val model = encode('''
+			package p;
+			
+			type T1<T> {
+				a : T;	
+			}
+			
+			type T3 {
+				
+			}
+			
+			type T2<T> includes(T1<T>, T3) {
+				b : Real;
+			}
+			
+			type T4 {
+				x : T2<Int>;
+			}
+			
+		''', "T4")
+		
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncoding() {
+		val model = encode('''
+			package p;
+			
+			trait tr {
+				a : Int;
+			}
+			
+			type T1 exhibits(tr) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncoding2() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T;
+			}
+						
+			type T1 exhibits(tr<Int>) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncodingExhibitsSameTraitMultipleTimes() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T;
+			}
+						
+			type T1 exhibits(tr<Int>, tr<Bool>) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncodingExhibitsMultipleTraitsWithShadowing() {
+		val model = encode('''
+			package p;
+			
+			trait tr {
+				a : Int;
+			}
+			
+			trait tr2 {
+				a : Bool;
+				c : Bool;
+			}
+			
+						
+			type T1 exhibits(tr, tr2) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	
+	@Test
+	def void testTraitEncodingExhibitsMultipleTraits() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T;
+			}
+			
+			trait tr2<T> {
+				c : T;
+			}
+						
+			type T1 exhibits(tr<Int>, tr2<Bool>) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncodingExhibitsWithShadowing() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T;
+			}
+						
+			type T1 exhibits(tr<Int>) {
+				a : Bool;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncodingWithSelf() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T -> Self;
+			}
+						
+			type T1 exhibits(tr<Int>) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncoding4() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T;
+			}
+			
+			type T2<T> {
+				c : T;
+			}
+			
+			type T1 exhibits(tr<Int>, tr<T2<Bool>>) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testTraitEncodingWithDef() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T ;
+				b : T := a;
+			}
+			
+			type T1 exhibits(tr<Int>) {
+				c : Real;
+				d : Int := b;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	
+	
+	@Test
+	def void testTraitEncodingWithInheritance() {
+		val model = encode('''
+			package p;
+			
+			trait tr<T> {
+				a : T;
+			}
+			
+			trait tr2<T> refines (tr<T>) {
+				c : T;
+			}
+			
+			type T1 exhibits(tr2<Int>) {
+				b : Real;
+			}
+		''', "T1")
+		println(encoder.toString)
+	}
+	
+	@Test
+	def void testIncludesWithShadowing() {
+		val model = encode('''
+			package p;
+			
+			type T1 {
+				a : Int := 5;
+			}
+			
+			type T2 includes(T1) {
+				a : Real := 10;
+				b : Real := a;
+			}
+		''', "T2")
+		println(encoder.toString)
 	}
 	
 }

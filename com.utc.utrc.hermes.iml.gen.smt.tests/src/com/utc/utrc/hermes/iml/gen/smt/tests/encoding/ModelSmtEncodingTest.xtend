@@ -9,7 +9,6 @@ import com.utc.utrc.hermes.iml.iml.Model
 import com.utc.utrc.hermes.iml.tests.TestHelper
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.XtextRunner
-import org.eclipse.xtext.testing.util.ParseHelper
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.junit.runner.RunWith
 import org.junit.Test
@@ -18,12 +17,13 @@ import java.util.stream.Collectors
 import com.utc.utrc.hermes.iml.util.FileUtil
 import org.eclipse.emf.ecore.resource.ResourceSet
 import com.utc.utrc.hermes.iml.gen.smt.tests.SmtTestInjectorProvider
+import com.utc.utrc.hermes.iml.ImlParseHelper
 
 @RunWith(XtextRunner)
 @InjectWith(SmtTestInjectorProvider)
 class ModelSmtEncodingTest {
 	
-	@Inject extension ParseHelper<Model>
+	@Inject extension ImlParseHelper
 	
 	@Inject extension ValidationTestHelper
 	
@@ -34,7 +34,7 @@ class ModelSmtEncodingTest {
 	@Test
 	def void testTest1GeneratedModelEncoder() {
 		
-		val files = FileUtil.readAllFilesUnderDir("./res/test1");
+		val files = FileUtil.readAllFilesUnderDir("./res/assessment2/test1");
 		var ResourceSet rs;
 		for (file : files) {
 			if (rs !== null) {
@@ -53,18 +53,16 @@ class ModelSmtEncodingTest {
 						swModel = model;
 					}
 				}
-				
 			}
 		}
 		if (swModel !== null) {
-			encoder.encode(swModel as Model)
+			encode(swModel as Model, "MC_SW_dot_Impl")
 			println(encoder.toString)
 		}
 		
 	}
 	
-	def encode(String modelString, String ctName) {
-		val model = modelString.parse;
+	def encode(Model model, String ctName) {
 		model.assertNoErrors
 		if (ctName !== null) {
 			encoder.encode(model.findSymbol(ctName))
@@ -78,20 +76,4 @@ class ModelSmtEncodingTest {
 		assertEquals(distinctFuncDecls.size, encoder.allFuncDeclarations.size)
 		return model
 	}
-	
-	@Test
-	def void testLoopProblem() {
-		encode('''
-			package p;
-			type Int;
-			type T1 {
-				var1 : Int := globalVar(5);
-			}
-			
-			globalVar : Int -> Int;
-		''', null)
-			println(encoder.toString)
-	}
-	
-	
 }

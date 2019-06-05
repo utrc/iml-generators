@@ -380,5 +380,7 @@
 		<module>../../com.utc.utrc.hermes.iml.gen.smt.tests</module>
 		<module>../com.utc.utrc.hermes.iml.gen.target</module>
 		<module> ../com.utc.utrc.hermes.iml.gen.report</module>
+		
+		<module>../../com.utc.utrc.hermes.sexpr</module>
 	</modules>
 </project>
