@@ -9,8 +9,6 @@ import org.eclipse.emf.ecore.EObject;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.iml.NamedType;
-import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
-import com.utc.utrc.hermes.iml.iml.TupleType;
 /**
  * This class responsible for storing SMT model and provide access to the symbols or elements inside it
  *
@@ -25,8 +23,8 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 	@Inject EncodedIdFactory encodedIdFactory;
 	
 	private Map<EncodedId, SortT> sorts;
-	private Map<EncodedId, Map<EncodedId, FunDeclT>> funDecls;
-	private Map<EncodedId, Map<EncodedId, FormulaT>> assertions;
+	private Map<EncodedId, FunDeclT> funDecls;
+	private Map<EncodedId, FormulaT> assertions; 
 	
 	public SmtSymbolTable() {
 		sorts = new HashMap<>();
@@ -35,22 +33,22 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 	}
 	
 	public void addSort(EObject type, SortT sort) {
-		EncodedId id = encodedIdFactory.createEncodedId(type);
+		EncodedId id = encodedIdFactory.createEncodedId(type, null);
 		if (sorts.containsKey(id)) return;
 		sorts.put(id, sort);
 	}
 	
-	public boolean contains(EObject type) {
-		EncodedId encoded = encodedIdFactory.createEncodedId(type);
+	public boolean containsSort(EObject type) {
+		EncodedId encoded = encodedIdFactory.createEncodedId(type, null);
 		return sorts.containsKey(encoded);
 	}
 
-	public String getUniqueId(EObject type) {
-		return encodedIdFactory.createEncodedId(type).stringId();
+	public String getUniqueId(EObject type, EObject container) {
+		return encodedIdFactory.createEncodedId(type, container).stringId();
 	}
 	
 	public SortT getSort(EObject type) {
-		EncodedId id = encodedIdFactory.createEncodedId(type);
+		EncodedId id = encodedIdFactory.createEncodedId(type, null);
 		return sorts.get(id);
 	}
 
@@ -59,16 +57,11 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 	}
 	
 	public void addFunDecl(EObject container, EObject symbol, FunDeclT funDecl) {
-		EncodedId containerId = encodedIdFactory.createEncodedId(container);
-		EncodedId symbolId = encodedIdFactory.createEncodedId(symbol);
-		Map<EncodedId, FunDeclT> containerFunDecls = funDecls.get(containerId);
-		if (containerFunDecls == null) {
-			containerFunDecls = new HashMap<>();
-			funDecls.put(containerId, containerFunDecls);
-		}
-		if (containerFunDecls.containsKey(symbolId)) return;
+		EncodedId symbolId = encodedIdFactory.createEncodedId(symbol, container);
 		
-		containerFunDecls.put(symbolId, funDecl);
+		if (funDecls.containsKey(symbolId)) return;
+		
+		funDecls.put(symbolId, funDecl);
 	}
 
 	public List<EncodedId> getEncodedIds() {
@@ -87,67 +80,34 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 	}
 
 	public List<FunDeclT> getFunDecls() {
-		List<FunDeclT> result = new ArrayList<>();
-		for (Map<EncodedId, FunDeclT> func : funDecls.values()) {
-			if (func != null) {
-				result.addAll(func.values());
-			}
-		}
-		return result;
+		return new ArrayList<FunDeclT>(funDecls.values());
 	}
 
 	public FunDeclT getFunDecl(EObject container, EObject imlObject) {
-		EncodedId containerId = encodedIdFactory.createEncodedId(container);
-		EncodedId imlId = encodedIdFactory.createEncodedId(imlObject);
-		Map<EncodedId, FunDeclT> decls = funDecls.get(containerId);
-		if (decls != null) {
-			return decls.get(imlId);
-		}
-		return null;
+		EncodedId id = encodedIdFactory.createEncodedId(imlObject, container);
+		return funDecls.get(id);
 	}
 	
-	public FunDeclT getFunDecl(EObject imlObject) {
-		EncodedId imlId = encodedIdFactory.createEncodedId(imlObject);
-		for (Map<EncodedId, FunDeclT> funs : funDecls.values()) {
-			if (funs.containsKey(imlId)) {
-				return funs.get(imlId);
-			}
-		}
-		return null;
-	}
-
-	public Map<EncodedId, Map<EncodedId, FunDeclT>> getFunDeclsMap() {
+	public Map<EncodedId, FunDeclT> getFunDeclsMap() {
 		return funDecls;
 	}
 
 	public void addFormula(EObject container, EObject symbol, FormulaT assertion) {
-		EncodedId containerId = encodedIdFactory.createEncodedId(container);
-		EncodedId symbolId = encodedIdFactory.createEncodedId(symbol);
-		Map<EncodedId, FormulaT> containerAssertions = assertions.get(containerId);
-		if (containerAssertions == null) {
-			containerAssertions = new HashMap<>();
-			assertions.put(containerId, containerAssertions);
-		}
-		if (containerAssertions.containsKey(symbolId)) return;
+		EncodedId symbolId = encodedIdFactory.createEncodedId(symbol, container);
+		if (assertions.containsKey(symbolId)) return;
 		
-		containerAssertions.put(symbolId, assertion);
+		assertions.put(symbolId, assertion);
 	}
 	
 	public List<FormulaT> getAllFormulas() {
-		List<FormulaT> result = new ArrayList<>();
-		for (Map<EncodedId, FormulaT> asserts : assertions.values()) {
-			if (asserts != null) {
-				result.addAll(asserts.values());
-			}
-		}
-		return result;
+		return new ArrayList<FormulaT>(assertions.values());
 	}
 	
-	public Map<EncodedId, Map<EncodedId, FormulaT>> getAssertions() {
+	public Map<EncodedId, FormulaT> getAssertions() {
 		return assertions;
 	}
 
-	public void setAssertions(Map<EncodedId, Map<EncodedId, FormulaT>> assertions) {
+	public void setAssertions(Map<EncodedId, FormulaT> assertions) {
 		this.assertions = assertions;
 	}
 

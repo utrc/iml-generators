@@ -3,16 +3,13 @@ package com.utc.utrc.hermes.iml.gen.smt.encoding;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
-import org.eclipse.xtext.naming.QualifiedName;
 
-import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.AtomicRelation;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.InstanceConstructorWithBinding;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.SymbolWithContext;
 import com.utc.utrc.hermes.iml.iml.Alias;
 import com.utc.utrc.hermes.iml.iml.Assertion;
 import com.utc.utrc.hermes.iml.iml.NamedType;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Inclusion;
+import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
@@ -28,12 +25,13 @@ import com.utc.utrc.hermes.iml.util.ImlUtil;
  */
 public class EncodedId {
 	
-	private QualifiedName container;
+	private String containerFqn;
 	private String name;
 	
 	EObject imlObject;
+	EObject _imlContainer;
 
-	public static QualifiedName DEFAULT_CONTAINER = QualifiedName.create("__unnamed__");
+	public static String DEFAULT_CONTAINER = "__unnamed__";
 	public static String ASSERTION_DEFAULT_NAME="__assertion_";
 	
 	/**
@@ -41,41 +39,56 @@ public class EncodedId {
 	 * for example: {@code Int ~> Real}type declared in different symbols should return the same EncoderId (eId1.equals(eId2) is true)
 	 * Current implementation uses the string of the actual type to generate unique id, for example the type {@code Int ~> Real}
 	 * will generate string id with "Int~>Real"
+	 * The method uses the imlContainer if not null, otherwise, it uses the eContainer of the given imlEObject
 	 * @param imlEObject
+	 * @param imlContainer
 	 * @param qnp
 	 */
-	public EncodedId(EObject imlEObject, IQualifiedNameProvider qnp) {
+	public EncodedId(EObject imlEObject, EObject imlContainer, IQualifiedNameProvider qnp) {
 		this.imlObject = imlEObject;
+		
+		if (imlContainer != null) {
+			this.containerFqn = getContainerFqn(imlContainer, qnp);
+			this._imlContainer = imlContainer;
+		}
+		
 		if (imlEObject instanceof Model) {
-			container = null;
 			name = ((Model) imlEObject).getName();
 		}
 		if (imlEObject instanceof NamedType) {
-			container = qnp.getFullyQualifiedName(imlEObject.eContainer());
+			if (imlContainer == null) {
+				this.containerFqn = getContainerFqn(imlEObject.eContainer(), qnp);
+			}
 			name = ((Symbol) imlEObject).getName();
 		} else if (imlEObject instanceof ImlType) {
 			// use the serialization as name 
 			if (imlEObject instanceof SimpleTypeReference && ((SimpleTypeReference) imlEObject).getTypeBinding().size() == 0) {
 				NamedType type = ((SimpleTypeReference) imlEObject).getType();
-				container = qnp.getFullyQualifiedName(type.eContainer());
+				if (imlContainer == null) {
+					this._imlContainer = type.eContainer();
+					this.containerFqn = getContainerFqn(this._imlContainer, qnp);
+				}
 				name = type.getName();
 			} else {
-				container = DEFAULT_CONTAINER;
-//				container = qnp.getFullyQualifiedName(((SimpleTypeReference) imlEObject).getType().eContainer());					
+				this.containerFqn = DEFAULT_CONTAINER;
 				// Use the name exactly as declared 					
 				name = ImlUtil.getTypeNameManually((ImlType) imlEObject, qnp);
 			}
 		} else if (imlEObject instanceof AtomicRelation) {
-			container = qnp.getFullyQualifiedName(((AtomicRelation) imlEObject).getRelation().eContainer());
+			if (imlContainer == null) {
+				this._imlContainer = ((AtomicRelation) imlEObject).getRelation().eContainer();
+				this.containerFqn = getContainerFqn(this._imlContainer, qnp);
+			}
 			if (((AtomicRelation) imlEObject).getRelation() instanceof Alias) {
 				name = "alias_" + ImlUtil.getTypeNameManually(((AtomicRelation) imlEObject).getRelatedType(), qnp);
 			} else if (((AtomicRelation) imlEObject).getRelation() instanceof Inclusion) {
 				name = "extends_" + ImlUtil.getTypeNameManually(((AtomicRelation) imlEObject).getRelatedType(), qnp);
-			} else {
-				// TODO handle traits
 			}
 		} else if (imlEObject instanceof SymbolDeclaration) {
-			container = qnp.getFullyQualifiedName(imlEObject.eContainer());
+			if (imlContainer == null) {
+				this._imlContainer = imlEObject.eContainer();
+				this.containerFqn = getContainerFqn(this._imlContainer, qnp);
+			}
 			if (imlEObject instanceof Assertion) {
 				if (((SymbolDeclaration) imlEObject).getName() != null && !((SymbolDeclaration) imlEObject).getName().isEmpty()) {
 					name = ((SymbolDeclaration) imlEObject).getName();
@@ -93,7 +106,10 @@ public class EncodedId {
 				name = ((SymbolDeclaration) imlEObject).getName();
 			}
 		} else if (imlEObject instanceof SymbolReferenceTerm) {
-			container = qnp.getFullyQualifiedName(((SymbolReferenceTerm) imlEObject).getSymbol().eContainer());
+			if (imlContainer == null) {
+				this._imlContainer = ((SymbolReferenceTerm) imlEObject).getSymbol().eContainer();
+				this.containerFqn = getContainerFqn(this._imlContainer, qnp);
+			}
 			name = ((SymbolReferenceTerm) imlEObject).getSymbol().getName();
 			if (!((SymbolReferenceTerm) imlEObject).getTypeBinding().isEmpty()) { // Add the symbolref type binding to the name
 				name = name + "<";
@@ -102,25 +118,23 @@ public class EncodedId {
 					.reduce((curr, acc) ->  acc + ", " +  curr).get();
 				name = name + ">";
 			}
-		} else if (imlEObject instanceof InstanceConstructorWithBinding) {
-			container = DEFAULT_CONTAINER;
-			name = "__some_" + ImlUtil.getTypeName(((InstanceConstructorWithBinding) imlEObject).getInstanceSTR(), qnp) 
-				+ "_" + System.identityHashCode(((InstanceConstructorWithBinding) imlEObject).getInstanceConstructor()); // Use hashcode to identify each some
-		} else if (imlEObject instanceof SymbolWithContext) {
-			if (((SymbolWithContext) imlEObject).getContext() != null)
-				container = qnp.getFullyQualifiedName(((SymbolWithContext) imlEObject).getContext().getType());
-			SymbolReferenceTerm symbolRef = ((SymbolWithContext) imlEObject).getSymbol();
-			name = symbolRef.getSymbol().getName();
-			if (!symbolRef.getTypeBinding().isEmpty()) { // Add the symbolref type binding to the name
-				name = name + "<";
-				name = name + symbolRef.getTypeBinding().stream()
-					.map(type -> ImlUtil.getTypeName(type, qnp))
-					.reduce((curr, acc) ->  acc + ", " +  curr).get();
-				name = name + ">";
-			}
+		} else if (imlEObject instanceof InstanceConstructor) {
+			this.containerFqn = DEFAULT_CONTAINER;
+			name = "__some_" + ImlUtil.getTypeName((ImlType) imlContainer, qnp) 
+						+ "_" + System.identityHashCode(imlEObject); // Use hashcode to identify each some
 		}
 	}
 	
+	private String getContainerFqn(EObject container, IQualifiedNameProvider qnp) {
+		if (container instanceof ImlType) {
+			return ImlUtil.getTypeName((ImlType) container, qnp);
+		} else if (container instanceof NamedType || container instanceof Model) {
+			return qnp.getFullyQualifiedName(container).toString();
+		} else {
+			return "";
+		}
+	}
+
 	public EObject getImlObject() {
 		return imlObject;
 	}
@@ -128,12 +142,16 @@ public class EncodedId {
 	public void setImlObject(EObject imlObject) {
 		this.imlObject = imlObject;
 	}
+	
+	public EObject getImlContainer() {
+		return _imlContainer;
+	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((container == null) ? 0 : container.hashCode());
+		result = prime * result + ((containerFqn == null) ? 0 : containerFqn.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -146,11 +164,11 @@ public class EncodedId {
 			return false;
 		if (!(obj instanceof EncodedId))
 			return false;
-		if ((container == null && ((EncodedId) obj).getContainer() != null) ||
-			(container != null && ((EncodedId) obj).getContainer() == null)) {
+		if ((containerFqn == null && ((EncodedId) obj).getContainer() != null) ||
+			(containerFqn != null && ((EncodedId) obj).getContainer() == null)) {
 			return false;
 		}
-		if (container != null && !container.equals(((EncodedId) obj).getContainer()))
+		if (containerFqn != null && !containerFqn.equals(((EncodedId) obj).getContainer()))
 			return false;
 		if (!name.equals(((EncodedId) obj).getName()))
 			return false;
@@ -158,12 +176,12 @@ public class EncodedId {
 		return true;
 	}
 
-	public QualifiedName getContainer() {
-		return container;
+	public String getContainer() {
+		return containerFqn;
 	}
 
-	public void setContainer(QualifiedName container) {
-		this.container = container;
+	public void setContainer(String container) {
+		this.containerFqn = container;
 	}
 
 	public String getName() {
@@ -175,10 +193,10 @@ public class EncodedId {
 	}
 	
 	public String stringId() {
-		if (container == null || container.isEmpty()) {
+		if (containerFqn == null || containerFqn.isEmpty()) {
 			return name;
 		} else {
-			return (container.toString() + "." + name);
+			return (containerFqn.toString() + "." + name);
 		}
 	}
 	

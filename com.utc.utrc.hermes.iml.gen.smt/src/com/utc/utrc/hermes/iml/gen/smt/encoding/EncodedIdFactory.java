@@ -23,8 +23,8 @@ public class EncodedIdFactory {
 	// For objects that don't have standard unique name
 	Map<EObject, EncodedId> specialIdList = new HashMap<>();
 	
-	public EncodedId createEncodedId(EObject imlObject) {
-		EncodedId id = new EncodedId(imlObject, qnp);
+	public EncodedId createEncodedId(EObject imlObject, EObject container) {
+		EncodedId id = new EncodedId(imlObject, container, qnp);
 		if (id.getName() == null || id.getName().isEmpty()) {
 			if (specialIdList.containsKey(imlObject)) {
 				return specialIdList.get(imlObject);
@@ -36,7 +36,7 @@ public class EncodedIdFactory {
 		return id;
 	}
 	
-	public String getStringId(EObject imlObject) {
-		return createEncodedId(imlObject).stringId();
+	public String getStringId(EObject imlObject, EObject container) {
+		return createEncodedId(imlObject, container).stringId();
 	}
 }
