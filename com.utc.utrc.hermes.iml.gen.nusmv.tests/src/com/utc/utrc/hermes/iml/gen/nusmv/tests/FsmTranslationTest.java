@@ -21,7 +21,7 @@ import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
 import org.eclipse.xtext.testing.XtextRunner ;
-import com.utc.utrc.hermes.iml.tests.ImlInjectorProvider;
+//import com.utc.utrc.hermes.iml.tests.ImlInjectorProvider;
 
 
 class FsmTranslationTest {
@@ -60,8 +60,8 @@ class FsmTranslationTest {
 		NuSmvModel nm = new NuSmvModel();
 		for (Symbol s : m.getSymbols()) {
 			if (s instanceof NamedType) {
-				if ( s.getName().equals("UxAS_responds_dot_i") )
-				gen.generateType(nm, ImlCustomFactory.INST.createSimpleTypeReference(((NamedType) s)));
+				if ( s.getName().equals("UxAS_responds_dot_i") ) {}
+				//gen.generateType(nm, ImlCustomFactory.INST.createSimpleTypeReference(((NamedType) s)));
 			}
 		}
 

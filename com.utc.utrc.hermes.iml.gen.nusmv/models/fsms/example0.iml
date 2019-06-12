@@ -1,0 +1,15 @@
+package sally.examples ;
+import iml.fsm.* ;
+
+
+type [Sm] T {
+    
+    x : PrimedVar<Real> ;
+     
+    [Init] initial_states : Bool := {x.current = 0} ;
+
+    [Transition] transition : Bool := { x.next = x.current+ 1} ;
+   
+}
+
+[Query] property1 : T -> Bool := fun(t:T):Bool { t.x >= 0} ;

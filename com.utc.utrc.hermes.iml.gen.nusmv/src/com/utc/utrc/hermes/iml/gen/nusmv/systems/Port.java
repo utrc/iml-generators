@@ -10,7 +10,7 @@ public class Port {
 	private ImlType dataType;
 	private boolean event;
 	private ImlType eventType;
-	private Component container;
+	private ComponentType container;
 
 	public static Port nil = new Port();
 
@@ -47,11 +47,11 @@ public class Port {
 		this.name = name;
 	}
 
-	public Component getContainer() {
+	public ComponentType getContainer() {
 		return container;
 	}
 
-	public void setContainer(Component container) {
+	public void setContainer(ComponentType container) {
 		this.container = container;
 	}
 
