@@ -4,7 +4,9 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.xtext.testing.InjectWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import com.google.inject.Injector;
 import com.utc.utrc.hermes.iml.ImlStandaloneSetup;
@@ -18,8 +20,11 @@ import com.utc.utrc.hermes.iml.iml.NamedType;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
+import org.eclipse.xtext.testing.XtextRunner ;
+import com.utc.utrc.hermes.iml.tests.ImlInjectorProvider;
 
-public class FsmTranslationTest {
+
+class FsmTranslationTest {
 
 	@Test
 	public void test() {

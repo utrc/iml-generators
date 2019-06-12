@@ -1,0 +1,77 @@
+package com.utc.utrc.hermes.iml.gen.nusmv.sms;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.utc.utrc.hermes.iml.iml.FolFormula;
+import com.utc.utrc.hermes.iml.iml.ImlType;
+
+public class StateMachine {
+	
+	private ImlType smType ;
+	private State stateType ;
+	private FolFormula invariant ;
+	private FolFormula transition ;
+	private FolFormula init ;
+	private Map<String, FolFormula> defines ;
+	boolean component ;
+	
+	public StateMachine() {
+		defines = new HashMap<String, FolFormula>() ;
+	}
+
+	public ImlType getSmType() {
+		return smType;
+	}
+
+	public void setSmType(ImlType smType) {
+		this.smType = smType;
+	}
+
+	public FolFormula getInvariant() {
+		return invariant;
+	}
+
+	public void setInvariant(FolFormula invariant) {
+		this.invariant = invariant;
+	}
+
+	public FolFormula getTransition() {
+		return transition;
+	}
+
+	public void setTransition(FolFormula transition) {
+		this.transition = transition;
+	}
+
+	public FolFormula getInit() {
+		return init;
+	}
+
+	public void setInit(FolFormula init) {
+		this.init = init;
+	}
+
+	public Map<String, FolFormula> getDefines() {
+		return defines;
+	}
+
+	public State getStateType() {
+		return stateType;
+	}
+
+	public void setStateType(State stateType) {
+		this.stateType = stateType;
+	}
+
+	public boolean isComponent() {
+		return component;
+	}
+
+	public void setComponent(boolean component) {
+		this.component = component;
+	}
+	
+	
+	
+}

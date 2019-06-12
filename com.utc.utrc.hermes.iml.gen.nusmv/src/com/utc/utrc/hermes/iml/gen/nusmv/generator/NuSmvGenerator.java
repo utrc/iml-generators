@@ -4,6 +4,8 @@ import static com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvTranslationProvid
 import static com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvTranslationProvider.isEnum;
 
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.xtext.naming.IQualifiedNameProvider;
+import org.eclipse.xtext.xbase.lib.Extension;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
@@ -13,11 +15,14 @@ import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvModule;
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvSymbol;
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvTypeInstance;
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvVariable;
+import com.utc.utrc.hermes.iml.gen.nusmv.sms.Sms;
+import com.utc.utrc.hermes.iml.gen.nusmv.sms.StateMachine;
+import com.utc.utrc.hermes.iml.gen.nusmv.systems.Systems;
 import com.utc.utrc.hermes.iml.iml.Assertion;
 import com.utc.utrc.hermes.iml.iml.NamedType;
-import com.utc.utrc.hermes.iml.iml.Extension;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.Inclusion;
 import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
@@ -28,7 +33,10 @@ import com.utc.utrc.hermes.iml.iml.TailedExpression;
 import com.utc.utrc.hermes.iml.iml.TermExpression;
 import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
+import com.utc.utrc.hermes.iml.lib.ImlStdLib;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
+import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
+import com.utc.utrc.hermes.iml.util.ImlUtil;
 import com.utc.utrc.hermes.iml.util.Phi;
 
 public class NuSmvGenerator {
@@ -38,20 +46,20 @@ public class NuSmvGenerator {
 	
 	@Inject
 	NuSmvGeneratorServices generatorServices;
+	
+	@Inject
+	private ImlStdLib stdLibs;
 
-	private StandardLibProvider libs;
+	@Inject
+	@Extension
+	private IQualifiedNameProvider qnp;
+
 	private Configuration conf ;
 	
-	private class NuSmvConnection {
-		public String target_machine;
-		public String target_input;
-		public String source;
-	}
 
 	public NuSmvGenerator() {}
 	
-	public NuSmvGenerator(StandardLibProvider libs, Configuration conf) {
-		this.libs = libs;
+	public NuSmvGenerator(Configuration conf) {
 		this.conf = conf ;
 	}
 
@@ -79,17 +87,25 @@ public class NuSmvGenerator {
 		return main ;
 	}
 	
-	public NuSmvModule generateType(NuSmvModel m, ImlType tr) {
-		if (tr instanceof SimpleTypeReference) {
-			return generateType(m, (SimpleTypeReference) tr);
+	
+	public NuSmvModule generateType(NuSmvModel m,ImlType t, Sms sms) {
+		if (t instanceof SimpleTypeReference) {
+			return generateType(m,(SimpleTypeReference)t,sms);
 		}
-		return (new NuSmvModule(m, "HIGHER_HORDER_TYPE_NOT_SUPPORTED"));
+		return (new NuSmvModule("__EMPTY__")) ;
 	}
-
-	public NuSmvModule generateType(NuSmvModel m, SimpleTypeReference tr) {
-		String type_name = generatorServices.getNameFor(tr);
+	public NuSmvModule generateType(NuSmvModel m,SimpleTypeReference tr,Sms sms) {
+		//start from the definition
+		StateMachine sm = sms.getStateMachine(tr) ;
+		if (sm == null) return (new NuSmvModule("__EMPTY__")) ;
+		
+		String type_name = ImlUtil.getTypeName(sm.getSmType(),qnp);
 		if (m.hasType(type_name))
 			return m.getType(type_name);
+		
+		//generate the state first
+		
+		
 		if (isEnum(tr.getType())) {
 			return generateEnumType(m, tr.getType());
 		} else {
@@ -114,12 +130,13 @@ public class NuSmvGenerator {
 			target.addSymbol(bypass);
 			return ;
 		}
+		TypingEnvironment typing = new TypingEnvironment(tr);
 		if (tr.getType().getRelations() != null) {
 			for(Relation r : tr.getType().getRelations()) {
-				if (r instanceof Extension) {
-					for(TypeWithProperties p : ((Extension) r).getExtensions()) {
+				if (r instanceof Inclusion) {
+					for(TypeWithProperties p : ((Inclusion) r).getInclusions()) {
 						//generate the type
-						NuSmvModule added = generateType(target.getContainer(), typeProvider.bind(p.getType(), tr)) ;
+						NuSmvModule added = generateType(target.getContainer(), typing.bind(p.getType())) ;
 						for(NuSmvSymbol s : added.getParameters()) {
 							target.addSymbol(s);
 						}
@@ -171,7 +188,7 @@ public class NuSmvGenerator {
 	}
 
 	private NuSmvSymbol generateSymbolDeclaration(NuSmvModule m, SymbolDeclaration sd, SimpleTypeReference ctx) {
-			
+		TypingEnvironment typing = new TypingEnvironment(ctx);
 		ImlType bound = null;
 		String name = null;
 		if (sd instanceof Assertion) {
@@ -183,7 +200,7 @@ public class NuSmvGenerator {
 			bound = ImlCustomFactory.INST.createSimpleTypeReference(libs.getImlType("iml.lang.Bool"));
 		} else {
 			name = sd.getName();
-			bound = typeProvider.bind(sd.getType(), ctx);
+			bound = typing.bind(sd.getType());
 		}
 
 		NuSmvSymbol target = new NuSmvSymbol(name);
@@ -256,7 +273,7 @@ public class NuSmvGenerator {
 			return null;
 		} else if (isState(sd)) {
 			NuSmvModule ti = generateType(m.getContainer(),
-					typeProvider.bind(((SimpleTypeReference) sd.getType()).getTypeBinding().get(0), ctx));
+					typing.bind(((SimpleTypeReference) sd.getType()).getTypeBinding().get(0)));
 			target.setType(new NuSmvTypeInstance(ti));
 			target.setElementType(NuSmvElementType.VAR);
 			m.addSymbol(target);

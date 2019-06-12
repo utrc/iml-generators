@@ -28,9 +28,10 @@ import com.utc.utrc.hermes.iml.iml.TermExpression
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
 import com.utc.utrc.hermes.iml.iml.Assertion
 import com.google.inject.Inject
+import com.utc.utrc.hermes.iml.typing.TypingEnvironment
 
 class NuSmvGeneratorServices {
-	
+		
 	@Inject
 	private ImlTypeProvider typeProvider;
 
@@ -268,31 +269,33 @@ class NuSmvGeneratorServices {
 		}
 	}
 
-	def List<String> getSuffix(TermExpression e, SimpleTypeReference ctx) {
+	def List<String> getSuffix(TermExpression e, SimpleTypeReference tr) {
 		var retval = new ArrayList<String>();
+		var ctx = new TypingEnvironment(tr);
 		var t = typeProvider.termExpressionType(e,ctx);
 		if (qualifiedName((t as SimpleTypeReference).type).equals("iml.fsm.PrimedVar")){
 				retval.add("") ;
 				return retval;
 		} 
-		retval.addAll(getSuffix("",t, ctx))
+		retval.addAll(getSuffix("",t, tr))
 		return retval;
 	}
 
-	def List<String> getSuffix(String sofar, ImlType t, SimpleTypeReference ctx) {
+	def List<String> getSuffix(String sofar, ImlType t, SimpleTypeReference tr) {
 		var retval = new ArrayList<String>();
+		var ctx = new TypingEnvironment(tr);
 		if (t instanceof SimpleTypeReference) {
-			
+			ctx.addContext(t);
 			for (s : t.type.symbols) {
 				if (! (s instanceof Assertion)) {
-					var boundtype = typeProvider.bind(s.type,t) ;
+					var boundtype = ctx.bind(s.type) ;
 					if ( qualifiedName( (boundtype as SimpleTypeReference).type).equals("iml.lang.Bool") || 
 						qualifiedName((boundtype as SimpleTypeReference).type).equals("iml.lang.Int") )
 							
 					{
 						retval.add(sofar + "." + s.name) ;
 					} else {
-						retval.addAll(getSuffix(sofar + "." + s.name,boundtype,ctx)) ;
+						retval.addAll(getSuffix(sofar + "." + s.name,boundtype,tr)) ;
 					}
 					
 				}
