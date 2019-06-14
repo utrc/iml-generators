@@ -59,10 +59,17 @@ public class MCMT  {
 		instructions.addLast(query); 
 	}
 	
+	public LinkedList<Sexp<String>> toSexps(){
+		LinkedList<Sexp<String>> result = new LinkedList<Sexp<String>>(); 
+		for (Instruction i : instructions) {
+			result.addLast(i.toSexp());
+		}
+		return result;
+	}
+
 	public String toString(){
 		StringBuilder result = new StringBuilder();
 		for (Instruction i : instructions) {
-			System.out.println("One instruction");
 			result.append(i.toSexp().toString());
 			result.append("\n");
 		}

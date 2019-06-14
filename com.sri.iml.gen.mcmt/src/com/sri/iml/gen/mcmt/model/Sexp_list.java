@@ -24,9 +24,14 @@ public class Sexp_list<Atom> extends Sexp<Atom> {
 	public void addRight(Sexp<Atom> s) {
 		list.addLast(s);
 	}
-	
-	public String to_String() {
-		StringBuilder tmp = new StringBuilder('(');
+
+	public void add(Sexp<Atom> s) {
+		list.addLast(s);
+	}
+
+	public String toString() {
+		StringBuilder tmp = new StringBuilder();
+		tmp.append('(');
 		Iterator<Sexp<Atom>> i = list.listIterator();
 		Sexp<Atom> current;		
 		while (i.hasNext()) {

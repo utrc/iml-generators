@@ -8,7 +8,7 @@ public class Sexp_atom<Atom> extends Sexp<Atom> {
 		this.atom = atom;
 	}
 	
-	public String to_string() {
+	public String toString() {
 		return this.atom.toString();
 	}
 	

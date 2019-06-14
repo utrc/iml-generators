@@ -1,21 +1,18 @@
 package com.sri.iml.gen.mcmt.tests
 
 import org.eclipse.xtext.testing.InjectWith
-import org.junit.runner.RunWith
 import org.eclipse.xtext.testing.XtextRunner
-import com.utc.utrc.hermes.iml.tests.ImlInjectorProvider
-import com.google.inject.Inject
-import com.utc.utrc.hermes.iml.ImlParseHelper
-import org.junit.Test
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
-import com.sri.iml.gen.mcmt.MCMTGenerator
+import com.google.inject.Inject
+import com.utc.utrc.hermes.iml.tests.ImlInjectorProvider
+import com.utc.utrc.hermes.iml.ImlParseHelper
 import com.utc.utrc.hermes.iml.tests.TestHelper
 import com.utc.utrc.hermes.iml.iml.NamedType
-import com.sri.iml.gen.mcmt.model.SallyModel
 import com.utc.utrc.hermes.iml.iml.ImlFactory
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.sri.iml.gen.mcmt.MCMTGenerator
+import org.junit.Test
+import org.junit.runner.RunWith
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import static org.junit.Assert.*;
@@ -56,9 +53,13 @@ class MCMTTests {
 		val model = '''
 		package p;
 		import iml.fsm.*;
+		import iml.connectivity.*;
 		type [Sm] T {
 		    
 		    x : PrimedVar<Real> ;
+		    y : PrimedVar<Int> ;
+
+		    [Input] z : Int ;
 		     
 		    [Init] initial_states : Bool := {x.current = 0.0} ;
 		
@@ -76,6 +77,6 @@ class MCMTTests {
 		
 		val m = generator.generate(stateModel)
 		
-		System.out.println(m.toString())
+		print(m)
 	}
 }

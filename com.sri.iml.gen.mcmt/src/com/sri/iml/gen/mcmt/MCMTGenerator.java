@@ -114,25 +114,19 @@ public class MCMTGenerator {
 				String sdname = sd.getName();
 				if (isState(sd)) {
 					ImlType tmp = typeProvider.bind(((SimpleTypeReference) sd.getType()).getTypeBinding().get(0), tr);
-					
-					System.out.println(sd.getTypeParameter().get(0));
-					NamedType tmp = ((SimpleTypeReference) sd.getType()).getType(); //.getTypeParameter().get(0);
-					ImlType imlType = typeProvider.bind(sd.getType(), tr);
-					// replace `sd.getType()` by `((SimpleTypeReference) sd.getType()).getTypeBinding().get(0)` ?
-					// ImlType parameter = imlType.getTypeParameter();
-					System.out.println(sdname + " " + imlType + " " + sd.getType());
-					BaseType basetype = generateBaseType(tmp.getName());
+					BaseType basetype = generateBaseType(generatorServices.getNameFor((SimpleTypeReference) tmp));
 					statevars.add_field(new StateVariable(sdname,basetype));
-				}				
+				}
 				if (isInput(sd)) {
 					ImlType imlType = typeProvider.bind(sd.getType(), tr);
-					// replace `sd.getType()` by `((SimpleTypeReference) sd.getType()).getTypeBinding().get(0)` ? 
 					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 					inputs.add_field(new Input(sdname,basetype));
 				}
 			}
 		}
-		return new NamedStateType(name, statevars, inputs);
+		NamedStateType result = new NamedStateType(name, statevars, inputs); 
+		target.addStateType(result);
+		return result;
 	}
 
 	// Translating the initial formula
@@ -140,12 +134,13 @@ public class MCMTGenerator {
 		for (Symbol s : tr.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
-				String sdname = sd.getName();
-				ImlType imlType = typeProvider.bind(sd.getType(), tr);
-				// replace `sd.getType()` by `((SimpleTypeReference) sd.getType()).getTypeBinding().get(0)` ? 
-				BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 				if (isInit(sd)) {
-					return NamedStateFormula.symbol("true"); // TO CHANGE
+					String sdname = sd.getName();
+					ImlType imlType = typeProvider.bind(sd.getType(), tr);
+					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
+					assert(basetype.equals(BaseType.Bool));
+					String test = generatorServices.serialize(sd.getDefinition(),tr);
+					return NamedStateFormula.symbol("true");
 				}
 			}
 		}
@@ -160,7 +155,7 @@ public class MCMTGenerator {
 				String sdname = sd.getName();
 				ImlType imlType = typeProvider.bind(sd.getType(), tr);
 				// replace `sd.getType()` by `((SimpleTypeReference) sd.getType()).getTypeBinding().get(0)` ? 
-				BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
+				// BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 				if (isInit(sd)) {
 					return NamedStateTransition.symbol("true"); // TO CHANGE
 				}
@@ -212,14 +207,7 @@ public class MCMTGenerator {
 
 		// Generate the type
 		// Decide on the element type
-		if (isInput(sd)) {
-			MCMT nbound = generateType(m.getContainer(), bound);
-			SallyTypeInstance ti = new SallyTypeInstance(nbound);
-			target.setType(ti);
-			target.setElementType(SallyElementType.PARAMETER);
-			m.addSymbol(target);
-
-		} else if (isOutput(sd)) {
+	if (isOutput(sd)) {
       throw new GeneratorException("OUTPUTS NOT PART OF MCMT "+tr.toString());
 
 		} else if (isInit(sd)) {
