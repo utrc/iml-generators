@@ -3,6 +3,9 @@ package com.utc.utrc.hermes.iml.gen.nusmv.generator;
 import static com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvTranslationProvider.getLiterals;
 import static com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvTranslationProvider.isEnum;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.xbase.lib.Extension;
@@ -29,6 +32,8 @@ import com.utc.utrc.hermes.iml.iml.NamedType;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Inclusion;
+import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
+import com.utc.utrc.hermes.iml.iml.LambdaExpression;
 import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
@@ -125,7 +130,7 @@ public class NuSmvGenerator {
 				generateInput(target, p);
 			}
 			for (Port p : ct.getPorts(Direction.OUT)) {
-				generateOutput(target, p);
+				generateOutput(target, p, tr);
 			}
 			for (ComponentInstance sub : ct.getSubs().values()) {
 				NuSmvModule gensm = generateStateMachine(target.getContainer(),
@@ -134,13 +139,14 @@ public class NuSmvGenerator {
 			}
 			// add all connections
 			for (Connection conn : ct.getConnections().values()) {
-				generateConnection(target, conn);
+				generateConnection(target, conn, tr);
 			}
 
 			// add all other symbols
 			TypingEnvironment typing = new TypingEnvironment(tr);
 			for (SymbolDeclaration sd : ct.getOtherSymbols()) {
-				if (!( sd.getName().equals("init") || sd.getName().equals("invariant") || sd.getName().equals("transition")) ) {
+				if (!(sd.getName().equals("init") || sd.getName().equals("invariant")
+						|| sd.getName().equals("transition"))) {
 					if (sd.getType() instanceof SimpleTypeReference) {
 						generateType(m, (SimpleTypeReference) typing.bind(sd.getType()));
 						addSymbol(target, sd, tr);
@@ -150,11 +156,15 @@ public class NuSmvGenerator {
 		} else {
 			for (Symbol sd : sm.getSmType().getType().getSymbols()) {
 				if (sd instanceof SymbolDeclaration) {
-					addSymbol(target, (SymbolDeclaration) sd, tr);
+					if (!(sd.getName().equals("init") || sd.getName().equals("invariant")
+							|| sd.getName().equals("transition"))) {
+						if ( ((SymbolDeclaration)sd).getType() instanceof SimpleTypeReference) {
+							addSymbol(target, (SymbolDeclaration) sd, tr);
+						}
+					}
 				}
 			}
 		}
-
 
 		if (sm.getInit() != null)
 			generateInit(target, sm.getInit(), tr);
@@ -225,7 +235,7 @@ public class NuSmvGenerator {
 	}
 
 	private NuSmvModule generateEnumType(NuSmvModel m, NamedType type) {
-		NuSmvModule target = new NuSmvModule(generatorServices.qualifiedName(type));
+		NuSmvModule target = new NuSmvModule(qnp.getFullyQualifiedName(type).toString());
 		m.addModule(target);
 		target.setEnum(true);
 		target.getLiterals().addAll(getLiterals(type));
@@ -247,7 +257,7 @@ public class NuSmvGenerator {
 		return new NuSmvSymbol("__UNSUPPORTED__");
 	}
 
-	private NuSmvSymbol generateOutput(NuSmvModule m, Port p) {
+	private NuSmvSymbol generateOutput(NuSmvModule m, Port p, SimpleTypeReference ctx) {
 
 		if (p.getDataType() instanceof SimpleTypeReference) {
 			NuSmvSymbol target = new NuSmvSymbol(p.getName());
@@ -255,7 +265,17 @@ public class NuSmvGenerator {
 			NuSmvTypeInstance ti = new NuSmvTypeInstance(nbound);
 			target.setType(ti);
 			if (p.getDefinition() != null) {
-				target.setDefinition(generatorServices.serialize(p.getDefinition(), null));
+				// TODO need to generalize this
+				if (p.getDefinition() instanceof SignedAtomicFormula) {
+					if (p.getDefinition().getLeft() instanceof InstanceConstructor) {
+						InstanceConstructor cons = (InstanceConstructor) p.getDefinition().getLeft();
+						SymbolDeclaration var = cons.getRef();
+						Map<Symbol, String> remap = new HashMap<>();
+						remap.put(var, p.getName());
+						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap) ;
+						target.setDefinition(expr.replace(p.getName() + "=", ""));
+					}
+				}
 				target.setElementType(NuSmvElementType.DEFINE);
 			} else {
 				target.setElementType(NuSmvElementType.VAR);
@@ -268,11 +288,16 @@ public class NuSmvGenerator {
 	}
 
 	private NuSmvSymbol generateInit(NuSmvModule m, FolFormula f, SimpleTypeReference tr) {
-		NuSmvSymbol target = new NuSmvSymbol("init");
+		NuSmvSymbol target = new NuSmvSymbol("init_");
 		NuSmvTypeInstance ti = new NuSmvTypeInstance(m.getContainer().getType("iml.lang.Bool"));
 		target.setType(ti);
 		target.setElementType(NuSmvElementType.INIT);
-		target.setDefinition(generatorServices.serialize(f, tr));
+		if (f instanceof SignedAtomicFormula && f.getLeft() instanceof LambdaExpression) {
+			LambdaExpression le = (LambdaExpression) f.getLeft();
+			Map<Symbol, String> remap = new HashMap<>();
+			remap.put(le.getParameters().get(0), "state");
+			target.setDefinition(generatorServices.serialize(le.getDefinition(), tr, remap));
+		}
 		m.addSymbol(target);
 		return target;
 	}
@@ -282,7 +307,13 @@ public class NuSmvGenerator {
 		NuSmvTypeInstance ti = new NuSmvTypeInstance(m.getContainer().getType("iml.lang.Bool"));
 		target.setType(ti);
 		target.setElementType(NuSmvElementType.TRANSITION);
-		target.setDefinition(generatorServices.serialize(f, tr));
+		if (f instanceof SignedAtomicFormula && f.getLeft() instanceof LambdaExpression) {
+			LambdaExpression le = (LambdaExpression) f.getLeft();
+			Map<Symbol, String> remap = new HashMap<>();
+			remap.put(le.getParameters().get(0), "state");
+			remap.put(le.getParameters().get(1), "next(state)");
+			target.setDefinition(generatorServices.serialize(le.getDefinition(), tr, remap));
+		}
 		m.addSymbol(target);
 		return target;
 	}
@@ -292,32 +323,48 @@ public class NuSmvGenerator {
 		NuSmvTypeInstance ti = new NuSmvTypeInstance(m.getContainer().getType("iml.lang.Bool"));
 		target.setType(ti);
 		target.setElementType(NuSmvElementType.INVAR);
-		target.setDefinition(generatorServices.serialize(f, tr));
+		if (f instanceof SignedAtomicFormula && f.getLeft() instanceof LambdaExpression) {
+			LambdaExpression le = (LambdaExpression) f.getLeft();
+			Map<Symbol, String> remap = new HashMap<>();
+			remap.put(le.getParameters().get(0), "state");
+			target.setDefinition(generatorServices.serialize(le.getDefinition(), tr, remap));
+		}
 		m.addSymbol(target);
 		return target;
 	}
 
 	private NuSmvSymbol generateState(NuSmvModule m, State state) {
 
-		ImlType type = state.getType();
-		if (type instanceof SimpleTypeReference) {
-			SimpleTypeReference typetr = (SimpleTypeReference) type;
-			TypingEnvironment typing = new TypingEnvironment(typetr);
-			for (Symbol s : typetr.getType().getSymbols()) {
-				if (s instanceof SymbolDeclaration) {
-					NuSmvSymbol target = new NuSmvSymbol(s.getName());
-					NuSmvModule ti = generateType(m.getContainer(), (SimpleTypeReference) typing
-							.bind(((SimpleTypeReference) ((SymbolDeclaration) s).getType())));
-					target.setType(new NuSmvTypeInstance(ti));
-					target.setElementType(NuSmvElementType.VAR);
-					m.addSymbol(target);
-				}
-			}
+		if (state == State.stateless) {
+			return null;
 		}
-		return null;
+
+		NuSmvSymbol target = new NuSmvSymbol("state");
+		NuSmvModule ti = generateType(m.getContainer(), (SimpleTypeReference) state.getType());
+		target.setType(new NuSmvTypeInstance(ti));
+		target.setElementType(NuSmvElementType.VAR);
+		m.addSymbol(target);
+		return target;
+
+//		ImlType type = state.getType();
+//		if (type instanceof SimpleTypeReference) {
+//			SimpleTypeReference typetr = (SimpleTypeReference) type;
+//			TypingEnvironment typing = new TypingEnvironment(typetr);
+//			for (Symbol s : typetr.getType().getSymbols()) {
+//				if (s instanceof SymbolDeclaration) {
+//					NuSmvSymbol target = new NuSmvSymbol(s.getName());
+//					NuSmvModule ti = generateType(m.getContainer(), (SimpleTypeReference) typing
+//							.bind(((SimpleTypeReference) ((SymbolDeclaration) s).getType())));
+//					target.setType(new NuSmvTypeInstance(ti));
+//					target.setElementType(NuSmvElementType.VAR);
+//					m.addSymbol(target);
+//				}
+//			}
+//		}
+//		return null;
 	}
 
-	private void generateConnection(NuSmvModule m, Connection conn) {
+	private void generateConnection(NuSmvModule m, Connection conn, SimpleTypeReference tr) {
 		// If this is a connection to an output of the current machine
 		// simply add a define
 		if (conn.getTargetComponent() == ComponentInstance.self) {
@@ -334,7 +381,7 @@ public class NuSmvGenerator {
 										.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
 				toadd.setName(m.getContainer().newSymbolName());
 				toadd.setElementType(NuSmvElementType.INVAR);
-				toadd.setDefinition(generatorServices.serialize(def, null));
+				toadd.setDefinition(generatorServices.serialize(def, tr));
 				m.addSymbol(toadd);
 			}
 		} else {
@@ -343,13 +390,23 @@ public class NuSmvGenerator {
 			if (machine != null) {
 				int index = machine.getType().getType().paramIndex(conn.getTargetPort().getName());
 				if (index != -1) {
-					NuSmvVariable param = new NuSmvVariable(
-							conn.getSourceComponent().getName() + "." + conn.getSourcePort().getName());
+
+					String portname = "";
+					if (conn.getSourceComponent() != ComponentInstance.self) {
+						portname += conn.getSourceComponent().getName() + ".";
+					}
+					portname += conn.getSourcePort().getName();
+
+					NuSmvVariable param = new NuSmvVariable(portname);
 					machine.getType().setParam(index, param);
 					;
 				}
 			}
 		}
+
+	}
+
+	public void defineOutput(NuSmvModule target, Port p, SimpleTypeReference ctx) {
 
 	}
 

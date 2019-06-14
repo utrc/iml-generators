@@ -7,6 +7,8 @@ public class State {
 	
 	private ImlType type ;
 	
+	public static State stateless = new State();
+	
 	public State() {
 		
 	}

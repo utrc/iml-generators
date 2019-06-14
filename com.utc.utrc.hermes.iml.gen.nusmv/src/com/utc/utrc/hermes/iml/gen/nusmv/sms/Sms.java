@@ -133,6 +133,11 @@ public class Sms {
 	}
 	
 	public State processState(SimpleTypeReference type) {
+		
+		if (type.getType() == stdLibs.getNamedType("iml.sms","Stateless")) {
+			return State.stateless;
+		}
+		
 		State retval = new State(type);
 		states.put(ImlUtil.getTypeName(type, qnp), retval);
 		return retval ;

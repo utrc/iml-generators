@@ -156,7 +156,7 @@ public class Systems {
 
 		if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "DataCarrier"))) {
 			p.setData(true);
-			p.setEventType(getCarrierType(t, "Data"));
+			p.setDataType(getCarrierType(t, "Data"));
 		} else {
 			p.setData(false);
 		}

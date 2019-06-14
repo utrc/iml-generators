@@ -29,15 +29,31 @@ import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
 import com.utc.utrc.hermes.iml.iml.Assertion
 import com.google.inject.Inject
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment
+import com.utc.utrc.hermes.iml.util.ImlUtil
+import org.eclipse.xtext.naming.IQualifiedNameProvider
+import com.utc.utrc.hermes.iml.iml.InstanceConstructor
+import com.utc.utrc.hermes.iml.iml.SymbolDeclaration
+import java.util.Map
+import com.utc.utrc.hermes.iml.iml.LambdaExpression
+import com.utc.utrc.hermes.iml.iml.Symbol
+import java.util.HashMap
+import com.utc.utrc.hermes.iml.lib.ImlStdLib
+import com.utc.utrc.hermes.iml.iml.Trait
 
 class NuSmvGeneratorServices {
 		
 	@Inject
 	private ImlTypeProvider typeProvider;
+	
+	@Inject
+	private IQualifiedNameProvider qnp;
+	
+	@Inject
+	private ImlStdLib stdLibs;
+	
 
 	def String getNameFor(SimpleTypeReference tr) {
-		return qualifiedName(tr.getType()) +
-			'''«FOR b : tr.typeBinding BEFORE '<' SEPARATOR ',' AFTER '>'» «b.nameFor» «ENDFOR»'''
+		return ImlUtil.getTypeName(tr,qnp) ;
 	}
 
 	def String getNameFor(ImlType imlType) {
@@ -47,10 +63,6 @@ class NuSmvGeneratorServices {
 		return "__NOT__SUPPORTED"
 	}
 
-	def String qualifiedName(NamedType t) {
-		var typename = t.getName();
-		return ( ( t.eContainer() as Model ).getName() + "." + typename);
-	}
 
 	def String getNameFor(FolFormula f) {
 		if (f instanceof TermMemberSelection) {
@@ -88,7 +100,7 @@ class NuSmvGeneratorServices {
 	}
 
 	def String serialize(NuSmvModule m) {
-		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int")) return "";
+		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
 		if(m.isEnum()) return "";
 		'''
 			MODULE «toNuSmvName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ',' AFTER ')'» «p.name» «ENDFOR»
@@ -126,7 +138,8 @@ class NuSmvGeneratorServices {
 		var retval = new ArrayList<String>();
 		for (field : s.type.type.variables.keySet) {
 			if (s.type.type.variables.get(field).type.type.name.equals("iml.lang.Bool") ||
-				s.type.type.variables.get(field).type.type.name.equals("iml.lang.Int")) {
+				s.type.type.variables.get(field).type.type.name.equals("iml.lang.Int") ||
+				s.type.type.variables.get(field).type.type.name.equals("iml.lang.Real") ) {
 				retval.add(field);
 			} else {
 				var tmplist = suffix(s.type.type.variables.get(field))
@@ -142,7 +155,8 @@ class NuSmvGeneratorServices {
 		var retval = new ArrayList<String>();
 		for (field : s.type.variables.keySet) {
 			if (s.type.variables.get(field).type.type.name.equals("iml.lang.Bool") ||
-				s.type.variables.get(field).type.type.name.equals("iml.lang.Int")) {
+				s.type.variables.get(field).type.type.name.equals("iml.lang.Int") ||
+				s.type.variables.get(field).type.type.name.equals("iml.lang.Real")) {
 				retval.add(field);
 			} else {
 				var tmplist = suffix(s.type.variables.get(field))
@@ -162,69 +176,75 @@ class NuSmvGeneratorServices {
 	}
 
 	def String serialize(FolFormula e, SimpleTypeReference ctx) {
+			serialize(e, ctx, new HashMap<Symbol,String>());
+	}
+
+	def String serialize(FolFormula e, SimpleTypeReference ctx,  Map<Symbol,String> map) {
 		var String retval = "";
 		if (e.getOp() !== null &&
 			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
-			retval = '''«serialize(e.left,ctx)»  «convertOp(e.op)»  «serialize(e.right,ctx)» ''';
+			retval = '''«serialize(e.left,ctx,map)»  «convertOp(e.op)»  «serialize(e.right,ctx,map)» ''';
 		} else if (e instanceof AtomicExpression) {
 
 			if (e.rel === RelationKind.EQ) {
 				var suff = getSuffix(e.left,ctx);
 				if (suff.empty) {
-					retval = '''«serialize(e.left,ctx)»«e.rel.toString»  «serialize(e.right,ctx)»'''
+					retval = '''«serialize(e.left,ctx,map)»«e.rel.toString»  «serialize(e.right,ctx,map)»'''
 				} else {
-					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left,ctx)»«suffix» «e.rel.toString»  «serialize(e.right,ctx)»«suffix» «ENDFOR»'''
+					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left,ctx,map)»«suffix» «e.rel.toString»  «serialize(e.right,ctx,map)»«suffix» «ENDFOR»'''
 				}
 			} else {
-				retval = ''' «serialize(e.left,ctx)» «e.rel.toString»  «serialize(e.right,ctx)» ''';
+				retval = ''' «serialize(e.left,ctx,map)» «e.rel.toString»  «serialize(e.right,ctx,map)» ''';
 			}
 		} else if (e instanceof Addition) {
-			retval = ''' «serialize(e.left,ctx)» «e.sign» «serialize(e.right,ctx)»'''
+			retval = ''' «serialize(e.left,ctx,map)» «e.sign» «serialize(e.right,ctx,map)»'''
 		} else if (e instanceof Multiplication) {
-			retval = ''' «serialize(e.left,ctx)» «e.sign» «serialize(e.right,ctx)»'''
+			retval = ''' «serialize(e.left,ctx,map)» «e.sign» «serialize(e.right,ctx,map)»'''
 		} else if (e instanceof TermMemberSelection) {
 			// TODO this is a quick hack
 			if (e.receiver instanceof SymbolReferenceTerm &&
 				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
-				var typename = qualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType);
-				var literalname = serialize(e.member,ctx);
+				var typename = qnp.getFullyQualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType).toString();
+				var literalname = serialize(e.member,ctx,map);
 				retval = '''"«typename».«literalname»"'''
 			} else {
-				var rec = serialize(e.receiver,ctx);
-				var mem = serialize(e.member,ctx);
-				if (mem.equals("current")) {
-					retval = rec;
-				} else if (mem.equals("next")) {
-					retval = '''next(«rec»)''';
+				var mem = serialize(e.member,ctx,map);
+				if (mem.equals("data") && isPort(e.receiver)) {
+						retval = '''«serialize(e.receiver,ctx,map)»'''
+					
 				} else {
-					retval = '''«serialize(e.receiver,ctx)».«serialize(e.member,ctx)»'''
+					retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
 				}
 			}
 		} else if (e instanceof SymbolReferenceTerm) {
-			retval = e.symbol.name;
+			if (map.containsKey(e.symbol)){
+				retval = map.get(e.symbol);
+			} else {
+				retval = e.symbol.name;
+			}
 		} else if (e instanceof ParenthesizedTerm) {
-			retval = '''( «serialize(e.sub,ctx)» )'''
+			retval = '''( «serialize(e.sub,ctx,map)» )'''
 		} else if (e instanceof IteTermExpression) {
 
 			if (e.right === null) {
-				retval = '''( «serialize(e.condition,ctx)» -> «serialize(e.left,ctx)» )'''
+				retval = '''( «serialize(e.condition,ctx,map)» -> «serialize(e.left,ctx,map)» )'''
 			} else {
-				retval = '''( «serialize(e.condition,ctx)» ? «serialize(e.left,ctx)» : «serialize(e.right,ctx)»'''
+				retval = '''( «serialize(e.condition,ctx,map)» ? «serialize(e.left,ctx,map)» : «serialize(e.right,ctx,map)»'''
 			}
 		} else if (e instanceof CaseTermExpression) {
 
 			retval = '''
 				case 
-					«FOR index : 0..e.cases.size-1 SEPARATOR ";\n" AFTER ";\n"»«serialize(e.cases.get(index),ctx)» : «serialize(e.expressions.get(index),ctx)»«ENDFOR»
+					«FOR index : 0..e.cases.size-1 SEPARATOR ";\n" AFTER ";\n"»«serialize(e.cases.get(index),ctx,map)» : «serialize(e.expressions.get(index),ctx,map)»«ENDFOR»
 				esac
 			'''
 		} else if (e instanceof SequenceTerm) {
-			retval = '''( «serialize(e.^return,ctx)» )'''
+			retval = '''( «serialize(e.^return,ctx,map)» )'''
 		} else if (e instanceof SignedAtomicFormula) {
 			if (e.neg) {
 				retval = retval + "!";
 			}
-			retval = retval + serialize(e.left,ctx);
+			retval = retval + serialize(e.left,ctx,map);
 		} else if (e instanceof NumberLiteral) {
 			if (e.isNeg) {
 				retval += "-";
@@ -236,6 +256,17 @@ class NuSmvGeneratorServices {
 		return retval;
 	}
 
+	def isPort(TermExpression e) {
+		if (e instanceof SymbolReferenceTerm) {
+			if (e.symbol instanceof SymbolDeclaration){
+				if ( ImlUtil.exhibits( (e.symbol as SymbolDeclaration).type, ( stdLibs.getNamedType("iml.systems","Port") as Trait) )  ) {
+					return true ;
+				}
+			}
+		}
+		return false;
+	}
+	
 	def String convertOp(String op) {
 		switch (op) {
 			case "&&": "&"
@@ -273,10 +304,6 @@ class NuSmvGeneratorServices {
 		var retval = new ArrayList<String>();
 		var ctx = new TypingEnvironment(tr);
 		var t = typeProvider.termExpressionType(e,ctx);
-		if (qualifiedName((t as SimpleTypeReference).type).equals("iml.fsm.PrimedVar")){
-				retval.add("") ;
-				return retval;
-		} 
 		retval.addAll(getSuffix("",t, tr))
 		return retval;
 	}
@@ -289,9 +316,8 @@ class NuSmvGeneratorServices {
 			for (s : t.type.symbols) {
 				if (! (s instanceof Assertion)) {
 					var boundtype = ctx.bind(s.type) ;
-					if ( qualifiedName( (boundtype as SimpleTypeReference).type).equals("iml.lang.Bool") || 
-						qualifiedName((boundtype as SimpleTypeReference).type).equals("iml.lang.Int") )
-							
+					if ( qnp.getFullyQualifiedName((boundtype as SimpleTypeReference).type).toString().equals("iml.lang.Bool") || 
+						qnp.getFullyQualifiedName((boundtype as SimpleTypeReference).type).toString().equals("iml.lang.Int") )
 					{
 						retval.add(sofar + "." + s.name) ;
 					} else {
