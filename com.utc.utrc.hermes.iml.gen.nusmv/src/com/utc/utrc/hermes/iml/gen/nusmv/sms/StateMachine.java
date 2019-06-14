@@ -3,28 +3,31 @@ package com.utc.utrc.hermes.iml.gen.nusmv.sms;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.utc.utrc.hermes.iml.gen.nusmv.systems.ComponentType;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 
 public class StateMachine {
 	
-	private ImlType smType ;
+	private SimpleTypeReference smType ;
 	private State stateType ;
 	private FolFormula invariant ;
 	private FolFormula transition ;
 	private FolFormula init ;
 	private Map<String, FolFormula> defines ;
 	boolean component ;
+	private ComponentType ctype ;
 	
 	public StateMachine() {
 		defines = new HashMap<String, FolFormula>() ;
 	}
 
-	public ImlType getSmType() {
+	public SimpleTypeReference getSmType() {
 		return smType;
 	}
 
-	public void setSmType(ImlType smType) {
+	public void setSmType(SimpleTypeReference smType) {
 		this.smType = smType;
 	}
 
@@ -72,6 +75,12 @@ public class StateMachine {
 		this.component = component;
 	}
 	
+	public ComponentType getComponentType() {
+		return ctype ;
+	}
+	public void setComponentType(ComponentType ct) {
+		ctype = ct ;
+	}
 	
 	
 }

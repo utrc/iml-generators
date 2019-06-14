@@ -8,6 +8,9 @@ import java.util.Map;
 import org.eclipse.xtext.xbase.lib.Pair;
 
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
+import com.utc.utrc.hermes.iml.iml.Symbol;
+import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
 
 public class ComponentType {
 
@@ -139,6 +142,18 @@ public class ComponentType {
 		this.container = container;
 	}
 
+	public List<SymbolDeclaration> getOtherSymbols() {
+		List<SymbolDeclaration> sd = new ArrayList<>();
+		if (type instanceof SimpleTypeReference) {
+			for(Symbol s : ((SimpleTypeReference)type).getType().getSymbols()) {
+				if ( (s instanceof SymbolDeclaration) && ! ( ports.containsKey(s.getName()) || subs.containsKey(s.getName()) || connections.containsKey(s.getName())) ) {
+					sd.add((SymbolDeclaration)s);
+				}
+			}
+		}
+		return sd ;
+	}
+	
 	@Override
 	public String toString() {
 

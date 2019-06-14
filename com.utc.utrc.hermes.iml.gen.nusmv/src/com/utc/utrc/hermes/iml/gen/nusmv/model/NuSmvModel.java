@@ -39,6 +39,6 @@ public class NuSmvModel {
 		last_id ++ ;
 		return "symbol___" + last_id ;
 	}
-
+	
 	
 }

@@ -1,10 +1,13 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.systems;
 
+import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
+
 
 public class Port {
-	private String name;
-	private ImlType type;
+	
+	private SymbolDeclaration sd ;
 	private Direction direction;
 	private boolean data;
 	private ImlType dataType;
@@ -12,23 +15,17 @@ public class Port {
 	private ImlType eventType;
 	private ComponentType container;
 
-	public static Port nil = new Port();
-
-	public Port() {
+	public static Port nil = new Port(null);
+	
+	public Port(SymbolDeclaration sd) {
 		data = false;
 		event = false;
-		container = null;
-		type = null;
-		name = null;
-
+		container = null;	
+		this.sd = sd ;
 	}
 
 	public ImlType getType() {
-		return type;
-	}
-
-	public void setType(ImlType type) {
-		this.type = type;
+		return sd.getType();
 	}
 
 	public Direction getDirection() {
@@ -40,13 +37,9 @@ public class Port {
 	}
 
 	public String getName() {
-		return name;
+		return sd.getName();
 	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
+	
 	public ComponentType getContainer() {
 		return container;
 	}
@@ -86,6 +79,11 @@ public class Port {
 	public void setEventType(ImlType eventType) {
 		this.eventType = eventType;
 	}
+	
+	public FolFormula getDefinition() {
+		return sd.getDefinition();
+	}
+	
 
 	@Override
 	public String toString() {

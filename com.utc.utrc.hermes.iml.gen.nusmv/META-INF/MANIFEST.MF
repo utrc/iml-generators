@@ -16,4 +16,5 @@ Import-Package: com.google.inject,
  org.eclipse.xtext.naming
 Export-Package: com.utc.utrc.hermes.iml.gen.nusmv.generator,
  com.utc.utrc.hermes.iml.gen.nusmv.model,
+ com.utc.utrc.hermes.iml.gen.nusmv.sms,
  com.utc.utrc.hermes.iml.gen.nusmv.systems

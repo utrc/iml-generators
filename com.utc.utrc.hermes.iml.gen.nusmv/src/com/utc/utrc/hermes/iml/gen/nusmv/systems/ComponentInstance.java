@@ -1,36 +1,40 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.systems;
 
+import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 
 public class ComponentInstance {
-	private String name ;
+	
+	private SymbolDeclaration sd ;
 	private ComponentType ctype ;
 	
-	public static ComponentInstance nil = new ComponentInstance("nil", null);
-	public static ComponentInstance self = new ComponentInstance("self", null);
+	public static ComponentInstance nil = new ComponentInstance(null,null);
+	public static ComponentInstance self = new ComponentInstance(null,null);
 	
-	public ComponentInstance(String name, ComponentType t) {
-		this.name = name;
+	public ComponentInstance(SymbolDeclaration sd, ComponentType t) {
+		this.sd = sd ;
 		ctype = t ;
 	}
 	public String getName() {
-		return name;
+		return sd.getName();
 	}
-	public void setName(String name) {
-		this.name = name;
-	}
+	
 	public ComponentType getComponentType() {
 		return ctype;
 	}
+	
 	public void setComponentType(ComponentType ctype) {
 		this.ctype = ctype;
 	}
+	
 	@Override
 	public String toString() {
-		String retval = name + " " + ctype.getName();
+		String retval = getName() + " " + ctype.getName();
 		return retval ;
 	}
-	
+	public SymbolDeclaration getSymbolDeclaration() {
+		return sd ;
+	}
 	
 	
 	

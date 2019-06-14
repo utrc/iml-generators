@@ -86,9 +86,7 @@ public class Systems {
 		}
 	}
 
-	public ComponentInstance processInstance(String name, SimpleTypeReference t, ComponentType container) {
-		return null;
-	}
+	
 
 	public ComponentType processComponent(SimpleTypeReference t) {
 
@@ -104,11 +102,11 @@ public class Systems {
 				if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
 					if (s_type instanceof SimpleTypeReference) {
 						ComponentType ct = processComponent((SimpleTypeReference) s_type);
-						ComponentInstance ci = new ComponentInstance(sd_s.getName(), ct);
+						ComponentInstance ci = new ComponentInstance(sd_s, ct);
 						c.addSub(ci);
 					}
 				} else if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Port"))) {
-					processPort(sd_s.getName(), s_type, c);
+					processPort(sd_s, s_type, c);
 				} else if (ImlUtil.hasType(s_type, stdLibs.getNamedType("iml.systems", "Connector"))) {
 					connectors.add(sd_s);
 				} else {
@@ -131,16 +129,14 @@ public class Systems {
 		return c;
 	}
 
-	public void processPort(String name, ImlType t, ComponentType container) {
+	public void processPort(SymbolDeclaration sd, ImlType t, ComponentType container) {
 
-		Port p = new Port();
-		p.setName(name);
-		p.setType(t);
+		Port p = new Port(sd);
 		p.setContainer(container);
 		if (container != null) {
 			container.addPort(p);
 		} else {
-			logger.error("Port {} should have a container ", name);
+			logger.error("Port {} should have a container ", sd.getName());
 		}
 
 		if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "In"))) {
@@ -167,7 +163,7 @@ public class Systems {
 
 	}
 
-	public Pair<Port, Port> processConnector(SymbolDeclaration sd, ComponentType container) {
+	public void processConnector(SymbolDeclaration sd, ComponentType container) {
 
 		Port sourcep = Port.nil;
 		Port destp = Port.nil;
@@ -182,14 +178,11 @@ public class Systems {
 					FolFormula destf = ((TupleConstructor) connect.getTail()).getElements().get(1).getLeft();
 					Pair<ComponentInstance, Port>  source = getComponentAndPort(sourcef, container);
 					Pair<ComponentInstance, Port>  dest = getComponentAndPort(destf, container);
-					Connection conn = new Connection(source.getKey(), source.getValue(), dest.getKey(), dest.getValue());
+					Connection conn = new Connection(sd,source.getKey(), source.getValue(), dest.getKey(), dest.getValue());
 					container.addConnection(sd.getName(), conn);
 				}
 			}
 		}
-
-		return (new Pair<Port, Port>(sourcep, destp));
-
 	}
 
 	public Pair<ComponentInstance, Port> getComponentAndPort(FolFormula f, ComponentType container) {
@@ -257,7 +250,7 @@ public class Systems {
 
 	public ComponentType getComponent(ImlType t) {
 		if (hasComponent(t)) {
-			return components.get(t);
+			return components.get(ImlUtil.getTypeName(t, qnp));
 		}
 		return null;
 	}

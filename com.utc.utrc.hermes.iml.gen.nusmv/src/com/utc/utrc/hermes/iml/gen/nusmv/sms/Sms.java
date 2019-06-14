@@ -57,11 +57,17 @@ public class Sms {
 	private Map<String, State> states;
 	// TODO need to handle polymorphic state machines
 	private Map<String, StateMachine> sms;
+	private Map<String, ImlType> otherTypes ;
+	
 
 	private Systems sys ;
 	
-	public Sms(Systems sys) {
+	public void setSystems(Systems sys) {
 		this.sys = sys ;
+	}
+	
+	public Sms() {
+		this.sys = null ;
 		states = new HashMap<>();
 		sms = new HashMap<>();
 	}
@@ -88,19 +94,14 @@ public class Sms {
 					StateMachine sm = processStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(nt));
 					sms.put(ImlUtil.getTypeName(ImlCustomFactory.INST.createSimpleTypeReference(nt), qnp), sm);
 				}
-				if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
-					StateMachine sm = new StateMachine() ;
-					//TODO need to check that this is indeed a state machine 
-					sm.setComponent(true);
-					sm.setSmType(ImlCustomFactory.INST.createSimpleTypeReference(nt));
-					sms.put(ImlUtil.getTypeName(ImlCustomFactory.INST.createSimpleTypeReference(nt), qnp), sm);
-				}
-
 			}
 		}
 	}
 
 	public StateMachine processStateMachine(SimpleTypeReference tr) {
+		if (sms.containsKey(ImlUtil.getTypeName(tr,qnp))){
+			return sms.get(ImlUtil.getTypeName(tr,qnp)) ;
+		}
 		StateMachine retval = new StateMachine();
 		// get the type of the state
 		ImlType stateType = getStateType(tr);
@@ -114,14 +115,18 @@ public class Sms {
 		SymbolDeclaration transition = ImlUtil.findSymbol(tr.getType(), "transition");
 		SymbolDeclaration init = ImlUtil.findSymbol(tr.getType(), "init");
 
-		if (invariant.getDefinition() != null) {
+		if (invariant != null && invariant.getDefinition() != null) {
 			retval.setInvariant(invariant.getDefinition());
 		}
-		if (transition.getDefinition() != null) {
+		if (transition != null && transition.getDefinition() != null) {
 			retval.setTransition(transition.getDefinition());
 		}
-		if (init.getDefinition() != null) {
+		if (init != null && init.getDefinition() != null) {
 			retval.setInit(init.getDefinition());
+		}
+		if (ImlUtil.exhibits(tr, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+			retval.setComponent(true);
+			retval.setComponentType(sys.getComponent(tr));
 		}
 
 		return retval;
@@ -163,7 +168,7 @@ public class Sms {
 	
 	public StateMachine getStateMachine(ImlType t) {
 		if (hasStateMachine(t)) {
-			return sms.get(t);
+			return sms.get(ImlUtil.getTypeName(t, qnp));
 		}
 		return null;
 	}
