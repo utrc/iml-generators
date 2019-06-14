@@ -19,6 +19,7 @@ import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvModel
 import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.util.ImlUtil
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
+import com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvGeneratorServices
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
@@ -39,6 +40,9 @@ class NuSmvTranslatorTests {
 	@Inject
 	NuSmvGenerator gen ;
 	
+	@Inject
+	NuSmvGeneratorServices generatorServices;
+	
 		
 	@Test
 	def void testTranslation() {
@@ -53,6 +57,8 @@ class NuSmvTranslatorTests {
 		var NuSmvModel smv = new NuSmvModel() ;
 		gen.generateStateMachine(smv,sms.getStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(smtype))) ;
 		
+		var output = generatorServices.serialize(smv);
+		System.out.println(output);
 	}
 }
 
