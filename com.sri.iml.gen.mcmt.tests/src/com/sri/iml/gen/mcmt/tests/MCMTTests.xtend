@@ -14,6 +14,14 @@ import com.utc.utrc.hermes.iml.iml.NamedType
 import com.sri.iml.gen.mcmt.model.SallyModel
 import com.utc.utrc.hermes.iml.iml.ImlFactory
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import static org.junit.Assert.*;
+import static org.junit.runners.Parameterized.*;
+
+
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
@@ -31,7 +39,7 @@ class MCMTTests {
 		'''
 			package p;
 			import iml.fsm.*;
-	
+			
 			type [Fsm] mySM {
 				
 			}
@@ -65,12 +73,9 @@ class MCMTTests {
 		model.assertNoErrors
 		
 		val stateModel = ImlCustomFactory.INST.createSimpleTypeReference(model.findSymbol("T") as NamedType)
-		val m = new SallyModel
 		
-		val sallySm = generator.generateType(m, stateModel)
+		val m = generator.generate(stateModel)
 		
-		
-		
+		System.out.println(m.toString())
 	}
-	
 }

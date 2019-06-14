@@ -24,15 +24,15 @@ import com.utc.utrc.hermes.iml.iml.TermExpression
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
 import com.utc.utrc.hermes.iml.iml.Assertion
 import com.google.inject.Inject
-import com.sri.iml.gen.mcmt.model.SallyModel
-import com.sri.iml.gen.mcmt.model.SallySm
-import com.sri.iml.gen.mcmt.model.SallySymbol
-import com.sri.iml.gen.mcmt.model.SallyTypeInstance
+// import com.sri.iml.gen.mcmt.model.SallyModel
+/* import com.sri.iml.gen.mcmt.model.SallySymbol
+import com.sri.iml.gen.mcmt.model.SallyTypeInstance */
+// import com.sri.iml.gen.mcmt.model.MCMT
 
 class MCMTGeneratorServices {
 	
 	@Inject
-	private ImlTypeProvider typeProvider;
+	ImlTypeProvider typeProvider;
 
 	def String getNameFor(SimpleTypeReference tr) {
 		return qualifiedName(tr.getType()) +
@@ -82,11 +82,12 @@ class MCMTGeneratorServices {
 		return s.getSymbol().getName();
 	}
 
+/*
 	def String serialize(SallyModel m) {
 		'''«FOR mod : m.modules.values AFTER '\n'»«serialize(mod)»«ENDFOR»'''
 	}
 
-	def String serialize(SallySm m) {
+	def String serialize(MCMT m) {
 		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int")) return "";
 		if(m.isEnum()) return "";
 		'''
@@ -159,7 +160,7 @@ class MCMTGeneratorServices {
 		}
 		'''«FOR l : i.type.literals BEFORE '{' SEPARATOR ',' AFTER '}'»«toSallyName(i.type,l)»«ENDFOR»'''
 	}
-
+*/
 	def String serialize(FolFormula e, SimpleTypeReference ctx) {
 		var String retval = "";
 		if (e.getOp() !== null &&
@@ -243,8 +244,8 @@ class MCMTGeneratorServices {
 			case "<=>": "<->"
 		}
 	}
-
-	def String toSallyName(SallySm m) {
+/*
+	def String toSallyName(MCMT m) {
 		if (m == SallyModel.Bool) {
 			return "boolean"
 		}
@@ -254,10 +255,10 @@ class MCMTGeneratorServices {
 		return '''"«m.name»"'''
 	}
 
-	def String toSallyName(SallySm m, String literal) {
+	def String toSallyName(MCMT m, String literal) {
 		'''"«m.name».«literal»"'''
 	}
-
+*/
 	def List<String> getSuffix(FolFormula e,SimpleTypeReference ctx) {
 		if (e instanceof TermExpression){
 			return getSuffix(e as TermExpression,ctx) ;
