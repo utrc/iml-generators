@@ -19,6 +19,10 @@ public class NamedTransitionSystem extends Named implements Instruction, StateTr
 	public void add_transition(Sexp<FormulaAtom<StateTransFormulaVariable>> transition) {
 		this.transitions.add(transition);
 	}
+	
+	public NamedStateType getStateType() {
+		return this.statetype;
+	}
 
 	public Sexp<String> toSexp() {
 		Sexp_list<String> result = new Sexp_list<String>();

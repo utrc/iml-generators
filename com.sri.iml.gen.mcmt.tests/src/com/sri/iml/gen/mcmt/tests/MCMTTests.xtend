@@ -64,10 +64,11 @@ class MCMTTests {
 		    [Init] initial_states : Bool := {x.current = 0.0} ;
 		
 		    [Transition] transition : Bool := { x.next = x.current+ 1.0} ;
+
+			[Query, Invariant] property1 : Bool := { x.current >= 0.0} ;
 		   
 		}
 		
-		[Query, Invariant] property1 : T -> Bool := fun(t:T):Bool { t.x.current >= 0.0} ;
 		
 		'''.parse
 		

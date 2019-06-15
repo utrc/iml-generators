@@ -26,11 +26,6 @@ import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
 import java.util.ArrayList
 import java.util.List
 
-// import com.sri.iml.gen.mcmt.model.SallyModel
-/* import com.sri.iml.gen.mcmt.model.SallySymbol
-import com.sri.iml.gen.mcmt.model.SallyTypeInstance */
-// import com.sri.iml.gen.mcmt.model.MCMT
-
 class MCMTGeneratorServices {
 	
 	@Inject
@@ -84,85 +79,6 @@ class MCMTGeneratorServices {
 		return s.getSymbol().getName();
 	}
 
-	def String serialize(FolFormula e, SimpleTypeReference ctx) {
-		var String retval = "";
-		if (e.getOp() !== null &&
-			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
-			retval = '''«serialize(e.left,ctx)»  «convertOp(e.op)»  «serialize(e.right,ctx)» ''';
-		} else if (e instanceof AtomicExpression) {
-			if (e.rel === RelationKind.EQ) {
-				var suff = getSuffix(e.left,ctx);
-				if (suff.empty) {
-					retval = '''«serialize(e.left,ctx)» «e.rel.toString» «serialize(e.right,ctx)»'''
-				} else {
-					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left,ctx)»«suffix» «e.rel.toString»  «serialize(e.right,ctx)»«suffix» «ENDFOR»'''
-				}
-			} else {
-				retval = ''' «serialize(e.left,ctx)» «e.rel.toString»  «serialize(e.right,ctx)» ''';
-			}
-		} else if (e instanceof Addition) {
-			retval = ''' «serialize(e.left,ctx)» «e.sign» «serialize(e.right,ctx)»'''
-		} else if (e instanceof Multiplication) {
-			retval = ''' «serialize(e.left,ctx)» «e.sign» «serialize(e.right,ctx)»'''
-		} else if (e instanceof TermMemberSelection) {
-			// TODO this is a quick hack
-			if (e.receiver instanceof SymbolReferenceTerm &&
-				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
-				var typename = qualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType);
-				var literalname = serialize(e.member,ctx);
-				retval = '''"«typename».«literalname»"'''
-			} else {
-				var rec = serialize(e.receiver,ctx);
-				var mem = serialize(e.member,ctx);
-				if (mem.equals("current")) {
-					retval = '''state.«rec»''';
-				} else if (mem.equals("next")) {
-					retval = '''next.«rec»''';
-				} else {
-					retval = '''«serialize(e.receiver,ctx)».«serialize(e.member,ctx)»'''
-				}
-			}
-		} else if (e instanceof SymbolReferenceTerm) {
-			retval = e.symbol.name;
-			
-		} else if (e instanceof ParenthesizedTerm) {
-			retval = '''( «serialize(e.sub,ctx)» )'''
-		} else if (e instanceof IteTermExpression) {
-
-			if (e.right === null) {
-				retval = '''( «serialize(e.condition,ctx)» -> «serialize(e.left,ctx)» )'''
-			} else {
-				retval = '''( «serialize(e.condition,ctx)» ? «serialize(e.left,ctx)» : «serialize(e.right,ctx)»'''
-			}
-		} else if (e instanceof CaseTermExpression) {
-			retval = '''
-				case 
-					«FOR index : 0..e.cases.size-1 SEPARATOR ";\n" AFTER ";\n"»«serialize(e.cases.get(index),ctx)» : «serialize(e.expressions.get(index),ctx)»«ENDFOR»
-				esac
-				
-			'''
-		} else if (e instanceof SequenceTerm) {
-			retval = '''( «serialize(e.^return,ctx)» )'''
-		} else if (e instanceof SignedAtomicFormula) {
-			if (e.neg) {
-				retval = retval + "!";
-			}
-			retval = retval + serialize(e.left,ctx);
-		} else if (e instanceof NumberLiteral) {
-			if (e.isNeg) {
-				retval += "-";
-			}
-			retval = e.value.toString;
-		} else if (e instanceof FloatNumberLiteral) {
-			if (e.isNeg) {
-				retval += "-";
-			}
-			retval = e.value.toString;
-		} else if (e instanceof TruthValue) {
-			if(e.isTRUE) retval = "TRUE" else retval = "FALSE";
-		}
-		return retval;
-	}
 
 	def String convertOp(String op) {
 		switch (op) {

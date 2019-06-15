@@ -45,31 +45,6 @@ public class MCMTGenerator {
 	FormulaGenerator<StateFormulaVariable> stateFormGenerator = new FormulaGenerator<StateFormulaVariable>(stateVarBuilder);
 	FormulaGenerator<StateTransFormulaVariable> transFormGenerator = new FormulaGenerator<StateTransFormulaVariable>(transVarBuilder);
 
-/*	public MCMT getMainModel(SallyModel m , SimpleTypeReference spec, SimpleTypeReference impl) {
-		MCMT main = new MCMT("main");
-		SallySymbol inst = new SallySymbol("inst");
-		MCMT insttype = m.getType(generatorServices.getNameFor(impl)) ;
-		SallyTypeInstance instti = new SallyTypeInstance(insttype);
-		inst.setType(instti);
-		inst.setElementType(SallyElementType.VAR);
-		main.addSymbol(inst);
-		
-		for(Symbol s : spec.getType().getSymbols()) {
-			if (s instanceof SymbolDeclaration) {
-				if (isInput((SymbolDeclaration)s)) {
-					SallySymbol target = new SallySymbol(s.getName());
-					SallyTypeInstance ti = new SallyTypeInstance(m.getType(generatorServices.getNameFor( ((SymbolDeclaration)s).getType())));
-					target.setType(ti);
-					target.setElementType(SallyElementType.VAR);
-					main.addSymbol(target);
-					instti.setParam( insttype.paramIndex(s.getName())  , new SallyVariable(s.getName()));
-				}
-			}
-		}
-		return main ;
-	}
-	*/
-
 	// This is the top-level function: it converts an ImlType into an MCMT problem
 	public MCMT generate(ImlType imltype) throws GeneratorException {
 		if (!(imltype instanceof SimpleTypeReference)) {
@@ -86,13 +61,16 @@ public class MCMTGenerator {
 			// generateType(m, b);
 		}
 		MCMT result = new MCMT();
-		// Check annotation [Sm] first?
-		generateSystem(result, tr);
+		if (!isStateMachine(tr)) {
+	        throw new GeneratorException("No SM (State Machine) annotation for "+tr.toString());
+		}
+		NamedTransitionSystem system = generateSystem(result, tr);
+		generateQueries(result, system, tr);
 		return result;
 	}
 
 	// Translating transition systems
-	private void generateSystem(MCMT target, SimpleTypeReference tr) throws GeneratorException {
+	private NamedTransitionSystem generateSystem(MCMT target, SimpleTypeReference tr) throws GeneratorException {
 		String name = generatorServices.getNameFor(tr);
 		NamedStateType statetype = generateStateType(target,"_state", tr);
 		Sexp<FormulaAtom<StateFormulaVariable>> init = generateInit(statetype,tr);
@@ -100,6 +78,7 @@ public class MCMTGenerator {
 		Sexp<FormulaAtom<StateTransFormulaVariable>> transition = generateTrans(statetype,tr);
 		result.add_transition(transition);
 		target.addTransitionSystem(result);
+		return result;
 	}
 	
 	// Translating state types
@@ -134,7 +113,6 @@ public class MCMTGenerator {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
 				if (isInit(sd)) {
-					AtomBuilder<StateFormulaVariable> varBuilder = new StateVarBuilder();
 					ImlType imlType = typeProvider.bind(sd.getType(), tr);
 					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 					assert(basetype.equals(BaseType.Bool));
@@ -161,6 +139,24 @@ public class MCMTGenerator {
 		return transVarBuilder.symbol("true");
 	}
 
+	// Translating the initial formula
+	private Sexp<FormulaAtom<StateFormulaVariable>> generateQueries(MCMT target, NamedTransitionSystem system, SimpleTypeReference tr) throws GeneratorException {
+		NamedStateType statetype = system.getStateType();
+		for (Symbol s : tr.getType().getSymbols()) {
+			if (s instanceof SymbolDeclaration) {
+				SymbolDeclaration sd = (SymbolDeclaration) s;
+				if (isInvariantQuery(sd)) {
+					ImlType imlType = typeProvider.bind(sd.getType(), tr);
+					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
+					assert(basetype.equals(BaseType.Bool));
+					Query query = new Query(system,stateFormGenerator.generate(sd.getDefinition(),statetype));
+					target.addQuery(query);
+				}
+			}
+		}
+		return stateVarBuilder.symbol("true");
+	}
+
 	// Translating base types
 	private BaseType generateBaseType(String type_name) throws GeneratorException {
 		if (type_name.equals("iml.lang.Bool")) return BaseType.Bool;
@@ -175,13 +171,6 @@ public class MCMTGenerator {
 		if (tr.getType().getRelations() != null) {
       if (tr.getType().getRelations().isEmpty())
         throw new GeneratorException("TYPE RELATIONS NOT PART OF MCMT "+tr.toString());
-		}
-		
-		for (Symbol s : tr.getType().getSymbols()) {
-			if (s instanceof SymbolDeclaration && ! isConnector((SymbolDeclaration) s)) {
-				SymbolDeclaration sd = (SymbolDeclaration) s;
-				generateSymbolDeclaration(target, sd, tr);
-			}
 		}
 	}
 
@@ -201,62 +190,21 @@ public class MCMTGenerator {
 			name = sd.getName();
 			bound = typeProvider.bind(sd.getType(), ctx);
 		}
+		[...]
 
-		// Generate the type
-		// Decide on the element type
-	if (isOutput(sd)) {
-      throw new GeneratorException("OUTPUTS NOT PART OF MCMT "+tr.toString());
 
-		} else if (isInit(sd)) {
+		if (sd instanceof Assertion) {
 			MCMT nbound = generateType(m.getContainer(), bound);
-			SallyTypeInstance ti = new SallyTypeInstance(nbound);
-			target.setType(ti);
-			target.setElementType(SallyElementType.INIT);
-			target.setDefinition(generatorServices.serialize(sd.getDefinition(),ctx));
-			m.addSymbol(target);
-
-		} else if (isTransition(sd)) {
-			MCMT nbound = generateType(m.getContainer(), bound);
-			SallyTypeInstance ti = new SallyTypeInstance(nbound);
-			target.setType(ti);
-			target.setElementType(SallyElementType.TRANSITION);
-			target.setDefinition(generatorServices.serialize(sd.getDefinition(),ctx));
-			m.addSymbol(target);
-
-		} else if (isConnector(sd)) {
-      throw new GeneratorException("CONNECTORS NOT PART OF MCMT "+tr.toString());
-
-		} else if (isState(sd)) {
-			MCMT ti = generateType(m.getContainer(),
-					typeProvider.bind(((SimpleTypeReference) sd.getType()).getTypeBinding().get(0), ctx));
-			target.setType(new SallyTypeInstance(ti));
-			target.setElementType(SallyElementType.VAR);
-			m.addSymbol(target);
-
-		} else if (sd instanceof Assertion) {
-			MCMT nbound = generateType(m.getContainer(), bound);
-			SallyTypeInstance ti = new SallyTypeInstance(nbound);
-			target.setType(ti);
-			target.setElementType(SallyElementType.INVAR);
-			target.setDefinition(generatorServices.serialize(sd.getDefinition(),ctx));
-			m.addSymbol(target);
-
-		} else {
-			MCMT nbound = generateType(m.getContainer(), bound);
-			SallyTypeInstance ti = new SallyTypeInstance(nbound);
-			target.setType(ti);
-			target.setElementType(SallyElementType.VAR);
-			m.addSymbol(target);
-		}
+			}
 	}
 */	
 
-	public boolean isInput(SymbolDeclaration s) {
-		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.connectivity", "Input"));
+	public boolean isStateMachine(SimpleTypeReference tr) {
+		return MCMTranslationProvider.isA(tr.getType(), libs.getNamedType("iml.fsm", "Sm"));
 	}
 
-	public boolean isOutput(SymbolDeclaration s) {
-		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.connectivity", "Output"));
+	public boolean isInput(SymbolDeclaration s) {
+		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.connectivity", "Input"));
 	}
 
 	public boolean isComponent(SymbolDeclaration s) {
@@ -271,8 +219,10 @@ public class MCMTGenerator {
 		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.fsm", "Transition"));
 	}
 
-	public boolean isInvariant(SymbolDeclaration s) {
-		return (s instanceof Assertion);
+	public boolean isInvariantQuery(SymbolDeclaration s) {
+		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.fsm", "Invariant"))
+				&& MCMTranslationProvider.isA(s, libs.getNamedType("iml.fsm", "Query"));
+	//	return (s instanceof Assertion);
 	}
 
 	private boolean isState(SymbolDeclaration sd) {
@@ -283,14 +233,6 @@ public class MCMTGenerator {
 		return MCMTranslationProvider.hasType(s, libs.getNamedType("iml.connectivity", "Connector"));
 	}
 	
-	public boolean isDelay(SymbolDeclaration s) {
-		return MCMTranslationProvider.hasType(s, libs.getNamedType("iml.ports", "delay"));
-	}
-	
-	public boolean isDelay(SimpleTypeReference st) {
-		return ( st.getType() == libs.getNamedType("iml.ports", ".delay"));
-	}
-
 	public boolean isSimpleTypeReference(ImlType imlType) {
 		return (imlType instanceof SimpleTypeReference);
 	}
