@@ -1,0 +1,126 @@
+package com.sri.iml.gen.mcmt
+
+import com.google.inject.Inject
+import com.utc.utrc.hermes.iml.iml.Addition
+import com.utc.utrc.hermes.iml.iml.Assertion
+import com.utc.utrc.hermes.iml.iml.AtomicExpression
+import com.utc.utrc.hermes.iml.iml.CaseTermExpression
+import com.utc.utrc.hermes.iml.iml.FloatNumberLiteral
+import com.utc.utrc.hermes.iml.iml.FolFormula
+import com.utc.utrc.hermes.iml.iml.ImlType
+import com.utc.utrc.hermes.iml.iml.IteTermExpression
+import com.utc.utrc.hermes.iml.iml.Model
+import com.utc.utrc.hermes.iml.iml.Multiplication
+import com.utc.utrc.hermes.iml.iml.NamedType
+import com.utc.utrc.hermes.iml.iml.NumberLiteral
+import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm
+import com.utc.utrc.hermes.iml.iml.RelationKind
+import com.utc.utrc.hermes.iml.iml.SequenceTerm
+import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula
+import com.utc.utrc.hermes.iml.iml.SimpleTypeReference
+import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm
+import com.utc.utrc.hermes.iml.iml.TermExpression
+import com.utc.utrc.hermes.iml.iml.TermMemberSelection
+import com.utc.utrc.hermes.iml.iml.TruthValue
+
+import com.sri.iml.gen.mcmt.model.FormulaAtom
+import com.sri.iml.gen.mcmt.model.Sexp
+import com.sri.iml.gen.mcmt.model.NamedStateType
+import com.sri.iml.gen.mcmt.model.StateNext
+
+class FormulaGenerator<V> {
+	
+	@Inject
+	MCMTGeneratorServices gen;
+
+	AtomBuilder<V> atomBuilder;
+	
+	new(AtomBuilder<V> atomBuilder){
+		this.atomBuilder = atomBuilder
+	}
+
+	def Sexp<FormulaAtom<V>> generate(FolFormula e, NamedStateType ctx) {
+		
+		var Sexp<FormulaAtom<V>> retval = null;
+		
+		if (e.getOp() !== null &&
+			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
+
+			retval = (new AppBuilder(gen.convertOp(e.op))).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+			
+		} else if (e instanceof AtomicExpression) {
+
+			retval = (new AppBuilder(e.rel.toString)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+
+		} else if (e instanceof Addition) {
+
+			retval = (new AppBuilder(e.sign)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+
+		} else if (e instanceof Multiplication) {
+
+			retval = (new AppBuilder(e.sign)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+
+		} else if (e instanceof TermMemberSelection) {
+			// TODO this is a quick hack
+			if (e.receiver instanceof SymbolReferenceTerm &&
+				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
+				var typename = gen.qualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType)
+				var literalname = '''"«typename».«e.member»"'''
+				retval = atomBuilder.variable(ctx.getInput(literalname))
+			} else {
+				var rec = (e.receiver as SymbolReferenceTerm).symbol.name
+				var mem = (e.member as SymbolReferenceTerm).symbol.name
+				if (mem.equals("current")) {
+					retval = atomBuilder.variable(StateNext.State, ctx.getVar(rec))
+				} else if (mem.equals("next")) {
+					retval = atomBuilder.variable(StateNext.Next, ctx.getVar(rec))
+				} else {
+					var literalname = '''"«e.receiver».«e.member»"'''
+					retval = atomBuilder.variable(ctx.getInput(literalname))
+				}
+			}
+		} else if (e instanceof SymbolReferenceTerm) {
+			
+			print("NOT GOOD: "+ e.symbol.name + "\n")
+			
+		} else if (e instanceof ParenthesizedTerm) {
+
+			retval = generate(e.sub,ctx)
+
+		} else if (e instanceof IteTermExpression) {
+
+			retval = (new AppBuilder("ite")).app(generate(e.condition,ctx)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+
+		} else if (e instanceof SequenceTerm) {
+
+			retval = generate(e.^return,ctx)
+
+		} else if (e instanceof SignedAtomicFormula) {
+			if (e.neg) {
+				retval = (new AppBuilder("not")).app(generate(e.left,ctx))
+			} else {
+				retval = generate(e.left,ctx);
+			}
+		} else if (e instanceof NumberLiteral) {
+			if (e.isNeg) {
+				retval = atomBuilder.symbol("-" + e.value.toString())
+			} else {
+				retval = atomBuilder.symbol(e.value.toString())
+			}
+		} else if (e instanceof FloatNumberLiteral) {
+			if (e.isNeg) {
+				retval = atomBuilder.symbol("-" + e.value.toString())
+			} else {
+				retval = atomBuilder.symbol(e.value.toString())
+			}
+		} else if (e instanceof TruthValue) {
+			if (e.isTRUE) {
+				retval = atomBuilder.symbol("true")
+			} else {
+				retval = atomBuilder.symbol("false")
+			}
+		}
+		return retval;
+	}
+
+}

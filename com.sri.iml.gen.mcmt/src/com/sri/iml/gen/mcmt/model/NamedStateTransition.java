@@ -21,11 +21,4 @@ public class NamedStateTransition extends Named implements Instruction, StateTra
 		return result;
 	}
 
-	public static Sexp_list<FormulaAtom<StateTransFormulaVariable>> symbol(String symb){
-		FormulaAtom<StateTransFormulaVariable> symbol = new FormulaSymb<StateTransFormulaVariable>(symb);
-		Sexp_list<FormulaAtom<StateTransFormulaVariable>> result = new Sexp_list<FormulaAtom<StateTransFormulaVariable>>();
-		result.addRight(new Sexp_atom<FormulaAtom<StateTransFormulaVariable>>(symbol));
-		return result;		
-	}
-
 }

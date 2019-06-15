@@ -21,11 +21,4 @@ public class NamedStateFormula extends Named implements Instruction, StateFormul
 		return result;
 	}
 	
-	public static Sexp_list<FormulaAtom<StateFormulaVariable>> symbol(String symb){
-		FormulaAtom<StateFormulaVariable> symbol = new FormulaSymb<StateFormulaVariable>(symb);
-		Sexp_list<FormulaAtom<StateFormulaVariable>> result = new Sexp_list<FormulaAtom<StateFormulaVariable>>();
-		result.addRight(new Sexp_atom<FormulaAtom<StateFormulaVariable>>(symbol));
-		return result;		
-	}
-	
 }

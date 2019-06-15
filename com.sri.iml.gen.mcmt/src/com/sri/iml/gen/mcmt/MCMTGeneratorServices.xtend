@@ -1,29 +1,31 @@
 package com.sri.iml.gen.mcmt
 
+import com.google.inject.Inject
 import com.utc.utrc.hermes.iml.iml.Addition
+import com.utc.utrc.hermes.iml.iml.Assertion
 import com.utc.utrc.hermes.iml.iml.AtomicExpression
 import com.utc.utrc.hermes.iml.iml.CaseTermExpression
-import com.utc.utrc.hermes.iml.iml.NamedType
+import com.utc.utrc.hermes.iml.iml.FloatNumberLiteral
 import com.utc.utrc.hermes.iml.iml.FolFormula
 import com.utc.utrc.hermes.iml.iml.ImlType
 import com.utc.utrc.hermes.iml.iml.IteTermExpression
 import com.utc.utrc.hermes.iml.iml.Model
 import com.utc.utrc.hermes.iml.iml.Multiplication
+import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.iml.NumberLiteral
 import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm
+import com.utc.utrc.hermes.iml.iml.RelationKind
 import com.utc.utrc.hermes.iml.iml.SequenceTerm
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference
 import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm
+import com.utc.utrc.hermes.iml.iml.TermExpression
 import com.utc.utrc.hermes.iml.iml.TermMemberSelection
 import com.utc.utrc.hermes.iml.iml.TruthValue
-import java.util.List
-import java.util.ArrayList
-import com.utc.utrc.hermes.iml.iml.RelationKind
-import com.utc.utrc.hermes.iml.iml.TermExpression
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
-import com.utc.utrc.hermes.iml.iml.Assertion
-import com.google.inject.Inject
+import java.util.ArrayList
+import java.util.List
+
 // import com.sri.iml.gen.mcmt.model.SallyModel
 /* import com.sri.iml.gen.mcmt.model.SallySymbol
 import com.sri.iml.gen.mcmt.model.SallyTypeInstance */
@@ -82,96 +84,16 @@ class MCMTGeneratorServices {
 		return s.getSymbol().getName();
 	}
 
-/*
-	def String serialize(SallyModel m) {
-		'''«FOR mod : m.modules.values AFTER '\n'»«serialize(mod)»«ENDFOR»'''
-	}
-
-	def String serialize(MCMT m) {
-		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int")) return "";
-		if(m.isEnum()) return "";
-		'''
-			MODULE «toSallyName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ',' AFTER ')'» «p.name» «ENDFOR»
-			«FOR v : m.variables.values AFTER '\n'»«serialize(v)»«ENDFOR» 
-			«FOR v : m.inits.values AFTER '\n'»«serialize(v)»«ENDFOR»
-			«FOR v : m.trans.values AFTER '\n'»«serialize(v)»«ENDFOR»
-			«FOR v : m.definitions.values AFTER '\n'»«serialize(v)»«ENDFOR»
-			«FOR v : m.invar.values AFTER '\n'»«serialize(v)»«ENDFOR»
-		'''
-	}
-
-	def String serialize(SallySymbol s) {
-		switch (s.elementType) {
-			case VAR: '''
-				VAR «s.name» : «serialize(s.type)» «FOR p : s.type.params BEFORE '(' SEPARATOR ',' AFTER ')'»«p.name»«ENDFOR» ;
-			'''
-			case DEFINE: '''
-				DEFINE «s.name» := «s.definition» ;
-			'''
-			case INIT: '''
-				DEFINE «s.name» := «s.definition» ;
-				INIT «s.name» ;
-			'''
-			case INVAR: '''
-				INVAR «s.definition»  ;
-			'''
-			case TRANSITION: '''
-				DEFINE «s.name» := «s.definition» ;
-				TRANS «s.name» ;
-			'''
-		}
-	}
-
-	def List<String> suffix(SallySymbol s) {
-		var retval = new ArrayList<String>();
-		for (field : s.type.type.variables.keySet) {
-			if (s.type.type.variables.get(field).type.type.name.equals("iml.lang.Bool") ||
-				s.type.type.variables.get(field).type.type.name.equals("iml.lang.Int")) {
-				retval.add(field);
-			} else {
-				var tmplist = suffix(s.type.type.variables.get(field))
-				for (ssuffix : tmplist) {
-					retval.add(field + ssuffix);
-				}
-			}
-		}
-		return retval;
-	}
-
-	def List<String> suffix(SallyTypeInstance s) {
-		var retval = new ArrayList<String>();
-		for (field : s.type.variables.keySet) {
-			if (s.type.variables.get(field).type.type.name.equals("iml.lang.Bool") ||
-				s.type.variables.get(field).type.type.name.equals("iml.lang.Int")) {
-				retval.add(field);
-			} else {
-				var tmplist = suffix(s.type.variables.get(field))
-				for (ssuffix : tmplist) {
-					retval.add(field + ssuffix);
-				}
-			}
-		}
-		return retval;
-	}
-
-	def String serialize(SallyTypeInstance i) {
-		if (! i.type.enum) {
-			return toSallyName(i.type);
-		}
-		'''«FOR l : i.type.literals BEFORE '{' SEPARATOR ',' AFTER '}'»«toSallyName(i.type,l)»«ENDFOR»'''
-	}
-*/
 	def String serialize(FolFormula e, SimpleTypeReference ctx) {
 		var String retval = "";
 		if (e.getOp() !== null &&
 			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
 			retval = '''«serialize(e.left,ctx)»  «convertOp(e.op)»  «serialize(e.right,ctx)» ''';
 		} else if (e instanceof AtomicExpression) {
-
 			if (e.rel === RelationKind.EQ) {
 				var suff = getSuffix(e.left,ctx);
 				if (suff.empty) {
-					retval = '''«serialize(e.left,ctx)»«e.rel.toString»  «serialize(e.right,ctx)»'''
+					retval = '''«serialize(e.left,ctx)» «e.rel.toString» «serialize(e.right,ctx)»'''
 				} else {
 					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left,ctx)»«suffix» «e.rel.toString»  «serialize(e.right,ctx)»«suffix» «ENDFOR»'''
 				}
@@ -193,15 +115,16 @@ class MCMTGeneratorServices {
 				var rec = serialize(e.receiver,ctx);
 				var mem = serialize(e.member,ctx);
 				if (mem.equals("current")) {
-					retval = rec;
+					retval = '''state.«rec»''';
 				} else if (mem.equals("next")) {
-					retval = '''next(«rec»)''';
+					retval = '''next.«rec»''';
 				} else {
 					retval = '''«serialize(e.receiver,ctx)».«serialize(e.member,ctx)»'''
 				}
 			}
 		} else if (e instanceof SymbolReferenceTerm) {
 			retval = e.symbol.name;
+			
 		} else if (e instanceof ParenthesizedTerm) {
 			retval = '''( «serialize(e.sub,ctx)» )'''
 		} else if (e instanceof IteTermExpression) {
@@ -212,11 +135,11 @@ class MCMTGeneratorServices {
 				retval = '''( «serialize(e.condition,ctx)» ? «serialize(e.left,ctx)» : «serialize(e.right,ctx)»'''
 			}
 		} else if (e instanceof CaseTermExpression) {
-
 			retval = '''
 				case 
 					«FOR index : 0..e.cases.size-1 SEPARATOR ";\n" AFTER ";\n"»«serialize(e.cases.get(index),ctx)» : «serialize(e.expressions.get(index),ctx)»«ENDFOR»
 				esac
+				
 			'''
 		} else if (e instanceof SequenceTerm) {
 			retval = '''( «serialize(e.^return,ctx)» )'''
@@ -226,6 +149,11 @@ class MCMTGeneratorServices {
 			}
 			retval = retval + serialize(e.left,ctx);
 		} else if (e instanceof NumberLiteral) {
+			if (e.isNeg) {
+				retval += "-";
+			}
+			retval = e.value.toString;
+		} else if (e instanceof FloatNumberLiteral) {
 			if (e.isNeg) {
 				retval += "-";
 			}
@@ -244,21 +172,7 @@ class MCMTGeneratorServices {
 			case "<=>": "<->"
 		}
 	}
-/*
-	def String toSallyName(MCMT m) {
-		if (m == SallyModel.Bool) {
-			return "boolean"
-		}
-		if (m == SallyModel.Int) {
-			return "0..256";
-		}
-		return '''"«m.name»"'''
-	}
 
-	def String toSallyName(MCMT m, String literal) {
-		'''"«m.name».«literal»"'''
-	}
-*/
 	def List<String> getSuffix(FolFormula e,SimpleTypeReference ctx) {
 		if (e instanceof TermExpression){
 			return getSuffix(e as TermExpression,ctx) ;

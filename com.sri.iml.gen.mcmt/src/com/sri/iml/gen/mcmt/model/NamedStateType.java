@@ -15,6 +15,14 @@ public class NamedStateType extends Named implements Instruction {
 		this(name, variables, new Record<Input>());
 	}
 
+	public StateVariable getVar(String name) {
+		return variables.get(name); 
+	}
+
+	public Input getInput(String name) {
+		return inputs.get(name); 
+	}
+
 	public Sexp<String> toSexp() {
 		Sexp_list<String> result = new Sexp_list<String>();
 		result.addRight(new Sexp_atom<String>("define-state-type"));

@@ -39,12 +39,11 @@ public class MCMTGenerator {
 
 	@Inject
 	private ImlStdLib libs;
-	
-	private class NuSmvConnection {
-		public String target_machine;
-		public String target_input;
-		public String source;
-	}
+
+	StateVarBuilder stateVarBuilder = new StateVarBuilder();
+	TransVarBuilder transVarBuilder = new TransVarBuilder();
+	FormulaGenerator<StateFormulaVariable> stateFormGenerator = new FormulaGenerator<StateFormulaVariable>(stateVarBuilder);
+	FormulaGenerator<StateTransFormulaVariable> transFormGenerator = new FormulaGenerator<StateTransFormulaVariable>(transVarBuilder);
 
 /*	public MCMT getMainModel(SallyModel m , SimpleTypeReference spec, SimpleTypeReference impl) {
 		MCMT main = new MCMT("main");
@@ -96,9 +95,9 @@ public class MCMTGenerator {
 	private void generateSystem(MCMT target, SimpleTypeReference tr) throws GeneratorException {
 		String name = generatorServices.getNameFor(tr);
 		NamedStateType statetype = generateStateType(target,"_state", tr);
-		Sexp<FormulaAtom<StateFormulaVariable>> init = generateInit(tr);
+		Sexp<FormulaAtom<StateFormulaVariable>> init = generateInit(statetype,tr);
 		NamedTransitionSystem result = new NamedTransitionSystem(name, statetype, init); 
-		Sexp<FormulaAtom<StateTransFormulaVariable>> transition = generateTrans(tr);
+		Sexp<FormulaAtom<StateTransFormulaVariable>> transition = generateTrans(statetype,tr);
 		result.add_transition(transition);
 		target.addTransitionSystem(result);
 	}
@@ -130,38 +129,36 @@ public class MCMTGenerator {
 	}
 
 	// Translating the initial formula
-	private Sexp<FormulaAtom<StateFormulaVariable>> generateInit(SimpleTypeReference tr) throws GeneratorException {
+	private Sexp<FormulaAtom<StateFormulaVariable>> generateInit(NamedStateType statetype, SimpleTypeReference tr) throws GeneratorException {
 		for (Symbol s : tr.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
 				if (isInit(sd)) {
-					String sdname = sd.getName();
+					AtomBuilder<StateFormulaVariable> varBuilder = new StateVarBuilder();
 					ImlType imlType = typeProvider.bind(sd.getType(), tr);
 					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 					assert(basetype.equals(BaseType.Bool));
-					String test = generatorServices.serialize(sd.getDefinition(),tr);
-					return NamedStateFormula.symbol("true");
+					return stateFormGenerator.generate(sd.getDefinition(),statetype);
 				}
 			}
 		}
-		return NamedStateFormula.symbol("true");
+		return stateVarBuilder.symbol("true");
 	}
 	
 	// Translating the transition formula
-	private Sexp<FormulaAtom<StateTransFormulaVariable>> generateTrans(SimpleTypeReference tr) throws GeneratorException {
+	private Sexp<FormulaAtom<StateTransFormulaVariable>> generateTrans(NamedStateType statetype, SimpleTypeReference tr) throws GeneratorException {
 		for (Symbol s : tr.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
-				String sdname = sd.getName();
-				ImlType imlType = typeProvider.bind(sd.getType(), tr);
-				// replace `sd.getType()` by `((SimpleTypeReference) sd.getType()).getTypeBinding().get(0)` ? 
-				// BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
-				if (isInit(sd)) {
-					return NamedStateTransition.symbol("true"); // TO CHANGE
+				if (isTransition(sd)) {
+					ImlType imlType = typeProvider.bind(sd.getType(), tr);
+					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
+					assert(basetype.equals(BaseType.Bool));
+					return transFormGenerator.generate(sd.getDefinition(),statetype);
 				}
 			}
 		}
-		return NamedStateTransition.symbol("true");
+		return transVarBuilder.symbol("true");
 	}
 
 	// Translating base types
@@ -271,7 +268,7 @@ public class MCMTGenerator {
 	}
 
 	public boolean isTransition(SymbolDeclaration s) {
-		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.fasm", "Transition"));
+		return MCMTranslationProvider.isA(s, libs.getNamedType("iml.fsm", "Transition"));
 	}
 
 	public boolean isInvariant(SymbolDeclaration s) {

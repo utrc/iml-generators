@@ -54,6 +54,22 @@ public class MCMT  {
 		instructions.addLast(system); 
 	}
 
+	public NamedStateType getStateType(String name) {
+		return statetypes.get(name); 
+	}
+
+	public NamedStateFormula addStateFormula(String name) {
+		return stateformulas.get(name); 
+	}
+
+	public NamedStateTransition addStateTransition(String name) {
+		return statetransitions.get(name); 
+	}
+
+	public NamedTransitionSystem addTransitionSystem(String name) {
+		return statetransitionsystems.get(name); 
+	}
+
 	public void addQuery(Query query) {
 		queries.add(query); 
 		instructions.addLast(query); 
