@@ -32,10 +32,7 @@ public class SmTranslationTest {
 		
 		Resource translationunit = resourceSet.getResource(URI.createURI("models/Sm1.iml"), true);
 
-		// StandardLibProvider standard_libs = new StandardLibProvider(resourceSet);
-		
 		MCMTGenerator gen = injector.getInstance(MCMTGenerator.class);
-		// gen.setLibs(standard_libs);
 		
 		Model m = (Model) translationunit.getContents().get(0);
 		for (Symbol s : m.getSymbols()) {

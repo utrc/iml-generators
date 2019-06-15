@@ -5,12 +5,11 @@ import com.sri.iml.gen.mcmt.model.FormulaSymb;
 import com.sri.iml.gen.mcmt.model.FormulaVar;
 import com.sri.iml.gen.mcmt.model.Sexp;
 import com.sri.iml.gen.mcmt.model.Sexp_atom;
-import com.sri.iml.gen.mcmt.model.Sexp_list;
 import com.sri.iml.gen.mcmt.model.StateFormulaVariable;
 import com.sri.iml.gen.mcmt.model.StateNext;
 import com.sri.iml.gen.mcmt.model.StateVariable;
 
-public abstract class AtomBuilder<V> {
+abstract class AtomBuilder<V> {
 
 	abstract FormulaVar<V> formulaVar(StateFormulaVariable var);
 	abstract FormulaVar<V> formulaVar(StateNext which, StateVariable var);

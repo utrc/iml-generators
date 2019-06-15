@@ -5,7 +5,7 @@ import com.sri.iml.gen.mcmt.model.StateFormulaVariable;
 import com.sri.iml.gen.mcmt.model.StateNext;
 import com.sri.iml.gen.mcmt.model.StateVariable;
 
-public class StateVarBuilder extends AtomBuilder<StateFormulaVariable>{
+class StateVarBuilder extends AtomBuilder<StateFormulaVariable>{
 
 	FormulaVar<StateFormulaVariable> formulaVar(StateFormulaVariable var){
 		return new FormulaVar<StateFormulaVariable>(var);

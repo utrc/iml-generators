@@ -8,7 +8,7 @@ import com.sri.iml.gen.mcmt.model.StateTransFormulaVariable;
 import com.sri.iml.gen.mcmt.model.StateTransVariable;
 import com.sri.iml.gen.mcmt.model.StateVariable;
 
-public class TransVarBuilder extends AtomBuilder<StateTransFormulaVariable>{
+class TransVarBuilder extends AtomBuilder<StateTransFormulaVariable>{
 
 	FormulaVar<StateTransFormulaVariable> formulaVar(StateFormulaVariable var){
 		assert(var instanceof Input);
