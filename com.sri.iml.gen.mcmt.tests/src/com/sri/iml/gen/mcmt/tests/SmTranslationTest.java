@@ -21,16 +21,18 @@ public class SmTranslationTest {
 		Injector injector = ImlStandaloneSetup.getInjector();
 		
 		ResourceSet resourceSet = new ResourceSetImpl();
+		String libDir = args[0];
+		String filename = args[1];
 
 		// Standard libraries
-	    resourceSet.getResource(URI.createURI("../../HERMES-IML/com.utc.utrc.hermes.iml.lib/src/iml/lang.iml"), true);
-		resourceSet.getResource(URI.createURI("../../HERMES-IML/com.utc.utrc.hermes.iml.lib/src/iml/software.iml"), true);
-		resourceSet.getResource(URI.createURI("../../HERMES-IML/com.utc.utrc.hermes.iml.lib/src/iml/connectivity.iml"), true);
-		resourceSet.getResource(URI.createURI("../../HERMES-IML/com.utc.utrc.hermes.iml.lib/src/iml/contracts.iml"), true);
-		resourceSet.getResource(URI.createURI("../../HERMES-IML/com.utc.utrc.hermes.iml.lib/src/iml/ports.iml"), true);
-		resourceSet.getResource(URI.createURI("../../HERMES-IML/com.utc.utrc.hermes.iml.lib/src/iml/fsm.iml"), true);		
+	    resourceSet.getResource(URI.createURI(libDir+"/lang.iml"), true);
+		resourceSet.getResource(URI.createURI(libDir+"/software.iml"), true);
+		resourceSet.getResource(URI.createURI(libDir+"/connectivity.iml"), true);
+		resourceSet.getResource(URI.createURI(libDir+"/contracts.iml"), true);
+		resourceSet.getResource(URI.createURI(libDir+"/ports.iml"), true);
+		resourceSet.getResource(URI.createURI(libDir+"/fsm.iml"), true);		
 		
-		Resource translationunit = resourceSet.getResource(URI.createURI("models/Sm1.iml"), true);
+		Resource translationunit = resourceSet.getResource(URI.createURI(filename), true);
 
 		MCMTGenerator gen = injector.getInstance(MCMTGenerator.class);
 		
