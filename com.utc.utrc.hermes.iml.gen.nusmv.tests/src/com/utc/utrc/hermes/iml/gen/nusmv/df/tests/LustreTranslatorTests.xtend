@@ -1,4 +1,4 @@
-package com.utc.utrc.hermes.iml.gen.nusmv.tests
+package com.utc.utrc.hermes.iml.gen.nusmv.df.tests
 
 import org.junit.runner.RunWith
 import org.eclipse.xtext.testing.XtextRunner
@@ -20,10 +20,14 @@ import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.util.ImlUtil
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
 import com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvGeneratorServices
+import com.utc.utrc.hermes.iml.gen.nusmv.df.SynchDf
+import com.utc.utrc.hermes.iml.gen.nusmv.df.generator.LustreGenerator
+import com.utc.utrc.hermes.iml.gen.nusmv.df.generator.LustreGeneratorServices
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreModel
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
-class NuSmvTranslatorTests {
+class LustreTranslatorTests {
 	
 	@Inject extension ImlParseHelper
 	
@@ -35,35 +39,34 @@ class NuSmvTranslatorTests {
 	Systems sys ;
 	
 	@Inject 
-	Sms sms ;
+	SynchDf sdf ;
 	
 	@Inject
-	NuSmvGenerator gen ;
+	LustreGenerator gen ;
 	
-	@Inject
-	NuSmvGeneratorServices generatorServices;
 	
 		
 	@Test
 	def void testTranslation() {
 		
-		var Model m = parse(FileUtil.readFileContent("models/fromaadl/UxASRespondsEvents_pkg.iml"),true) ;
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/filter.iml"),true) ;
 		sys.process(m) ;
 		System.out.println(sys.toString)
-		sms.systems = sys;
-		sms.process(m);
-		gen.sms = sms;
-		var NamedType smtype = m.findSymbol("UxAS_responds_dot_i") as NamedType;
-		var NamedType spectype = m.findSymbol("UxAS_responds") as NamedType;
-		var NuSmvModel smv = new NuSmvModel() ;
-		gen.generateStateMachine(smv,sms.getStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(smtype))) ;
-		
-		var output = generatorServices.serialize(smv);
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Filter") as NamedType;
+		//var NamedType spectype = m.findSymbol("UxAS_responds") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+	
+	
+		var output = gen.serialize(lus);
 		System.out.println(output);
 		
-		var main = gen.getMainModel(smv,ImlCustomFactory.INST.createSimpleTypeReference(spectype),ImlCustomFactory.INST.createSimpleTypeReference(smtype))
+		//var main = gen.getMainModel(smv,ImlCustomFactory.INST.createSimpleTypeReference(spectype),ImlCustomFactory.INST.createSimpleTypeReference(smtype))
 		
-		System.out.println(generatorServices.serialize(main));
+		//System.out.println(generatorServices.serialize(main));
 		
 		
 	}

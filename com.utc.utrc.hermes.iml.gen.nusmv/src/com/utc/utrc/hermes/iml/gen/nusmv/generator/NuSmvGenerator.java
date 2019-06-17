@@ -1,9 +1,10 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.generator;
 
-import static com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvTranslationProvider.getLiterals;
-import static com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvTranslationProvider.isEnum;
 
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -28,6 +29,7 @@ import com.utc.utrc.hermes.iml.gen.nusmv.systems.Direction;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Port;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Systems;
 import com.utc.utrc.hermes.iml.iml.Assertion;
+import com.utc.utrc.hermes.iml.iml.EnumRestriction;
 import com.utc.utrc.hermes.iml.iml.NamedType;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
@@ -42,7 +44,9 @@ import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
 import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
 import com.utc.utrc.hermes.iml.iml.TailedExpression;
 import com.utc.utrc.hermes.iml.iml.TermExpression;
+import com.utc.utrc.hermes.iml.iml.Trait;
 import com.utc.utrc.hermes.iml.iml.TupleConstructor;
+import com.utc.utrc.hermes.iml.iml.TypeRestriction;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
@@ -83,26 +87,36 @@ public class NuSmvGenerator {
 
 	public NuSmvModule getMainModel(NuSmvModel m, SimpleTypeReference spec, SimpleTypeReference impl) {
 		NuSmvModule main = new NuSmvModule("main");
+		NuSmvModule insttype = null ;
+		NuSmvModule spectype = null ;
+		if ( m.hasType(ImlUtil.getTypeName(impl, qnp)) ) {
+			insttype = m.getType(ImlUtil.getTypeName(impl, qnp)) ;
+		} else {
+			insttype = generateStateMachine(m, impl) ;
+		}
+		if ( m.hasType(ImlUtil.getTypeName(spec, qnp)) ) {
+			spectype = m.getType(ImlUtil.getTypeName(spec, qnp)) ;
+		} else {
+			spectype = generateStateMachine(m, spec) ;
+		}
+		
 		NuSmvSymbol inst = new NuSmvSymbol("inst");
-		NuSmvModule insttype = m.getType(generatorServices.getNameFor(impl));
 		NuSmvTypeInstance instti = new NuSmvTypeInstance(insttype);
 		inst.setType(instti);
 		inst.setElementType(NuSmvElementType.VAR);
 		main.addSymbol(inst);
-
-		for (Symbol s : spec.getType().getSymbols()) {
-			if (s instanceof SymbolDeclaration) {
-//				if (isInput((SymbolDeclaration) s)) {
-//					NuSmvSymbol target = new NuSmvSymbol(s.getName());
-//					NuSmvTypeInstance ti = new NuSmvTypeInstance(
-//							m.getType(generatorServices.getNameFor(((SymbolDeclaration) s).getType())));
-//					target.setType(ti);
-//					target.setElementType(NuSmvElementType.VAR);
-//					main.addSymbol(target);
-//					instti.setParam(insttype.paramIndex(s.getName()), new NuSmvVariable(s.getName()));
-//				}
-			}
+		
+		
+		for (NuSmvSymbol in : spectype.getParameters() ) {
+			NuSmvSymbol target = new NuSmvSymbol( in.getName() );
+			NuSmvTypeInstance ti = new NuSmvTypeInstance(in.getType().getType()) ;
+			target.setType(ti);
+			target.setElementType(NuSmvElementType.VAR);
+			main.addSymbol(target);
+			instti.setParam(insttype.paramIndex(in.getName()), new NuSmvVariable(in.getName()));
 		}
+		
+		m.addModule(main);
 		return main;
 	}
 
@@ -187,7 +201,7 @@ public class NuSmvGenerator {
 
 		// generate the state first
 
-		if (isEnum(tr.getType())) {
+		if (ImlUtil.isEnum(tr.getType())) {
 			return generateEnumType(m, tr.getType());
 		} else {
 
@@ -238,7 +252,7 @@ public class NuSmvGenerator {
 		NuSmvModule target = new NuSmvModule(qnp.getFullyQualifiedName(type).toString());
 		m.addModule(target);
 		target.setEnum(true);
-		target.getLiterals().addAll(getLiterals(type));
+		target.getLiterals().addAll(ImlUtil.getLiterals(type));
 		return target;
 	}
 
@@ -411,9 +425,18 @@ public class NuSmvGenerator {
 	}
 
 	public boolean isDelay(SymbolDeclaration s) {
-		return NuSmvTranslationProvider.hasType(s, stdLibs.getNamedType("iml.sms", "delay"));
+		return ImlUtil.hasType(s.getType(), stdLibs.getNamedType("iml.sms", "delay"));
 	}
 
+	public boolean isInput(SymbolDeclaration sd) {
+
+			if ( ImlUtil.exhibits(sd.getType(), (Trait) stdLibs.getNamedType("iml.systems", "In")   ) ) {
+				return true ;
+			}
+		
+		return false ;
+	}
+	
 	public boolean isDelay(ImlType st) {
 		return (st == stdLibs.getNamedType("iml.sms", "delay"));
 	}
@@ -446,4 +469,6 @@ public class NuSmvGenerator {
 		return target;
 	}
 
+	
+	
 }

@@ -1,46 +1,49 @@
-package com.utc.utrc.hermes.iml.gen.nusmv.generator
+package com.utc.utrc.hermes.iml.gen.nusmv.df.generator
 
-import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvModel
-import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvModule
+import com.google.inject.Inject
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreModel
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreNode
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvSymbol
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvTypeInstance
 import com.utc.utrc.hermes.iml.iml.Addition
+import com.utc.utrc.hermes.iml.iml.Assertion
 import com.utc.utrc.hermes.iml.iml.AtomicExpression
 import com.utc.utrc.hermes.iml.iml.CaseTermExpression
-import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.iml.FolFormula
 import com.utc.utrc.hermes.iml.iml.ImlType
 import com.utc.utrc.hermes.iml.iml.IteTermExpression
-import com.utc.utrc.hermes.iml.iml.Model
 import com.utc.utrc.hermes.iml.iml.Multiplication
+import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.iml.NumberLiteral
 import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm
+import com.utc.utrc.hermes.iml.iml.RelationKind
 import com.utc.utrc.hermes.iml.iml.SequenceTerm
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference
+import com.utc.utrc.hermes.iml.iml.Symbol
+import com.utc.utrc.hermes.iml.iml.SymbolDeclaration
 import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm
-import com.utc.utrc.hermes.iml.iml.TermMemberSelection
-import com.utc.utrc.hermes.iml.iml.TruthValue
-import java.util.List
-import java.util.ArrayList
-import com.utc.utrc.hermes.iml.iml.RelationKind
+import com.utc.utrc.hermes.iml.iml.TailedExpression
 import com.utc.utrc.hermes.iml.iml.TermExpression
+import com.utc.utrc.hermes.iml.iml.TermMemberSelection
+import com.utc.utrc.hermes.iml.iml.Trait
+import com.utc.utrc.hermes.iml.iml.TruthValue
+import com.utc.utrc.hermes.iml.iml.TupleConstructor
+import com.utc.utrc.hermes.iml.lib.ImlStdLib
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
-import com.utc.utrc.hermes.iml.iml.Assertion
-import com.google.inject.Inject
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment
 import com.utc.utrc.hermes.iml.util.ImlUtil
-import org.eclipse.xtext.naming.IQualifiedNameProvider
-import com.utc.utrc.hermes.iml.iml.InstanceConstructor
-import com.utc.utrc.hermes.iml.iml.SymbolDeclaration
-import java.util.Map
-import com.utc.utrc.hermes.iml.iml.LambdaExpression
-import com.utc.utrc.hermes.iml.iml.Symbol
+import java.util.ArrayList
 import java.util.HashMap
-import com.utc.utrc.hermes.iml.lib.ImlStdLib
-import com.utc.utrc.hermes.iml.iml.Trait
+import java.util.List
+import java.util.Map
+import org.eclipse.xtext.naming.IQualifiedNameProvider
+import com.utc.utrc.hermes.iml.iml.FunctionType
+import com.utc.utrc.hermes.iml.iml.LambdaExpression
+import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
+import com.utc.utrc.hermes.iml.iml.TupleType
 
-class NuSmvGeneratorServices {
+class LustreGeneratorServices {
 
 	@Inject
 	private ImlTypeProvider typeProvider;
@@ -50,6 +53,12 @@ class NuSmvGeneratorServices {
 
 	@Inject
 	private ImlStdLib stdLibs;
+
+	private Map<String, SymbolDeclaration> functional_nodes ;
+
+	new() {
+		functional_nodes = newHashMap
+	}
 
 	def String getNameFor(SimpleTypeReference tr) {
 		return ImlUtil.getTypeName(tr, qnp);
@@ -61,6 +70,7 @@ class NuSmvGeneratorServices {
 		}
 		return "__NOT__SUPPORTED"
 	}
+	
 
 	def String getNameFor(FolFormula f) {
 		if (f instanceof TermMemberSelection) {
@@ -86,50 +96,47 @@ class NuSmvGeneratorServices {
 		} else {
 			mem = getNameFor(ts.getMember() as TermMemberSelection);
 		}
-		return rec + "." + mem;
+		return rec + "_dot_" + mem;
 	}
 
 	def String getNameFor(SymbolReferenceTerm s) {
 		return s.getSymbol().getName();
 	}
 
-	def String serialize(NuSmvModel m) {
-		'''«FOR mod : m.modules.values AFTER '\n'»«serialize(mod)»«ENDFOR»'''
+	def String serialize(LustreModel m) {
+		'''«FOR n : m.nodes.values AFTER '\n'»«serialize(n)»«ENDFOR»'''
 	}
 
-	def String serialize(NuSmvModule m) {
+	def String serialize(LustreNode m) {
 		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
-		if(m.isEnum()) return "";
+		if(m.isEnum()) return '''type «toLustreName(m)» = enum {«FOR l : m.literals SEPARATOR ','» «l» «ENDFOR»} ;''';
+		if(m.isStruct()) return '''type «toLustreName(m)» = struct { «FOR f : m.fields.values SEPARATOR ';'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»  } ;'''
+		var nodes = 
 		'''
-			MODULE «toNuSmvName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ',' AFTER ')'» «p.name» «ENDFOR»
-			«FOR v : m.variables.values AFTER '\n'»«serialize(v)»«ENDFOR» 
-			«FOR v : m.inits.values AFTER '\n'»«serialize(v)»«ENDFOR»
-			«FOR v : m.trans.values AFTER '\n'»«serialize(v)»«ENDFOR»
-			«FOR v : m.definitions.values AFTER '\n'»«serialize(v)»«ENDFOR»
-			«FOR v : m.invar.values AFTER '\n'»«serialize(v)»«ENDFOR»
+			node «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
+			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
+			«IF (m.variables.size > 0 || m.fields.size > 0)»
+				var
+				«FOR v : m.variables.values SEPARATOR '; \n' AFTER ';'» «v.name» : «v.type.type.toLustreName»«ENDFOR» 
+				«FOR v : m.fields.values SEPARATOR '; \n' AFTER ';'» «v.name» : «v.type.type.toLustreName»«ENDFOR» 
+			«ENDIF»
+			let
+			«IF (m.fields.size > 0)»
+			«FOR v : m.fields.values» «IF v.definition !== null» «v.name» = «v.definition» ; «'\n '» «ENDIF»«ENDFOR» 
+			«ENDIF»
+			«FOR v : m.lets.values AFTER '; \n'»«v.definition»«ENDFOR»
+			tel
 		'''
-	}
-
-	def String serialize(NuSmvSymbol s) {
-		switch (s.elementType) {
-			case VAR: '''
-				VAR «s.name» : «serialize(s.type)» «FOR p : s.type.params BEFORE '(' SEPARATOR ',' AFTER ')'»«p.name»«ENDFOR» ;
-			'''
-			case DEFINE: '''
-				DEFINE «s.name» := «s.definition» ;
-			'''
-			case INIT: '''
-				DEFINE «s.name» := «s.definition» ;
-				INIT «s.name» ;
-			'''
-			case INVAR: '''
-				INVAR «s.definition»  ;
-			'''
-			case TRANSITION: '''
-				DEFINE «s.name» := «s.definition» ;
-				TRANS «s.name» ;
-			'''
+		
+		while(functional_nodes.size > 0) {
+			var fname = functional_nodes.keySet.get(0) ;
+			var togen = functional_nodes.get(fname);
+			functional_nodes.remove(fname) ;
+			nodes = nodes + serializeFunctionalNode(togen);
 		}
+		
+		return nodes ;
+		
 	}
 
 	def List<String> suffix(NuSmvSymbol s) {
@@ -166,13 +173,6 @@ class NuSmvGeneratorServices {
 		return retval;
 	}
 
-	def String serialize(NuSmvTypeInstance i) {
-		if (! i.type.enum) {
-			return toNuSmvName(i.type);
-		}
-		'''«FOR l : i.type.literals BEFORE '{' SEPARATOR ',' AFTER '}'»«toNuSmvName(i.type,l)»«ENDFOR»'''
-	}
-
 	def String serialize(FolFormula e, SimpleTypeReference ctx) {
 		serialize(e, ctx, new HashMap<Symbol, String>());
 	}
@@ -183,7 +183,6 @@ class NuSmvGeneratorServices {
 			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
 			retval = '''«serialize(e.left,ctx,map)»  «convertOp(e.op)»  «serialize(e.right,ctx,map)» ''';
 		} else if (e instanceof AtomicExpression) {
-
 			if (e.rel === RelationKind.EQ) {
 				var suff = getSuffix(e.left, ctx);
 				if (suff.empty) {
@@ -211,10 +210,10 @@ class NuSmvGeneratorServices {
 				// get the data field of the data port
 				if (isCarrierAccess(e.member)) {
 					retval = '''«serialize(e.receiver,ctx,map)»'''
-				}else {
+				} else {
 					retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
 				}
-				
+
 			}
 		} else if (e instanceof SymbolReferenceTerm) {
 			if (map.containsKey(e.symbol)) {
@@ -222,6 +221,20 @@ class NuSmvGeneratorServices {
 			} else {
 				retval = e.symbol.name;
 			}
+		} else if (e instanceof TailedExpression) {
+			var prefix = serialize(e.left, ctx, map);
+			var taile = e.tail;
+			var String tails = "";
+			if (taile instanceof TupleConstructor) {
+				tails = '''( «FOR tailelem : taile.elements SEPARATOR ','» «serialize(tailelem,ctx,map)» «ENDFOR» )'''
+				// add to queue of nodes to be generated
+				if (e.left instanceof SymbolReferenceTerm &&
+					(e.left as SymbolReferenceTerm).symbol instanceof SymbolDeclaration) {
+					var symbol = (e.left as SymbolReferenceTerm).symbol as SymbolDeclaration;
+					functional_nodes.put(symbol.name, symbol);
+				}
+			}
+			retval = prefix + tails;
 		} else if (e instanceof ParenthesizedTerm) {
 			retval = '''( «serialize(e.sub,ctx,map)» )'''
 		} else if (e instanceof IteTermExpression) {
@@ -242,7 +255,7 @@ class NuSmvGeneratorServices {
 			retval = '''( «serialize(e.^return,ctx,map)» )'''
 		} else if (e instanceof SignedAtomicFormula) {
 			if (e.neg) {
-				retval = retval + "!";
+				retval = retval + "not";
 			}
 			retval = retval + serialize(e.left, ctx, map);
 		} else if (e instanceof NumberLiteral) {
@@ -251,9 +264,59 @@ class NuSmvGeneratorServices {
 			}
 			retval = e.value.toString;
 		} else if (e instanceof TruthValue) {
-			if(e.TRUE) retval = "TRUE" else retval = "FALSE";
+			if(e.TRUE) retval = "true" else retval = "false";
 		}
 		return retval;
+	}
+
+	def serializeFunctionalNode(SymbolDeclaration sd) {
+
+		var type = sd.type;
+		if (type instanceof FunctionType) {
+			if (sd.definition !== null) {
+				var lambda = (sd.definition.left as LambdaExpression)
+				var expr = lambda.definition as SequenceTerm
+				return 
+				'''
+					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+					returns (_return : «toLustreName(lambda.returnType)» )
+					«IF expr.defs.size >0»
+						var
+						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
+					«ENDIF»
+					let
+					_return = «serialize(expr.^return, null)» ;
+					tel
+				'''
+			} else {
+				var domain = type.domain;
+				var range = type.range;
+				var parameters = new ArrayList<SymbolDeclaration>() ;
+				
+				if (domain instanceof SimpleTypeReference) {
+					var p = ImlCustomFactory.INST.createSymbolDeclaration("_x0_", domain) ;
+					parameters.add(p) ; 
+				} else if (domain instanceof TupleType) {
+					var index = 0 ;
+					for(t : domain.types) {
+						var p = ImlCustomFactory.INST.createSymbolDeclaration("_x" + index + "_", t) ;
+						parameters.add(p) ; 
+					}
+				}
+				return 
+				'''
+					node «toLustreName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(sd.type)»«ENDFOR» )
+					returns (_return : «toLustreName(range)» )
+					let
+					tel
+				'''
+
+			}
+
+		}
+		
+		return "" 
+
 	}
 
 	def isPort(TermExpression e) {
@@ -282,28 +345,41 @@ class NuSmvGeneratorServices {
 
 	def String convertOp(String op) {
 		switch (op) {
-			case "&&": "&"
-			case "||": "|"
-			case "=>": "->"
-			case "<=>": "<->"
+			case "&&": "and"
+			case "||": "or"
+			case "=>": "=>"
+			case "<=>": "<=>"
 		}
 	}
 
-	def String toNuSmvName(NuSmvModule m) {
-		if (m == NuSmvModel.Bool) {
-			return "boolean"
+	def String toLustreName(LustreNode m) {
+		if (m == LustreModel.Bool) {
+			return "bool"
 		}
-		if (m == NuSmvModel.Int) {
-			return "0..256";
+		if (m == LustreModel.Int) {
+			return "int";
 		}
-		if (m.name.equals("main")){
-			return "main" ;
+		if (m == LustreModel.Real) {
+			return "real";
 		}
-		return '''"«m.name»"'''
+		return '''«m.name.replaceAll("\\.","_dot_")»'''
 	}
 
-	def String toNuSmvName(NuSmvModule m, String literal) {
-		'''"«m.name».«literal»"'''
+	def String toLustreName(LustreNode m, String literal) {
+		'''"«toLustreName(m)»_dot_«literal»"'''
+	}
+
+	def String toLustreName(SymbolDeclaration sd) {
+		'''«qnp.getFullyQualifiedName(sd).toString().replaceAll("\\.","_dot_")»'''
+	}
+
+	def String toLustreName(ImlType t) {
+		if (t instanceof SimpleTypeReference) {
+			if (t.type === stdLibs.boolType) return "bool" ;
+			if (t.type === stdLibs.intType) return "int";
+			if (t.type === stdLibs.realType) return "real";
+		}
+		'''«ImlUtil.getTypeName(t,qnp).replaceAll("\\.","_dot_")»'''
 	}
 
 	def List<String> getSuffix(FolFormula e, SimpleTypeReference ctx) {
