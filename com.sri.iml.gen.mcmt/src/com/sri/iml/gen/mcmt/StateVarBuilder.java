@@ -6,7 +6,6 @@ import com.sri.iml.gen.mcmt.model.MCMT;
 import com.sri.iml.gen.mcmt.model.NamedStateFormula;
 import com.sri.iml.gen.mcmt.model.StateFormulaVariable;
 import com.sri.iml.gen.mcmt.model.StateNext;
-import com.sri.iml.gen.mcmt.model.StateVariable;
 
 class StateVarBuilder extends AtomBuilder<StateFormulaVariable>{
 
@@ -21,7 +20,7 @@ class StateVarBuilder extends AtomBuilder<StateFormulaVariable>{
 		return new FormulaVar<StateFormulaVariable>(var);
 	}
 	
-	FormulaVar<StateFormulaVariable> formulaVar(StateNext which, StateVariable var) throws GeneratorException {
+	FormulaVar<StateFormulaVariable> formulaVar(StateNext which, StateFormulaVariable var) throws GeneratorException {
 		assert(var != null);
 		if (which == StateNext.Next) throw new GeneratorException("This mode should be State, but got Next");
 		return formulaVar(var);
@@ -33,5 +32,8 @@ class StateVarBuilder extends AtomBuilder<StateFormulaVariable>{
 		return formulaVar(form);
 	}
 	
-	
+	FormulaVar<StateFormulaVariable> formulaByName(StateNext which, String var) throws GeneratorException {
+		throw new GeneratorException("This mode should be State, but got Next");
+	}
+
 }

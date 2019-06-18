@@ -29,6 +29,12 @@ import com.sri.iml.gen.mcmt.model.NamedStateType
 import com.sri.iml.gen.mcmt.model.StateNext
 import com.sri.iml.gen.mcmt.model.MCMT
 import com.sri.iml.gen.mcmt.model.StateFormulaVariable
+import com.utc.utrc.hermes.iml.iml.TailedExpression
+import com.utc.utrc.hermes.iml.iml.TupleConstructor
+import com.sri.iml.gen.mcmt.model.StateTransVariable
+import com.sri.iml.gen.mcmt.model.StateTransFormulaVariable
+import com.sri.iml.gen.mcmt.model.FormulaVar
+import com.sri.iml.gen.mcmt.model.Sexp_atom
 
 class FormulaGenerator<V> {
 	
@@ -43,7 +49,6 @@ class FormulaGenerator<V> {
 	}
 
 	def Sexp<FormulaAtom<V>> generate(FolFormula e, NamedStateType ctx, MCMT mcmt) throws GeneratorException {
-		
 		var Sexp<FormulaAtom<V>> retval = null;
 		
 		if (e.getOp() !== null &&
@@ -123,6 +128,15 @@ class FormulaGenerator<V> {
 			} else {
 				retval = atomBuilder.symbol("false")
 			}
+		} else if (e instanceof TailedExpression) {
+			var e2 = (e.getTail() as TupleConstructor).getElements().get(0).left;
+			if (!(e2 instanceof SymbolReferenceTerm)) {
+				System.out.println(e2);
+				throw new GeneratorException("Argument not a SymbolReferenceTerm");
+			}
+			var form = (e2 as SymbolReferenceTerm).symbol.name;
+			retval = atomBuilder.variable(StateNext.Next, form);
+			//System.out.println(e.left);
 		}
 		return retval;
 	}

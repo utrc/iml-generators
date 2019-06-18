@@ -12,21 +12,28 @@ import com.sri.iml.gen.mcmt.model.StateVariable;
 abstract class AtomBuilder<V> {
 
 	abstract FormulaVar<V> formulaVar(StateFormulaVariable var) throws GeneratorException ;
-	abstract FormulaVar<V> formulaVar(StateNext which, StateVariable var) throws GeneratorException ;
+	abstract FormulaVar<V> formulaVar(StateNext which, StateFormulaVariable var) throws GeneratorException ;
 	abstract FormulaVar<V> formulaByName(String var) throws GeneratorException ;
+	abstract FormulaVar<V> formulaByName(StateNext which,String var) throws GeneratorException ;
 	
 	Sexp<FormulaAtom<V>> variable(StateFormulaVariable var) throws GeneratorException {
 		assert(var != null);
 		return new Sexp_atom<FormulaAtom<V>>(formulaVar(var));
 	}
 	
-	Sexp<FormulaAtom<V>> variable(StateNext which, StateVariable var) throws GeneratorException {
-		return new Sexp_atom<FormulaAtom<V>>(formulaVar(which,var));
-	}
-
 	Sexp<FormulaAtom<V>> variable(String var) throws GeneratorException {
 		assert(var != null);
 		return new Sexp_atom<FormulaAtom<V>>(formulaByName(var));
+	}
+
+	Sexp<FormulaAtom<V>> variable(StateNext which, String var) throws GeneratorException {
+		assert(var != null);
+		return new Sexp_atom<FormulaAtom<V>>(formulaByName(which,var));
+	}
+
+	Sexp<FormulaAtom<V>> variable(StateNext which, StateFormulaVariable var) throws GeneratorException {
+		assert(var != null);
+		return new Sexp_atom<FormulaAtom<V>>(formulaVar(which,var));
 	}
 
 	Sexp<FormulaAtom<V>> symbol(String symb) throws GeneratorException {

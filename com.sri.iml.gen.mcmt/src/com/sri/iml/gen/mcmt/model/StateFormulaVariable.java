@@ -4,7 +4,8 @@ package com.sri.iml.gen.mcmt.model;
 can be used as variables in a StateFormula
 	Classes implementing that interface:
 	- Input
-	- StateVariable */
+	- StateVariable
+	- NamedStateFormula */
 
 public interface StateFormulaVariable {
 	public StateTransFormulaVariable convert(StateNext which);

@@ -83,6 +83,8 @@ package p;
 import iml.fsm.*;
 import iml.connectivity.*;
 
+prime : Bool -> Bool;
+
 type [Sm] T {
     
     // A definition of a state type called "my_state_type" with variables
@@ -100,8 +102,7 @@ type [Sm] T {
    // "my_state_type" by a state formula. These are all states where 
    // both x and y are 0.
    [Init] initial_states : Bool := { x_is_zero && (y.current = 0.0) };
-   next_initial_states : Bool ;
-
+   
    // Definition of a transition where the next value of x is the 
    // current value + 1.
    inc_x : Bool := { x.next = x.current + 1.0 };
@@ -113,7 +114,7 @@ type [Sm] T {
    // exceeding 100, or goes back to the state with x = y = 0
    [Transition] transition : Bool := {
        ((x.current < 100.0) && inc_x_and_y)
-       || next_initial_states
+       || (prime(initial_states))
    } ;
 
    // Check whether x, y <= 20

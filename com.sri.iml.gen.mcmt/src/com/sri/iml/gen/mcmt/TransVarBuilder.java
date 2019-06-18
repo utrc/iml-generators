@@ -24,13 +24,22 @@ class TransVarBuilder extends AtomBuilder<StateTransFormulaVariable>{
 		return new FormulaVar<StateTransFormulaVariable>((Input)var);
 	}
 	
-	FormulaVar<StateTransFormulaVariable> formulaVar(StateNext which, StateVariable var){
+	FormulaVar<StateTransFormulaVariable> formulaVar(StateNext which, StateFormulaVariable var){
 		return new FormulaVar<StateTransFormulaVariable>(new StateTransVariable(which, var));
 	}
 	
 	FormulaVar<StateTransFormulaVariable> formulaByName(String var) throws GeneratorException {
 		NamedStateTransition form = mcmt.getStateTransition(var);
+		if (form == null) {
+			NamedStateFormula form2 = mcmt.getStateFormula(var);
+			return new FormulaVar<StateTransFormulaVariable>(new StateTransVariable(StateNext.State,form2));
+		}
 		return new FormulaVar<StateTransFormulaVariable>(form);
+	}
+
+	FormulaVar<StateTransFormulaVariable> formulaByName(StateNext which, String var) throws GeneratorException {
+		NamedStateFormula form = mcmt.getStateFormula(var);
+		return new FormulaVar<StateTransFormulaVariable>(new StateTransVariable(which,form));
 	}
 
 }

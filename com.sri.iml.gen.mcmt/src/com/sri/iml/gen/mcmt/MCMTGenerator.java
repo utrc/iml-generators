@@ -86,18 +86,20 @@ public class MCMTGenerator {
 					ImlType imlType = typeProvider.bind(sd.getType(), tr);
 					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 					if (basetype.equals(BaseType.Bool) && (sd.getDefinition() != null)) {
+						NamedStateFormula state_namedForm = null; 
 						// Trying to parse it as state formula
 						try {
 							Sexp<FormulaAtom<StateFormulaVariable>> state_tmp
 								= stateFormGenerator.generate(sd.getDefinition(),statetype,target);
-							NamedStateFormula state_namedForm = new NamedStateFormula(sd.getName(),statetype,state_tmp); 
+							state_namedForm = new NamedStateFormula(sd.getName(),statetype,state_tmp); 
 							target.addStateFormula(state_namedForm);
 							// target.addStateTransition(namedForm.convert(StateNext.State));
-							target.addStateTransition(state_namedForm.convert(StateNext.Next));
+							// target.addStateTransition(state_namedForm.convert(StateNext.Next));
 							if (isInit(sd)) { init = stateVarBuilder.variable(state_namedForm.toString()); }
 						}
 						catch(GeneratorException e) {}
 						// Trying to parse it as transition formula
+						if (state_namedForm == null) {
 						try {
 							Sexp<FormulaAtom<StateTransFormulaVariable>> trans_tmp
 								= transFormGenerator.generate(sd.getDefinition(),statetype,target);
@@ -106,6 +108,7 @@ public class MCMTGenerator {
 							if (isTransition(sd)) { transition = transVarBuilder.variable(trans_namedForm.toString()); }
 						}
 						catch(GeneratorException e) {}
+						}
 					}
 				} catch(GeneratorException e) { /* e.printStackTrace();*/ }
 			}
