@@ -3,9 +3,7 @@ package com.sri.iml.gen.mcmt;
 import static com.sri.iml.gen.mcmt.MCMTranslationProvider.getLiterals;
 import static com.sri.iml.gen.mcmt.MCMTranslationProvider.isEnum;
 
-import java.util.Collection;
-
-import org.eclipse.emf.ecore.util.EcoreUtil;
+import java.util.LinkedList;
 
 import com.google.inject.Inject;
 import com.sri.iml.gen.mcmt.model.*;
@@ -27,7 +25,6 @@ import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
-import com.utc.utrc.hermes.iml.util.Phi;
 
 public class MCMTGenerator {
 	
@@ -68,17 +65,16 @@ public class MCMTGenerator {
 		if (!isStateMachine(tr)) {
 	        throw new GeneratorException("No SM (State Machine) annotation for "+tr.toString());
 		}
-		NamedTransitionSystem system = generateSystem(result, tr);
-		generateQueries(result, system, tr);
+		generateSystem(result, tr);
 		return result;
 	}
 
 	// Translating transition systems
-	private NamedTransitionSystem generateSystem(MCMT target, SimpleTypeReference tr) throws GeneratorException {
+	private void generateSystem(MCMT target, SimpleTypeReference tr) throws GeneratorException {
 		String name = generatorServices.getNameFor(tr);
 		NamedStateType statetype = generateStateType(target,"_state", tr);
-		Sexp<FormulaAtom<StateFormulaVariable>> init = stateVarBuilder.symbol("true");
-		Sexp<FormulaAtom<StateTransFormulaVariable>> transition = transVarBuilder.symbol("true");
+		NamedTransitionSystem result = new NamedTransitionSystem(name, statetype);
+		LinkedList<Query> queries = new LinkedList<Query>();
 		for (Symbol s : tr.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
@@ -95,7 +91,12 @@ public class MCMTGenerator {
 							target.addStateFormula(state_namedForm);
 							// target.addStateTransition(namedForm.convert(StateNext.State));
 							// target.addStateTransition(state_namedForm.convert(StateNext.Next));
-							if (isInit(sd)) { init = stateVarBuilder.variable(state_namedForm.toString()); }
+							Sexp<FormulaAtom<StateFormulaVariable>> form = stateVarBuilder.variable(state_namedForm.toString());
+							if (isInit(sd)) { result.add_init(form); }
+							if (isInvariantQuery(sd)) {
+								Query query = new Query(result,form);
+								queries.addLast(query);
+							}
 						}
 						catch(GeneratorException e) {}
 						// Trying to parse it as transition formula
@@ -105,7 +106,7 @@ public class MCMTGenerator {
 								= transFormGenerator.generate(sd.getDefinition(),statetype,target);
 							NamedStateTransition trans_namedForm = new NamedStateTransition(sd.getName(),statetype,trans_tmp); 
 							target.addStateTransition(trans_namedForm);
-							if (isTransition(sd)) { transition = transVarBuilder.variable(trans_namedForm.toString()); }
+							if (isTransition(sd)) { result.add_transition(transVarBuilder.variable(trans_namedForm.toString())); }
 						}
 						catch(GeneratorException e) {}
 						}
@@ -113,10 +114,10 @@ public class MCMTGenerator {
 				} catch(GeneratorException e) { /* e.printStackTrace();*/ }
 			}
 		}
-		NamedTransitionSystem result = new NamedTransitionSystem(name, statetype, init); 
-		result.add_transition(transition);
 		target.addTransitionSystem(result);
-		return result;
+		for (Query q : queries) {
+			target.addQuery(q);
+		}
 	}
 	
 	// Translating state types
@@ -143,23 +144,6 @@ public class MCMTGenerator {
 		NamedStateType result = new NamedStateType(name, statevars, inputs); 
 		target.addStateType(result);
 		return result;
-	}
-
-	// Translating the initial formula
-	private void generateQueries(MCMT target, NamedTransitionSystem system, SimpleTypeReference tr) throws GeneratorException {
-		NamedStateType statetype = system.getStateType();
-		for (Symbol s : tr.getType().getSymbols()) {
-			if (s instanceof SymbolDeclaration) {
-				SymbolDeclaration sd = (SymbolDeclaration) s;
-				if (isInvariantQuery(sd)) {
-					ImlType imlType = typeProvider.bind(sd.getType(), tr);
-					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
-					assert(basetype.equals(BaseType.Bool));
-					Query query = new Query(system,stateFormGenerator.generate(sd.getDefinition(),statetype,target));
-					target.addQuery(query);
-				}
-			}
-		}
 	}
 
 	// Translating base types

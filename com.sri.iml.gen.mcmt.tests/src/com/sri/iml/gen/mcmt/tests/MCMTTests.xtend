@@ -113,7 +113,7 @@ type [Sm] T {
    // Definition of a transition that increases x and y if not 
    // exceeding 100, or goes back to the state with x = y = 0
    [Transition] transition : Bool := {
-       ((x.current < 100.0) && inc_x_and_y)
+       ((x.current < 20.0) && inc_x_and_y)
        || (prime(initial_states))
    } ;
 

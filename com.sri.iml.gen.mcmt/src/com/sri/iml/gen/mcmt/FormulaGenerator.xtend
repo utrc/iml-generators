@@ -130,13 +130,14 @@ class FormulaGenerator<V> {
 			}
 		} else if (e instanceof TailedExpression) {
 			var e2 = (e.getTail() as TupleConstructor).getElements().get(0).left;
+			if (!(e.left instanceof SymbolReferenceTerm && (e.left as SymbolReferenceTerm).symbol.name.equals("prime"))) {
+				throw new GeneratorException("Function is not \"prime\" -- Some kind of higher-order that does not exist in MCMT");
+			}
 			if (!(e2 instanceof SymbolReferenceTerm)) {
-				System.out.println(e2);
 				throw new GeneratorException("Argument not a SymbolReferenceTerm");
 			}
 			var form = (e2 as SymbolReferenceTerm).symbol.name;
 			retval = atomBuilder.variable(StateNext.Next, form);
-			//System.out.println(e.left);
 		}
 		return retval;
 	}
