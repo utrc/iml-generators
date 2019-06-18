@@ -11,7 +11,8 @@ Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
  org.eclipse.emf.ecore,
  org.junit,
  org.eclipse.xtext.xbase.lib,
- org.slf4j.api;bundle-version="1.7.2"
+ org.slf4j.api;bundle-version="1.7.2",
+ com.utc.utrc.hermes.sexpr;bundle-version="1.0.0"
 Import-Package: com.google.inject,
  org.eclipse.xtext.naming
 Export-Package: com.utc.utrc.hermes.iml.gen.nusmv.df,
@@ -19,5 +20,7 @@ Export-Package: com.utc.utrc.hermes.iml.gen.nusmv.df,
  com.utc.utrc.hermes.iml.gen.nusmv.df.model,
  com.utc.utrc.hermes.iml.gen.nusmv.generator,
  com.utc.utrc.hermes.iml.gen.nusmv.model,
+ com.utc.utrc.hermes.iml.gen.nusmv.sally.generator,
+ com.utc.utrc.hermes.iml.gen.nusmv.sally.model,
  com.utc.utrc.hermes.iml.gen.nusmv.sms,
  com.utc.utrc.hermes.iml.gen.nusmv.systems
