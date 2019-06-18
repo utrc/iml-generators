@@ -311,14 +311,14 @@ public class LustreGenerator {
 			}
 		} else {
 			// otherwise
-			LustreSymbol machine = m.getVariables().get(conn.getTargetComponent().getName());
+			LustreSymbol machine = m.getComponents().get(conn.getTargetComponent().getName());
 			if (machine != null) {
 				int index = machine.getType().getType().paramIndex(conn.getTargetPort().getName());
 				if (index != -1) {
 
 					String portname = "";
 					if (conn.getSourceComponent() != ComponentInstance.self) {
-						portname += conn.getSourceComponent().getName() + ".";
+						portname += conn.getSourceComponent().getName() + "_";
 					}
 					portname += conn.getSourcePort().getName();
 

@@ -109,30 +109,55 @@ class LustreGeneratorServices {
 
 	def String serialize(LustreNode m) {
 		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
-		if(m.isEnum()) return '''type «toLustreName(m)» = enum {«FOR l : m.literals SEPARATOR ','» «l» «ENDFOR»} ;''';
-		if(m.isStruct()) return '''type «toLustreName(m)» = struct { «FOR f : m.fields.values SEPARATOR ';'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»  } ;'''
+		if(m.isEnum()) {
+			return 
+			'''
+			type «toLustreName(m)» = enum {
+				«FOR l : m.literals SEPARATOR ',\n'» «toLustreName(m) + "_dot_" +l» «ENDFOR»
+			} ;
+			''';
+		}
+		if(m.isStruct()) {
+			return 
+			'''
+			type «toLustreName(m)» = struct { 
+				«FOR f : m.fields.values SEPARATOR ';\n'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»
+			} ;
+			'''
+		} 
 		var nodes = 
 		'''
 			node «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
 			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
-			«IF (m.variables.size > 0 || m.fields.size > 0)»
+			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
 				var
 				«FOR v : m.variables.values SEPARATOR '; \n' AFTER ';'» «v.name» : «v.type.type.toLustreName»«ENDFOR» 
 				«FOR v : m.fields.values SEPARATOR '; \n' AFTER ';'» «v.name» : «v.type.type.toLustreName»«ENDFOR» 
+				«FOR v : m.components.values» 
+				«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
+				«ENDFOR» 
 			«ENDIF»
 			let
+			«IF (m.components.size > 0)»
+			«FOR v : m.components.values SEPARATOR ';' AFTER ';'» 
+			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR»)
+			«ENDFOR» 
+			«ENDIF»
 			«IF (m.fields.size > 0)»
 			«FOR v : m.fields.values» «IF v.definition !== null» «v.name» = «v.definition» ; «'\n '» «ENDIF»«ENDFOR» 
 			«ENDIF»
 			«FOR v : m.lets.values AFTER '; \n'»«v.definition»«ENDFOR»
 			tel
 		'''
-		
+		var closed = new ArrayList<String>() ;
 		while(functional_nodes.size > 0) {
 			var fname = functional_nodes.keySet.get(0) ;
-			var togen = functional_nodes.get(fname);
+			if (! closed.contains(fname)) { 
+				var togen = functional_nodes.get(fname);
+				nodes = nodes + serializeFunctionalNode(togen);
+			}
 			functional_nodes.remove(fname) ;
-			nodes = nodes + serializeFunctionalNode(togen);
+			closed.add(fname);
 		}
 		
 		return nodes ;
@@ -203,8 +228,9 @@ class LustreGeneratorServices {
 				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
 				var typename = qnp.getFullyQualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType).
 					toString();
+				
 				var literalname = serialize(e.member, ctx, map);
-				retval = '''"«typename».«literalname»"'''
+				retval = '''«typename.replaceAll("\\.","_dot_")»_dot_«literalname»'''
 			} else {
 
 				// get the data field of the data port

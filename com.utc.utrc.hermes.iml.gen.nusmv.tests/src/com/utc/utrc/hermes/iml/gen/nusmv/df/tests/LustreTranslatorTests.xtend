@@ -47,7 +47,7 @@ class LustreTranslatorTests {
 	
 		
 	@Test
-	def void testTranslation() {
+	def void testFilter() {
 		
 		var Model m = parse(FileUtil.readFileContent("models/synchdf/filter.iml"),true) ;
 		sys.process(m) ;
@@ -70,5 +70,31 @@ class LustreTranslatorTests {
 		
 		
 	}
+	
+	@Test
+	def void testSW() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/SW.iml"),true) ;
+		sys.process(m) ;
+		System.out.println(sys.toString)
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("MC_SW_dot_Impl") as NamedType;
+		//var NamedType spectype = m.findSymbol("UxAS_responds") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+	
+	
+		var output = gen.serialize(lus);
+		System.out.println(output);
+		
+		//var main = gen.getMainModel(smv,ImlCustomFactory.INST.createSimpleTypeReference(spectype),ImlCustomFactory.INST.createSimpleTypeReference(smtype))
+		
+		//System.out.println(generatorServices.serialize(main));
+		
+		
+	}
+	
 }
 

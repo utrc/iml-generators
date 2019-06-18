@@ -12,12 +12,14 @@ public class LustreNode extends LustreType {
 	private Map<String,LustreSymbol> variables ;
 	private List<LustreSymbol> parameters;
 	private List<LustreSymbol> returns;
+	private Map<String, LustreSymbol> components;
 	private Map<String,LustreSymbol> lets;
 	
 	
 	public LustreNode(String name) {
 		super(name);
 		variables = new HashMap<String,LustreSymbol>();
+		components = new HashMap<String,LustreSymbol>();
 		parameters = new ArrayList<LustreSymbol>();
 		returns = new ArrayList<LustreSymbol>();
 		lets = new HashMap<>() ;
@@ -39,6 +41,10 @@ public class LustreNode extends LustreType {
 	public List<LustreSymbol> getParameters() {
 		return parameters;
 	}
+	public Map<String,LustreSymbol> getComponents() {
+		return components;
+	}
+	
 	public List<LustreSymbol> getReturns() {
 		return returns;
 	}
@@ -70,7 +76,8 @@ public class LustreNode extends LustreType {
 			case PARAMETER : parameters.add(s); s.setContainer(this);break;
 			case RETURN : returns.add(s); s.setContainer(this);break;
 			case VAR : variables.put(s.getName(), s); s.setContainer(this);break;
-			case FIELD : addField(s.getName(), s);
+			case FIELD : addField(s.getName(), s);s.setContainer(this);break;
+			case COMPONENT: components.put(s.getName(),s);s.setContainer(this);break;
 			default : break;
 		} 
 	}
