@@ -16,7 +16,7 @@ public class StateTransVariable implements StateTransFormulaVariable {
 	}
 	
 	public String toString() {
-		return which.toString() + var;
+		return which.toString() + "."+var;
 	}
 	
 }

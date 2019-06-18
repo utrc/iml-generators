@@ -9,8 +9,8 @@ public enum StateNext {
 	
 	public String toString() {
 		switch(this) {
-		case State: return "state.";
-		case Next : return "next.";
+		case State: return "state";
+		case Next : return "next";
 		default   : return null;
 		}
 	}

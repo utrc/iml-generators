@@ -6,4 +6,8 @@ public class StateVariable extends Variable implements StateFormulaVariable {
 		super(name, ty);
 	}
 	
+	public StateTransFormulaVariable convert(StateNext which) {
+		return new StateTransVariable(which, this);
+	}
+	
 }

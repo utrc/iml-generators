@@ -27,6 +27,8 @@ import com.sri.iml.gen.mcmt.model.FormulaAtom
 import com.sri.iml.gen.mcmt.model.Sexp
 import com.sri.iml.gen.mcmt.model.NamedStateType
 import com.sri.iml.gen.mcmt.model.StateNext
+import com.sri.iml.gen.mcmt.model.MCMT
+import com.sri.iml.gen.mcmt.model.StateFormulaVariable
 
 class FormulaGenerator<V> {
 	
@@ -37,28 +39,28 @@ class FormulaGenerator<V> {
 	
 	new(AtomBuilder<V> atomBuilder){
 		this.atomBuilder = atomBuilder
+		this.gen = new MCMTGeneratorServices()
 	}
 
-	def Sexp<FormulaAtom<V>> generate(FolFormula e, NamedStateType ctx) {
+	def Sexp<FormulaAtom<V>> generate(FolFormula e, NamedStateType ctx, MCMT mcmt) throws GeneratorException {
 		
 		var Sexp<FormulaAtom<V>> retval = null;
 		
 		if (e.getOp() !== null &&
 			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
-
-			retval = (new AppBuilder(gen.convertOp(e.op))).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+			retval = (new AppBuilder(gen.convertOp(e.op))).app(generate(e.left,ctx,mcmt)).app(generate(e.right,ctx,mcmt));
 			
 		} else if (e instanceof AtomicExpression) {
 
-			retval = (new AppBuilder(e.rel.toString)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+			retval = (new AppBuilder(e.rel.toString)).app(generate(e.left,ctx,mcmt)).app(generate(e.right,ctx,mcmt));
 
 		} else if (e instanceof Addition) {
 
-			retval = (new AppBuilder(e.sign)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+			retval = (new AppBuilder(e.sign)).app(generate(e.left,ctx,mcmt)).app(generate(e.right,ctx,mcmt));
 
 		} else if (e instanceof Multiplication) {
 
-			retval = (new AppBuilder(e.sign)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+			retval = (new AppBuilder(e.sign)).app(generate(e.left,ctx,mcmt)).app(generate(e.right,ctx,mcmt));
 
 		} else if (e instanceof TermMemberSelection) {
 			// TODO this is a quick hack
@@ -81,25 +83,27 @@ class FormulaGenerator<V> {
 			}
 		} else if (e instanceof SymbolReferenceTerm) {
 			
-			print("NOT GOOD: "+ e.symbol.name + "\n")
+			var input = ctx.getInput(e.symbol.name)
+			if (input !== null) retval = atomBuilder.variable(input)
+			else retval = atomBuilder.variable(e.symbol.name)
 			
 		} else if (e instanceof ParenthesizedTerm) {
 
-			retval = generate(e.sub,ctx)
+			retval = generate(e.sub,ctx,mcmt)
 
 		} else if (e instanceof IteTermExpression) {
 
-			retval = (new AppBuilder("ite")).app(generate(e.condition,ctx)).app(generate(e.left,ctx)).app(generate(e.right,ctx));
+			retval = (new AppBuilder("ite")).app(generate(e.condition,ctx,mcmt)).app(generate(e.left,ctx,mcmt)).app(generate(e.right,ctx,mcmt));
 
 		} else if (e instanceof SequenceTerm) {
 
-			retval = generate(e.^return,ctx)
+			retval = generate(e.^return,ctx,mcmt)
 
 		} else if (e instanceof SignedAtomicFormula) {
 			if (e.neg) {
-				retval = (new AppBuilder("not")).app(generate(e.left,ctx))
+				retval = (new AppBuilder("not")).app(generate(e.left,ctx,mcmt))
 			} else {
-				retval = generate(e.left,ctx);
+				retval = generate(e.left,ctx,mcmt);
 			}
 		} else if (e instanceof NumberLiteral) {
 			if (e.isNeg) {

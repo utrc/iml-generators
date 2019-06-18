@@ -40,10 +40,10 @@ public class MCMTGenerator {
 	@Inject
 	private ImlStdLib libs;
 
-	StateVarBuilder stateVarBuilder = new StateVarBuilder();
-	TransVarBuilder transVarBuilder = new TransVarBuilder();
-	FormulaGenerator<StateFormulaVariable> stateFormGenerator = new FormulaGenerator<StateFormulaVariable>(stateVarBuilder);
-	FormulaGenerator<StateTransFormulaVariable> transFormGenerator = new FormulaGenerator<StateTransFormulaVariable>(transVarBuilder);
+	StateVarBuilder stateVarBuilder;
+	TransVarBuilder transVarBuilder;
+	FormulaGenerator<StateFormulaVariable> stateFormGenerator;
+	FormulaGenerator<StateTransFormulaVariable> transFormGenerator;
 
 	// This is the top-level function: it converts an ImlType into an MCMT problem
 	public MCMT generate(ImlType imltype) throws GeneratorException {
@@ -61,6 +61,10 @@ public class MCMTGenerator {
 			// generateType(m, b);
 		}
 		MCMT result = new MCMT();
+		stateVarBuilder = new StateVarBuilder(result);
+		transVarBuilder = new TransVarBuilder(result);
+		stateFormGenerator = new FormulaGenerator<StateFormulaVariable>(stateVarBuilder);
+		transFormGenerator = new FormulaGenerator<StateTransFormulaVariable>(transVarBuilder);
 		if (!isStateMachine(tr)) {
 	        throw new GeneratorException("No SM (State Machine) annotation for "+tr.toString());
 		}
@@ -73,9 +77,40 @@ public class MCMTGenerator {
 	private NamedTransitionSystem generateSystem(MCMT target, SimpleTypeReference tr) throws GeneratorException {
 		String name = generatorServices.getNameFor(tr);
 		NamedStateType statetype = generateStateType(target,"_state", tr);
-		Sexp<FormulaAtom<StateFormulaVariable>> init = generateInit(statetype,tr);
+		Sexp<FormulaAtom<StateFormulaVariable>> init = stateVarBuilder.symbol("true");
+		Sexp<FormulaAtom<StateTransFormulaVariable>> transition = transVarBuilder.symbol("true");
+		for (Symbol s : tr.getType().getSymbols()) {
+			if (s instanceof SymbolDeclaration) {
+				SymbolDeclaration sd = (SymbolDeclaration) s;
+				try {
+					ImlType imlType = typeProvider.bind(sd.getType(), tr);
+					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
+					if (basetype.equals(BaseType.Bool) && (sd.getDefinition() != null)) {
+						// Trying to parse it as state formula
+						try {
+							Sexp<FormulaAtom<StateFormulaVariable>> state_tmp
+								= stateFormGenerator.generate(sd.getDefinition(),statetype,target);
+							NamedStateFormula state_namedForm = new NamedStateFormula(sd.getName(),statetype,state_tmp); 
+							target.addStateFormula(state_namedForm);
+							// target.addStateTransition(namedForm.convert(StateNext.State));
+							target.addStateTransition(state_namedForm.convert(StateNext.Next));
+							if (isInit(sd)) { init = stateVarBuilder.variable(state_namedForm.toString()); }
+						}
+						catch(GeneratorException e) {}
+						// Trying to parse it as transition formula
+						try {
+							Sexp<FormulaAtom<StateTransFormulaVariable>> trans_tmp
+								= transFormGenerator.generate(sd.getDefinition(),statetype,target);
+							NamedStateTransition trans_namedForm = new NamedStateTransition(sd.getName(),statetype,trans_tmp); 
+							target.addStateTransition(trans_namedForm);
+							if (isTransition(sd)) { transition = transVarBuilder.variable(trans_namedForm.toString()); }
+						}
+						catch(GeneratorException e) {}
+					}
+				} catch(GeneratorException e) { /* e.printStackTrace();*/ }
+			}
+		}
 		NamedTransitionSystem result = new NamedTransitionSystem(name, statetype, init); 
-		Sexp<FormulaAtom<StateTransFormulaVariable>> transition = generateTrans(statetype,tr);
 		result.add_transition(transition);
 		target.addTransitionSystem(result);
 		return result;
@@ -108,39 +143,7 @@ public class MCMTGenerator {
 	}
 
 	// Translating the initial formula
-	private Sexp<FormulaAtom<StateFormulaVariable>> generateInit(NamedStateType statetype, SimpleTypeReference tr) throws GeneratorException {
-		for (Symbol s : tr.getType().getSymbols()) {
-			if (s instanceof SymbolDeclaration) {
-				SymbolDeclaration sd = (SymbolDeclaration) s;
-				if (isInit(sd)) {
-					ImlType imlType = typeProvider.bind(sd.getType(), tr);
-					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
-					assert(basetype.equals(BaseType.Bool));
-					return stateFormGenerator.generate(sd.getDefinition(),statetype);
-				}
-			}
-		}
-		return stateVarBuilder.symbol("true");
-	}
-	
-	// Translating the transition formula
-	private Sexp<FormulaAtom<StateTransFormulaVariable>> generateTrans(NamedStateType statetype, SimpleTypeReference tr) throws GeneratorException {
-		for (Symbol s : tr.getType().getSymbols()) {
-			if (s instanceof SymbolDeclaration) {
-				SymbolDeclaration sd = (SymbolDeclaration) s;
-				if (isTransition(sd)) {
-					ImlType imlType = typeProvider.bind(sd.getType(), tr);
-					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
-					assert(basetype.equals(BaseType.Bool));
-					return transFormGenerator.generate(sd.getDefinition(),statetype);
-				}
-			}
-		}
-		return transVarBuilder.symbol("true");
-	}
-
-	// Translating the initial formula
-	private Sexp<FormulaAtom<StateFormulaVariable>> generateQueries(MCMT target, NamedTransitionSystem system, SimpleTypeReference tr) throws GeneratorException {
+	private void generateQueries(MCMT target, NamedTransitionSystem system, SimpleTypeReference tr) throws GeneratorException {
 		NamedStateType statetype = system.getStateType();
 		for (Symbol s : tr.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
@@ -149,12 +152,11 @@ public class MCMTGenerator {
 					ImlType imlType = typeProvider.bind(sd.getType(), tr);
 					BaseType basetype = generateBaseType(generatorServices.getNameFor(imlType));
 					assert(basetype.equals(BaseType.Bool));
-					Query query = new Query(system,stateFormGenerator.generate(sd.getDefinition(),statetype));
+					Query query = new Query(system,stateFormGenerator.generate(sd.getDefinition(),statetype,target));
 					target.addQuery(query);
 				}
 			}
 		}
-		return stateVarBuilder.symbol("true");
 	}
 
 	// Translating base types

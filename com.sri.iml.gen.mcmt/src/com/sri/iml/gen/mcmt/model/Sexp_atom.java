@@ -2,7 +2,7 @@ package com.sri.iml.gen.mcmt.model;
 
 public class Sexp_atom<Atom> extends Sexp<Atom> {
 
-	Atom atom;
+	private Atom atom;
 	
 	public Sexp_atom(Atom atom){
 		this.atom = atom;
@@ -14,6 +14,10 @@ public class Sexp_atom<Atom> extends Sexp<Atom> {
 	
 	public Sexp<String> toSexp(){
 		return new Sexp_atom<String>(this.atom.toString());
+	}
+	
+	Atom getAtom(){
+		return atom;
 	}
 
 }

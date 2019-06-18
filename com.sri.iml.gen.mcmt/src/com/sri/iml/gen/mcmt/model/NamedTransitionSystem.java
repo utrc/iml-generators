@@ -3,7 +3,7 @@ package com.sri.iml.gen.mcmt.model;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class NamedTransitionSystem extends Named implements Instruction, StateTransFormulaVariable {
+public class NamedTransitionSystem extends Named implements Instruction {
 
 	private NamedStateType statetype;
 	private Sexp<FormulaAtom<StateFormulaVariable>> init;

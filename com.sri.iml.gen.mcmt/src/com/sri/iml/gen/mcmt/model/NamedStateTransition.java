@@ -11,6 +11,9 @@ public class NamedStateTransition extends Named implements Instruction, StateTra
 		this.formula = formula;
 	}
 	
+	public Sexp<FormulaAtom<StateTransFormulaVariable>> getFormula() {
+		return formula;
+	}
 
 	public Sexp<String> toSexp() {
 		Sexp_list<String> result = new Sexp_list<String>();
@@ -20,5 +23,5 @@ public class NamedStateTransition extends Named implements Instruction, StateTra
 		result.addRight(formula.toSexp());
 		return result;
 	}
-
+	
 }

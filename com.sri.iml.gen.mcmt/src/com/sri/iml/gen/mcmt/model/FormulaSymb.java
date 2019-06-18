@@ -14,4 +14,8 @@ public class FormulaSymb<V> extends FormulaAtom<V> {
 	public String toString() {
 		return symbol.toString();
 	}
+	
+	String getSymbol(){
+		return symbol;
+	}
 }

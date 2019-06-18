@@ -7,5 +7,5 @@ can be used as variables in a StateFormula
 	- StateVariable */
 
 public interface StateFormulaVariable {
-
+	public StateTransFormulaVariable convert(StateNext which);
 }

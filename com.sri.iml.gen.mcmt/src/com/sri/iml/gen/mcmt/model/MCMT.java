@@ -58,15 +58,15 @@ public class MCMT  {
 		return statetypes.get(name); 
 	}
 
-	public NamedStateFormula addStateFormula(String name) {
+	public NamedStateFormula getStateFormula(String name) {
 		return stateformulas.get(name); 
 	}
 
-	public NamedStateTransition addStateTransition(String name) {
+	public NamedStateTransition getStateTransition(String name) {
 		return statetransitions.get(name); 
 	}
 
-	public NamedTransitionSystem addTransitionSystem(String name) {
+	public NamedTransitionSystem getTransitionSystem(String name) {
 		return statetransitionsystems.get(name); 
 	}
 

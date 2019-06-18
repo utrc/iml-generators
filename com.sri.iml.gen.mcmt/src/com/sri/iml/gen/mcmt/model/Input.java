@@ -10,4 +10,8 @@ public class Input extends Variable implements StateTransFormulaVariable, StateF
 		super(s, ty);
 	}
 
+	public StateTransFormulaVariable convert(StateNext which) {
+		return this;
+	}
+
 }

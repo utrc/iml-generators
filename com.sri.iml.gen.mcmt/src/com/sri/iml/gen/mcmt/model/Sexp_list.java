@@ -54,5 +54,8 @@ public class Sexp_list<Atom> extends Sexp<Atom> {
 		return result;
 	}
 
+	LinkedList<Sexp<Atom>> getList(){
+		return list;
+	}
 
 }

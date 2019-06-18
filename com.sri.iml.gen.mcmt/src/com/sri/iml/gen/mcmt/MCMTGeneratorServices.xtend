@@ -82,10 +82,10 @@ class MCMTGeneratorServices {
 
 	def String convertOp(String op) {
 		switch (op) {
-			case "&&": "&"
-			case "||": "|"
-			case "=>": "->"
-			case "<=>": "<->"
+			case "&&": "and"
+			case "||": "or"
+			case "=>": "=>"
+			case "<=>": "="
 		}
 	}
 
