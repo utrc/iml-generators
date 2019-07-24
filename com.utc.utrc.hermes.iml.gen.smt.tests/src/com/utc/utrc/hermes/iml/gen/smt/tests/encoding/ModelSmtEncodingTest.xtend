@@ -62,6 +62,37 @@ class ModelSmtEncodingTest {
 		
 	}
 	
+	@Test
+	def void testAssessment3SW() {
+		
+		val files = FileUtil.readAllFilesUnderDir("./res/assessment3/SW_static.iml");
+		var ResourceSet rs;
+		for (file : files) {
+			if (rs !== null) {
+				rs = file.parse(rs).eResource.resourceSet			 
+			} else {
+				rs = file.parse.eResource.resourceSet
+			}
+		}
+		var Model swModel = null;
+		for (resource : rs.resources) {
+			if (resource.contents !== null && resource.contents.size > 0) {
+				val model = resource.contents.get(0);
+				if (model instanceof Model) {
+					model.assertNoErrors
+					if ((model as Model).name.equals("examples.SW.static")) {
+						swModel = model;
+					}
+				}
+			}
+		}
+		if (swModel !== null) {
+			encode(swModel as Model, "MC_SW_dot_Impl")
+			println(encoder.toString)
+		}
+		
+	}
+	
 	def encode(Model model, String ctName) {
 		model.assertNoErrors
 		if (ctName !== null) {
