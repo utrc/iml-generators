@@ -29,7 +29,7 @@ import com.utc.utrc.hermes.iml.gen.smt.tests.SmtTestInjectorProvider
 import com.utc.utrc.hermes.iml.ImlParseHelper
 import com.utc.utrc.hermes.iml.iml.Inclusion
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment
-import com.utc.utrc.hermes.iml.gen.smt.encoding.custom.AtomicRelation
+import com.utc.utrc.hermes.iml.gen.smt.encoding.AtomicRelation
 
 @RunWith(XtextRunner)
 @InjectWith(SmtTestInjectorProvider)
@@ -199,21 +199,6 @@ class ImlSmtEncoderTest {
 			(model.findSymbol("T1") as NamedType).findSymbol("vart") as SymbolDeclaration,
 			new TypingEnvironment(model.getSymbolType("T2", "var2") as SimpleTypeReference)
 		)
-		
-		val intToRealSort = assertAndGetSort(intToRealType)
-		val intToIntSort = assertAndGetSort(intToIntType)
-		assertNotSame(intToRealSort, intToIntSort)
-		
-		// Make sure we create function declarations for concurrent sorts
-		val vartIntRealFun = assertAndGetFuncDecl(model.getSymbolType("T2", "var1"), 
-			(model.findSymbol("T1") as NamedType).findSymbol("vart"),
-			#[t1IntReal], intToRealSort
-		)
-		val vartIntIntFun = assertAndGetFuncDecl(model.getSymbolType("T2", "var2"), 
-			(model.findSymbol("T1") as NamedType).findSymbol("vart"),
-			#[t1IntInt], intToIntSort
-		)
-		assertNotSame(vartIntRealFun, vartIntIntFun)
 	}
 	
 	
@@ -231,11 +216,7 @@ class ImlSmtEncoderTest {
 	
 	def assertAndGetFuncDecl(EObject container, EObject imlObject, List<SimpleSort> inputSorts, SimpleSort outputSort) {
 		var SimpleFunDeclaration funcDecl;
-		if (container === null) {
-			funcDecl = encoder.getFuncDeclaration(imlObject)
-		} else {
-			funcDecl = encoder.getFuncDeclaration(container, imlObject)
-		}
+		funcDecl = encoder.getFuncDeclaration(container, imlObject)
 		assertNotNull(funcDecl)
 		assertEquals(outputSort, funcDecl.outputSort)
 		assertContainTheSameElements(inputSorts, funcDecl.inputSorts);

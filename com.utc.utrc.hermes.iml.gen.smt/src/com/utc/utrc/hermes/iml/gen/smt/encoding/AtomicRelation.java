@@ -1,4 +1,4 @@
-package com.utc.utrc.hermes.iml.gen.smt.encoding.custom;
+package com.utc.utrc.hermes.iml.gen.smt.encoding;
 
 import java.lang.reflect.InvocationTargetException;
 

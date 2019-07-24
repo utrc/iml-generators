@@ -27,6 +27,17 @@ public class MCMTranslationProvider {
 
 	}
 
+	public static boolean isA(NamedType t, NamedType imlType) {
+		if (t.getPropertylist() == null)
+			return false;
+		for (Property p : t.getPropertylist().getProperties()) {
+			if (((SimpleTypeReference) p.getRef()).getType() == imlType) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static boolean isA(SymbolDeclaration s, NamedType imlType) {
 		if (s.getPropertylist() == null)
 			return false;
@@ -37,6 +48,7 @@ public class MCMTranslationProvider {
 		}
 		return false;
 	}
+
 	
 	public static boolean isConnect(SymbolReferenceTerm s) {
 		return (s.getSymbol().getName().equals("connect")) ;
