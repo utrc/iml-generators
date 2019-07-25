@@ -115,7 +115,7 @@ public class EncodedId {
 				name = name + "<";
 				name = name + ((SymbolReferenceTerm) imlEObject).getTypeBinding().stream()
 					.map(type -> ImlUtil.getTypeName(type, qnp))
-					.reduce((curr, acc) ->  acc + ", " +  curr).get();
+					.reduce((acc, curr) ->  acc + ", " +  curr).get();
 				name = name + ">";
 			}
 		} else if (imlEObject instanceof InstanceConstructor) {

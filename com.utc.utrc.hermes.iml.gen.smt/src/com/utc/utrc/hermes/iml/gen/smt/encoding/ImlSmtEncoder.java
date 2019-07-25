@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import javax.activation.MailcapCommandMap;
+
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -240,8 +242,8 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		SortT sort = null;
 		if (type instanceof TupleType){
 			sort = smtModelProvider.createTupleSort(sortName, getTupleSorts((TupleType) type));
-//		} else if (isEnum(type)) { // TODO Should check for other Restricitions
-////			sort = smtModelProvider.createEnum(sortName, getEnumList((NamedType) type));
+		} else if (isEnum(type)) { // TODO Should check for other Restricitions
+			sort = smtModelProvider.createEnum(sortName, ImlUtil.getLiterals((NamedType) type));
 		} else {
 			sort = smtModelProvider.createSort(sortName);
 		}
@@ -251,6 +253,16 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	}
 
 	
+	private boolean isEnum(EObject type) {
+		if (type instanceof NamedType) {
+			return ImlUtil.isEnum((NamedType) type);
+		} else if (type instanceof SimpleTypeReference) {
+			return ImlUtil.isEnum(((SimpleTypeReference) type).getType());
+		} else {
+			return false;
+		}
+	}
+
 	public SortT getOrCreateSort(EObject type, TypingEnvironment env) {
 		if (type instanceof NamedType || env == null) {
 			System.err.println("NamedType!!!!!");
@@ -548,6 +560,12 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			TermExpression receiver = ((TermMemberSelection) formula).getReceiver();
 			TermExpression member = ((TermMemberSelection) formula).getMember();
 			
+			if (isEnumSelection((TermMemberSelection) formula)) {
+				NamedType enumType = (NamedType) ((SymbolReferenceTerm)receiver).getSymbol();
+				encode(enumType);
+				return smtModelProvider.createFormula(((SymbolReferenceTerm)member).getSymbol().getName());
+			}
+			
 			FormulaT receiverFormula = encodeFormula(receiver, env, inst, scope);
 			ImlType receiverType = typeProvider.termExpressionType(receiver, env);
 			if (receiverType instanceof SimpleTypeReference) {
@@ -629,7 +647,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			forallScope.addAll(scope.stream().map(symbol -> smtModelProvider.createFormula(
 					symbol.getName(), getOrCreateSort(symbol.getType(), env))).collect(Collectors.toList()));
 			
-			String newInst = ((inst != null)? inst + " " : "") + scope.stream().map(symbol -> symbol.getName()).reduce((curr, acc) -> acc + " " + curr).orElse(""); // TODO really bad hack, need better solution
+			String newInst = ((inst != null)? inst + " " : "") + scope.stream().map(symbol -> symbol.getName()).reduce((acc, curr) -> acc + " " + curr).orElse(""); // TODO really bad hack, need better solution
 			
 			FormulaT instanceConsDef = encodeFormula(instanceConstructor.getDefinition(), env, smtModelProvider.createFormula(newInst), scope);
 			instanceConsDef = smtModelProvider.createFormula(OperatorType.ASSERT, 
@@ -687,6 +705,15 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		throw new SMTEncodingException("Couldn't encode the formula to SMT!" + formula);
 	}
 
+	private boolean isEnumSelection(TermMemberSelection formula) {
+		if (formula.getReceiver() instanceof SymbolReferenceTerm && ((SymbolReferenceTerm) formula.getReceiver()).getSymbol() instanceof NamedType) {
+			NamedType reciever = (NamedType) ((SymbolReferenceTerm) formula.getReceiver()).getSymbol();
+			List<String> literals = ImlUtil.getLiterals(reciever);
+			return formula.getMember() instanceof SymbolReferenceTerm && literals.contains(((SymbolReferenceTerm) formula.getMember()).getSymbol().getName());
+		}
+		return false;
+	}
+
 	private boolean isAssertion(FolFormula formula) {
 		return EcoreUtil2.getContainerOfType(formula, Assertion.class) != null;
 	}
@@ -708,6 +735,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		
 		if (symbolRef.getSymbol() instanceof NamedType) { // Check for NamedType symbol
 			// TODO We only support enum now
+			encode((NamedType) symbolRef.getSymbol());
 		}
 		
 		FuncDeclT symbolAccess = getOrCreateSymbolDeclFun(symbolRef, env);
