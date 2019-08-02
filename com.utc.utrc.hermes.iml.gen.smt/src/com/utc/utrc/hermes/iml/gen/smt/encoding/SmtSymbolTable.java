@@ -111,4 +111,11 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 		this.assertions = assertions;
 	}
 
+	public void clear() {
+		encodedIdFactory.reset();
+		assertions.clear();
+		funDecls.clear();
+		sorts.clear();
+	}
+
 }

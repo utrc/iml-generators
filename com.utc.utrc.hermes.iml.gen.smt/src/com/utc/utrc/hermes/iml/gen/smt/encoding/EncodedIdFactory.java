@@ -39,4 +39,8 @@ public class EncodedIdFactory {
 	public String getStringId(EObject imlObject, EObject container) {
 		return createEncodedId(imlObject, container).stringId();
 	}
+	
+	public void reset() {
+		lastId = 0;
+	}
 }

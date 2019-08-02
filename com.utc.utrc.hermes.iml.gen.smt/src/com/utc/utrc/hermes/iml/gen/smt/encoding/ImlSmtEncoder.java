@@ -180,7 +180,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 
 			addTypeSort(type);
 
-			for (TypeWithProperties relationType : getRelationTypes(type)) {
+			for (TypeWithProperties relationType : getRelatedTypesWithProp(type)) {
 				defineTypes(env.bind(relationType.getType()));
 			}
 		} 
@@ -869,7 +869,19 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	}
 
 	public FormulaT encodeFormula(FolFormula formula, SymbolDeclaration symbol) throws SMTEncodingException {
-		return encodeFormula(formula, new TypingEnvironment((SimpleTypeReference) symbol.getType()),  smtModelProvider.createFormula(symbol.getName()), new ArrayList<>());
+		if (symbol == null) {
+			return encodeFormula(formula, new TypingEnvironment(), null, new ArrayList<>());
+		} else {
+			return encodeFormula(formula, new TypingEnvironment((SimpleTypeReference) symbol.getType()),  smtModelProvider.createFormula(symbol.getName()), new ArrayList<>());
+		}
+	}
+	
+	/**
+	 * Reset the encoder to allow encoding new models
+	 */
+	public void reset() {
+		symbolTable.clear();
+		aliases.clear();
 	}
 	
 }
