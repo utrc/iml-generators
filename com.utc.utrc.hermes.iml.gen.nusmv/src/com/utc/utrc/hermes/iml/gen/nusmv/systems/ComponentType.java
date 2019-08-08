@@ -8,9 +8,12 @@ import java.util.Map;
 import org.eclipse.xtext.xbase.lib.Pair;
 
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
+import com.utc.utrc.hermes.iml.iml.TraitExhibition;
+import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 
 public class ComponentType {
 
@@ -150,6 +153,24 @@ public class ComponentType {
 					sd.add((SymbolDeclaration)s);
 				}
 			}
+			
+			// also need to gather from exhibited traits
+			// not dealing with shadowing
+			for (Relation rl : ((SimpleTypeReference)type).getType().getRelations()) {
+				if (rl instanceof TraitExhibition) {
+					TraitExhibition tr = (TraitExhibition) rl;
+					for (TypeWithProperties twp : tr.getExhibitions()) {
+						if (twp.getType() instanceof SimpleTypeReference) {
+							for(Symbol s : ((SimpleTypeReference)(twp.getType())).getType().getSymbols()) {
+								if ( (s instanceof SymbolDeclaration) && ! ( ports.containsKey(s.getName()) || subs.containsKey(s.getName()) || connections.containsKey(s.getName())) ) {
+									sd.add((SymbolDeclaration)s);
+								}
+							}
+						}
+					}
+				}
+			}
+	
 		}
 		return sd ;
 	}
