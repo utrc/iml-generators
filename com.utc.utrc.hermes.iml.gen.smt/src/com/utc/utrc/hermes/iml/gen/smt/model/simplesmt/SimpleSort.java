@@ -1,8 +1,8 @@
-package com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt;
+package com.utc.utrc.hermes.iml.gen.smt.model.simplesmt;
 
 import java.util.List;
 
-import com.utc.utrc.hermes.iml.gen.smt.encoding.AbstractSort;
+import com.utc.utrc.hermes.iml.gen.smt.model.AbstractSort;
 
 public class SimpleSort extends AbstractSort {
 	SimpleSort domain;

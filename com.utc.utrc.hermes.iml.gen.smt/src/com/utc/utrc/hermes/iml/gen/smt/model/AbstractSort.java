@@ -1,5 +1,6 @@
-package com.utc.utrc.hermes.iml.gen.smt.encoding;
+package com.utc.utrc.hermes.iml.gen.smt.model;
 
+import com.utc.utrc.hermes.iml.gen.smt.encoding.SmtStandardLib;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 
 public class AbstractSort implements NamedEntity {

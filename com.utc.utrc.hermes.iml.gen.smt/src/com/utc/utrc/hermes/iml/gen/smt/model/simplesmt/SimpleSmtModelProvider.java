@@ -1,11 +1,10 @@
-package com.utc.utrc.hermes.iml.gen.smt.encoding;
+package com.utc.utrc.hermes.iml.gen.smt.model.simplesmt;
 
 import java.util.Arrays;
 import java.util.List;
 
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleFunDeclaration;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSmtFormula;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSort;
+import com.utc.utrc.hermes.iml.gen.smt.encoding.OperatorType;
+import com.utc.utrc.hermes.iml.gen.smt.model.SmtModelProvider;
 
 /**
  * This is a simple implementation of SmtModelProvider using simple SMT model
@@ -68,6 +67,12 @@ public class SimpleSmtModelProvider implements SmtModelProvider<SimpleSort, Simp
 	@Override
 	public SimpleSort createEnum(String sortName, List<String> enumList) {
 		return new SimpleSort(sortName, enumList, null);
+	}
+
+	@Override
+	public SimpleFunDeclaration createFuncDef(String funName, List<SimpleSmtFormula> inputParams, SimpleSort outputSort,
+			SimpleSmtFormula funcDef) {
+		return new SimpleFunDeclaration(funName, inputParams, outputSort, funcDef);
 	}
 
 

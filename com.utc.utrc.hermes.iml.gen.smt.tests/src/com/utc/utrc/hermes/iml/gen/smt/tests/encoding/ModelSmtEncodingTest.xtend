@@ -2,9 +2,6 @@ package com.utc.utrc.hermes.iml.gen.smt.tests.encoding
 
 import com.google.inject.Inject
 import com.utc.utrc.hermes.iml.gen.smt.encoding.ImlSmtEncoder
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleFunDeclaration
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSmtFormula
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSort
 import com.utc.utrc.hermes.iml.iml.Model
 import com.utc.utrc.hermes.iml.tests.TestHelper
 import org.eclipse.xtext.testing.InjectWith
@@ -18,6 +15,9 @@ import com.utc.utrc.hermes.iml.util.FileUtil
 import org.eclipse.emf.ecore.resource.ResourceSet
 import com.utc.utrc.hermes.iml.gen.smt.tests.SmtTestInjectorProvider
 import com.utc.utrc.hermes.iml.ImlParseHelper
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSort
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleFunDeclaration
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSmtFormula
 
 @RunWith(XtextRunner)
 @InjectWith(SmtTestInjectorProvider)

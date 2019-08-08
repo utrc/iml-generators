@@ -1,4 +1,4 @@
-package com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt;
+package com.utc.utrc.hermes.iml.gen.smt.model.simplesmt;
 
 import java.util.List;
 

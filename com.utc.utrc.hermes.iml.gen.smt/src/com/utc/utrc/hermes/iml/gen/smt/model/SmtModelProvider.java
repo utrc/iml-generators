@@ -1,6 +1,8 @@
-package com.utc.utrc.hermes.iml.gen.smt.encoding;
+package com.utc.utrc.hermes.iml.gen.smt.model;
 
 import java.util.List;
+
+import com.utc.utrc.hermes.iml.gen.smt.encoding.OperatorType;
 
 /**
  * This interface abstract the creation of an SMT model
@@ -20,6 +22,8 @@ public interface SmtModelProvider <SortT, FuncDeclT, FormulaT> {
 	public SortT createTupleSort(String sortName, List<SortT> sorts);
 	
 	public FuncDeclT createFuncDecl(String funName, List<SortT> inputSorts, SortT outputSort);
+	
+	public FuncDeclT createFuncDef(String funName, List<FormulaT> inputParams, SortT outputSort, FormulaT funcDef);
 
 	public FuncDeclT createConst(String symbolId, SortT symbolSort);
 

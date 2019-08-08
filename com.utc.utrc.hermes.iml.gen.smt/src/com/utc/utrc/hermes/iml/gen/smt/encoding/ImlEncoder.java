@@ -13,14 +13,14 @@ import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
  * @author Gerald Wang (wangg@utrc.utc.com) 
  */
 public interface ImlEncoder {
-	public void encode(NamedType type);
+	public void encode(NamedType type) throws SMTEncodingException;
 	
-	public void encode(ImlType imlType);
+	public void encode(ImlType imlType) throws SMTEncodingException;
 	
-	public void encode(Symbol symbol);
+	public void encode(Symbol symbol) throws SMTEncodingException;
 	
-	public void encode(SymbolDeclaration symbol);
+	public void encode(SymbolDeclaration symbol) throws SMTEncodingException;
 	
-	public void encode(Model model);
+	public void encode(Model model) throws SMTEncodingException;
 	
 }
