@@ -2,6 +2,7 @@ package com.utc.utrc.hermes.iml.gen.nusmv.df.generator;
 
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -28,6 +29,8 @@ import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
 import com.utc.utrc.hermes.iml.iml.NamedType;
+import com.utc.utrc.hermes.iml.iml.Refinement;
+import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
@@ -35,7 +38,9 @@ import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
 import com.utc.utrc.hermes.iml.iml.TailedExpression;
 import com.utc.utrc.hermes.iml.iml.TermExpression;
 import com.utc.utrc.hermes.iml.iml.Trait;
+import com.utc.utrc.hermes.iml.iml.TraitExhibition;
 import com.utc.utrc.hermes.iml.iml.TupleConstructor;
+import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
@@ -202,9 +207,43 @@ public class LustreGenerator {
 					addSymbol(target, sd, tr);
 				}
 			}
+			
+			// process relations
+			gatherFromRelation(m, tr, target);
 
 			return target;
 		}
+	}
+
+	private void gatherFromRelation(LustreModel m, SimpleTypeReference str, LustreNode target) {
+		String type_name = ImlUtil.getTypeName(str, qnp);
+		for (Symbol s : str.getType().getSymbols()) {
+			if (s instanceof SymbolDeclaration) {
+				SymbolDeclaration sd = (SymbolDeclaration) s;
+				addSymbol(target, sd, str);
+			}
+		}	
+		TypingEnvironment tEnv = new TypingEnvironment(str);
+		for (Relation rl : str.getType().getRelations()) {
+			if (rl instanceof TraitExhibition) {
+				TraitExhibition tr = (TraitExhibition) rl;
+				for (TypeWithProperties twp : tr.getExhibitions()) {
+					if (twp.getType() instanceof SimpleTypeReference) {
+						ImlType boundType = tEnv.bind(twp.getType());
+						gatherFromRelation(m, (SimpleTypeReference) boundType, target);
+					}
+				}
+			}
+			else if (rl instanceof Refinement) {
+				Refinement tr = (Refinement) rl;
+				for (TypeWithProperties twp : tr.getRefinements()) {
+					if (twp.getType() instanceof SimpleTypeReference) {
+						ImlType boundType = tEnv.bind(twp.getType());
+						gatherFromRelation(m, (SimpleTypeReference) boundType, target);
+					}
+				}				
+			}
+		}		
 	}
 
 	public LustreSymbol addSymbol(LustreNode target, SymbolDeclaration sd, SimpleTypeReference ctx) {
@@ -243,7 +282,7 @@ public class LustreGenerator {
 		return target;
 	}
 
-	private LustreSymbol generateInput(LustreNode m, Port p) {
+	private LustreSymbol generateInput_old(LustreNode m, Port p) {
 
 		if (p.getDataType() instanceof SimpleTypeReference) {
 			LustreSymbol target = new LustreSymbol(p.getName());
@@ -258,11 +297,56 @@ public class LustreGenerator {
 		return new LustreSymbol("__UNSUPPORTED__");
 	}
 
-	private LustreSymbol generateOutput(LustreNode m, Port p, SimpleTypeReference ctx) {
+	private LustreSymbol generateInput(LustreNode m, Port p) {
+
+		if (p.getType() instanceof SimpleTypeReference) {
+			LustreSymbol target = new LustreSymbol(p.getName());
+			LustreNode nbound = generateType(m.getContainer(), (SimpleTypeReference) p.getType());
+			LustreTypeInstance ti = new LustreTypeInstance(nbound);
+			target.setType(ti);
+			target.setElementType(LustreElementType.PARAMETER);
+			m.addSymbol(target);
+			return target;
+		}
+
+		return new LustreSymbol("__UNSUPPORTED__");
+	}
+	
+	
+	private LustreSymbol generateOutput_old(LustreNode m, Port p, SimpleTypeReference ctx) {
 
 		if (p.getDataType() instanceof SimpleTypeReference) {
 			LustreSymbol target = new LustreSymbol(p.getName());
 			LustreNode nbound = generateType(m.getContainer(), (SimpleTypeReference) p.getDataType());
+			LustreTypeInstance ti = new LustreTypeInstance(nbound);
+			target.setType(ti);
+			if (p.getDefinition() != null) {
+				// TODO need to generalize this
+				if (p.getDefinition() instanceof SignedAtomicFormula) {
+					if (p.getDefinition().getLeft() instanceof InstanceConstructor) {
+						InstanceConstructor cons = (InstanceConstructor) p.getDefinition().getLeft();
+						SymbolDeclaration var = cons.getRef();
+						Map<Symbol, String> remap = new HashMap<>();
+						remap.put(var, p.getName());
+						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap) ;
+						target.setDefinition(expr.replace(p.getName() + "=", ""));
+					}
+				}
+			}
+			target.setElementType(LustreElementType.RETURN);
+			
+			m.addSymbol(target);
+			return target;
+		}
+
+		return new LustreSymbol("__UNSUPPORTED__");
+	}
+
+	private LustreSymbol generateOutput(LustreNode m, Port p, SimpleTypeReference ctx) {
+
+		if (p.getType() instanceof SimpleTypeReference) {
+			LustreSymbol target = new LustreSymbol(p.getName());
+			LustreNode nbound = generateType(m.getContainer(), (SimpleTypeReference) p.getType());
 			LustreTypeInstance ti = new LustreTypeInstance(nbound);
 			target.setType(ti);
 			if (p.getDefinition() != null) {

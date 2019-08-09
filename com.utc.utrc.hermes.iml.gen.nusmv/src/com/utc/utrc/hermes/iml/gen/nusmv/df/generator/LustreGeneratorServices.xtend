@@ -127,27 +127,33 @@ class LustreGeneratorServices {
 		} 
 		var nodes = 
 		'''
-			node «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
+			node imported «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
 			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
 			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
-				var
-				«FOR v : m.variables.values SEPARATOR '; \n' AFTER ';'» «v.name» : «v.type.type.toLustreName»«ENDFOR» 
-				«FOR v : m.fields.values SEPARATOR '; \n' AFTER ';'» «v.name» : «v.type.type.toLustreName»«ENDFOR» 
+			(*@contract
+«««				var
+«««				«FOR v : m.variables.values SEPARATOR '; \n' AFTER ';'» var «v.name» : «v.type.type.toLustreName»«ENDFOR» 
+				«FOR v : m.fields.values SEPARATOR '; \n' AFTER ';'» var «v.name» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
 				«FOR v : m.components.values» 
-				«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
-				«ENDFOR» 
+				«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
+				«ENDFOR»
+			*) 
+			«FOR v : m.variables.values» var «v.name» : «v.type.type.toLustreName» ; \n «ENDFOR» 
+			«FOR v : m.fields.values» «IF v.definition === null » var «v.name» : «v.type.type.toLustreName» ; \n «ENDIF» «ENDFOR» 
 			«ENDIF»
-			let
 			«IF (m.components.size > 0)»
+			let
+«««			«IF (m.components.size > 0)»
 			«FOR v : m.components.values » 
 			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
 			«ENDFOR» 
-			«ENDIF»
-			«IF (m.fields.size > 0)»
-			«FOR v : m.fields.values» «IF v.definition !== null» «v.name» = «v.definition» ; «'\n '» «ENDIF»«ENDFOR» 
-			«ENDIF»
-			«FOR v : m.lets.values AFTER '; \n'»«v.definition»«ENDFOR»
+«««			«ENDIF»
+«««			«IF (m.fields.size > 0)»
+«««			«FOR v : m.fields.values» «IF v.definition !== null» «v.name» = «v.definition» ; «'\n '» «ENDIF»«ENDFOR» 
+«««			«ENDIF»
+«««			«FOR v : m.lets.values AFTER '; \n'»«v.definition»«ENDFOR»
 			tel
+			«ENDIF»
 		'''
 		var closed = new ArrayList<String>() ;
 		while(functional_nodes.size > 0) {
