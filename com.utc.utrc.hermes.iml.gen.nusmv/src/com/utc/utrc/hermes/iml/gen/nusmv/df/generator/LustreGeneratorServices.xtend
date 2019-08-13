@@ -244,7 +244,8 @@ class LustreGeneratorServices {
 
 				// get the data field of the data port
 				if (isCarrierAccess(e.member)) {
-					retval = '''«serialize(e.receiver,ctx,map)»'''
+//					retval = '''«serialize(e.receiver,ctx,map)»'''
+					retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
 				} else {
 					retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
 				}
