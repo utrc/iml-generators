@@ -68,12 +68,16 @@ public class SimpleSmtFormula {
 			return "(" + op.getSmtOp() + " " + paramsString + ")";
 		} else if (funDecl != null) {
 			if (paramsString.isEmpty()) {
-				return "|" + funDecl.name + "|" ;
+				return funDecl.getQuotedName() ;
 			} else {
-				return "(|" + funDecl.name + "| " + paramsString + ")";
+				return "(" + funDecl.getQuotedName() + " " + paramsString + ")";
 			}
 		} else if (!paramsString.isEmpty()) {
-			return "(" + paramsString + ")";
+			if (paramsString.contains(" ")) { // TODO find better way to implement this
+				return "(" + paramsString + ")";
+			} else {
+				return paramsString ;
+			}
 		} else {
 			String valueString = value.toString();
 			if (SmtStandardLib.isNative(valueString)) {

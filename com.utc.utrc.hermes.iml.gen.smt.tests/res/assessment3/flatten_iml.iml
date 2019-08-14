@@ -1,0 +1,1023 @@
+package p;
+
+/* 
+ * For each type, I have created a sort of template.
+ * The template includes the list of fields of that 
+ * type with the prefix "inst__". I have used these
+ * templates to quickly generate instances by replacing
+ * the prefix with the name of the variable to instantiate. 
+ * */
+
+/* 
+Coordinate_dot_Impl 
+
+ inst__lat : Int ;
+ inst__long : Int ;
+ inst__alt : Int ;
+*/
+
+
+/* 
+Map_dot_Impl
+
+ inst__wp1__lat : Int ;
+ inst__wp1__long : Int ;
+ inst__wp1__alt : Int ; 
+ inst__wp2__lat : Int ;
+ inst__wp2__long : Int ;
+ inst__wp2__alt : Int ;
+ inst__wp3__lat : Int ;
+ inst__wp3__long : Int ;
+ inst__wp3__alt : Int ;
+ inst__wp4__lat : Int ;
+ inst__wp4__long : Int ;
+ inst__wp4__alt : Int ;
+ * */
+
+/*This is the only type that remained */
+//type FlightPattern enum { ZigZag , StraightLine , Perimeter } ; 
+
+
+/*
+Command_dot_Impl
+
+ inst__Map__wp1__lat : Int ;
+ inst__Map__wp1__long : Int ;
+ inst__Map__wp1__alt : Int ; 
+ inst__Map__wp2__lat : Int ;
+ inst__Map__wp2__long : Int ;
+ inst__Map__wp2__alt : Int ;
+ inst__Map__wp3__lat : Int ;
+ inst__Map__wp3__long : Int ;
+ inst__Map__wp3__alt : Int ;
+ inst__Map__wp4__lat : Int ;
+ inst__Map__wp4__long : Int ;
+ inst__Map__wp4__alt : Int ;
+ inst__Pattern : FlightPattern ;
+ inst__HMAC : Bool ;
+ */
+ 
+/* 
+ Mission_dot_Impl
+ 
+ inst__wp1__lat : Int ;
+ inst__wp1__long : Int ;
+ inst__wp1__alt : Int ; 
+ inst__wp2__lat : Int ;
+ inst__wp2__long : Int ;
+ inst__wp2__alt : Int ;
+ inst__wp3__lat : Int ;
+ inst__wp3__long : Int ;
+ inst__wp3__alt : Int ;
+ inst__wp4__lat : Int ;
+ inst__wp4__long : Int ;
+ inst__wp4__alt : Int ;
+ inst__wp5__lat : Int ;
+ inst__wp5__long : Int ;
+ inst__wp5__alt : Int ; 
+ inst__wp6__lat : Int ;
+ inst__wp6__long : Int ;
+ inst__wp6__alt : Int ;
+ inst__wp7__lat : Int ;
+ inst__wp7__long : Int ;
+ inst__wp7__alt : Int ;
+ inst__wp8__lat : Int ;
+ inst__wp8__long : Int ;
+ inst__wp8__alt : Int ;
+ inst__wp9__lat : Int ;
+ inst__wp9__long : Int ;
+ inst__wp9__alt : Int ;
+ inst__wp10__lat : Int ;
+ inst__wp10__long : Int ;
+ inst__wp10__alt : Int ;
+ * */
+ 
+
+/* 
+MissionWindow_dot_Impl
+
+ inst__wp1__lat : Int ;
+ inst__wp1__long : Int ;
+ inst__wp1__alt : Int ; 
+ inst__wp2__lat : Int ;
+ inst__wp2__long : Int ;
+ inst__wp2__alt : Int ;
+ inst__wp3__lat : Int ;
+ inst__wp3__long : Int ;
+ inst__wp3__alt : Int ;
+ inst__wp4__lat : Int ;
+ inst__wp4__long : Int ;
+ inst__wp4__alt : Int ;
+ inst__crc : Bool ;
+ * */
+ 
+
+/* 
+RadioDriver_dot_Impl
+
+ inst__recv_map_in__event : Bool ;
+ inst__recv_map_in__data__Map__wp1__lat : Int ;
+ inst__recv_map_in__data__Map__wp1__long : Int ;
+ inst__recv_map_in__data__Map__wp1__alt : Int ; 
+ inst__recv_map_in__data__Map__wp2__lat : Int ;
+ inst__recv_map_in__data__Map__wp2__long : Int ;
+ inst__recv_map_in__data__Map__wp2__alt : Int ;
+ inst__recv_map_in__data__Map__wp3__lat : Int ;
+ inst__recv_map_in__data__Map__wp3__long : Int ;
+ inst__recv_map_in__data__Map__wp3__alt : Int ;
+ inst__recv_map_in__data__Map__wp4__lat : Int ;
+ inst__recv_map_in__data__Map__wp4__long : Int ;
+ inst__recv_map_in__data__Map__wp4__alt : Int ;
+ inst__recv_map_in__data__Pattern : FlightPattern ;
+ inst__recv_map_in__data__HMAC : Bool ;
+ inst__send_status_out__event : Bool ;
+ inst__send_status_out__data__lat : Int ;
+ inst__send_status_out__data__long : Int ;
+ inst__send_status_out__data__alt : Int ;
+ inst__send_status_in__event : Bool ;
+ inst__send_status_in__data__lat : Int ;
+ inst__send_status_in__data__long : Int ;
+ inst__send_status_in__data__alt : Int ;
+ inst__recv_map_in__event : Bool ;
+ inst__recv_map_out__data__Map__wp1__lat : Int ;
+ inst__recv_map_out__data__Map__wp1__long : Int ;
+ inst__recv_map_out__data__Map__wp1__alt : Int ; 
+ inst__recv_map_out__data__Map__wp2__lat : Int ;
+ inst__recv_map_out__data__Map__wp2__long : Int ;
+ inst__recv_map_out__data__Map__wp2__alt : Int ;
+ inst__recv_map_out__data__Map__wp3__lat : Int ;
+ inst__recv_map_out__data__Map__wp3__long : Int ;
+ inst__recv_map_out__data__Map__wp3__alt : Int ;
+ inst__recv_map_out__data__Map__wp4__lat : Int ;
+ inst__recv_map_out__data__Map__wp4__long : Int ;
+ inst__recv_map_out__data__Map__wp4__alt : Int ;
+ inst__recv_map_out__data__Pattern : FlightPattern ;
+ inst__recv_map_out__data__HMAC : Bool ;
+ inst__Req001_RadioDriver : Bool := inst__recv_map_in__data__HMAC ;
+ inst__Req002_RadioDriver : Bool := inst__recv_map_out__data__HMAC ;
+ inst__assumption : Bool := inst__Req001_RadioDriver ;
+ inst__guarantee : Bool := inst__Req002_RadioDriver ;
+ * */
+
+
+/* 
+FlightPlanner_dot_Impl 
+
+ inst__flight_plan__data__wp1__lat : Int ;
+ inst__flight_plan__data__wp1__long : Int ;
+ inst__flight_plan__data__wp1__alt : Int ; 
+ inst__flight_plan__data__wp2__lat : Int ;
+ inst__flight_plan__data__wp2__long : Int ;
+ inst__flight_plan__data__wp2__alt : Int ;
+ inst__flight_plan__data__wp3__lat : Int ;
+ inst__flight_plan__data__wp3__long : Int ;
+ inst__flight_plan__data__wp3__alt : Int ;
+ inst__flight_plan__data__wp4__lat : Int ;
+ inst__flight_plan__data__wp4__long : Int ;
+ inst__flight_plan__data__wp4__alt : Int ;
+ inst__flight_plan__data__wp5__lat : Int ;
+ inst__flight_plan__data__wp5__long : Int ;
+ inst__flight_plan__data__wp5__alt : Int ; 
+ inst__flight_plan__data__wp6__lat : Int ;
+ inst__flight_plan__data__wp6__long : Int ;
+ inst__flight_plan__data__wp6__alt : Int ;
+ inst__flight_plan__data__wp7__lat : Int ;
+ inst__flight_plan__data__wp7__long : Int ;
+ inst__flight_plan__data__wp7__alt : Int ;
+ inst__flight_plan__data__wp8__lat : Int ;
+ inst__flight_plan__data__wp8__long : Int ;
+ inst__flight_plan__data__wp8__alt : Int ;
+ inst__flight_plan__data__wp9__lat : Int ;
+ inst__flight_plan__data__wp9__long : Int ;
+ inst__flight_plan__data__wp9__alt : Int ;
+ inst__flight_plan__data__wp10__lat : Int ;
+ inst__flight_plan__data__wp10__long : Int ;
+ inst__flight_plan__data__wp10__alt : Int ; 
+ inst__recv_map__data__Map__wp1__lat : Int ;
+ inst__recv_map__data__Map__wp1__long : Int ;
+ inst__recv_map__data__Map__wp1__alt : Int ; 
+ inst__recv_map__data__Map__wp2__lat : Int ;
+ inst__recv_map__data__Map__wp2__long : Int ;
+ inst__recv_map__data__Map__wp2__alt : Int ;
+ inst__recv_map__data__Map__wp3__lat : Int ;
+ inst__recv_map__data__Map__wp3__long : Int ;
+ inst__recv_map__data__Map__wp3__alt : Int ;
+ inst__recv_map__data__Map__wp4__lat : Int ;
+ inst__recv_map__data__Map__wp4__long : Int ;
+ inst__recv_map__data__Map__wp4__alt : Int ;
+ inst__recv_map__data__Pattern : FlightPattern ;
+ inst__recv_map__data__HMAC : Bool ;
+ inst__position_status__data__lat : Int ;
+ inst__position_status__data__long : Int ;
+ inst__position_status__data__alt : Int ;
+ inst__Req001_FlightPlanner : Bool := inst__recvmap__data__HMAC ;
+  inst__Req002_FlightPlanner : Bool := 
+  inst__recv_map__data__Map__wp1__lat >= -90 && inst__recv_map__data__Map__wp1__lat <= 90 && 
+inst__recv_map__data__Map__wp1__long >= -180 && inst__recv_map__data__Map__wp1__long <= 180 && 
+inst__recv_map__data__Map__wp1__alt >= 0 && inst__recv_map__data__Map__wp1__alt <= 15000 &&
+inst__recv_map__data__Map__wp2__lat >= -90 && inst__recv_map__data__Map__wp2__lat <= 90 && 
+inst__recv_map__data__Map__wp2__long >= -180 && inst__recv_map__data__Map__wp2__long <= 180 && 
+inst__recv_map__data__Map__wp2__alt >= 0 && inst__recv_map__data__Map__wp2__alt <= 15000 &&
+inst__recv_map__data__Map__wp3__lat >= -90 && inst__recv_map__data__Map__wp3__lat <= 90 && 
+inst__recv_map__data__Map__wp3__long >= -180 && inst__recv_map__data__Map__wp3__long <= 180 && 
+inst__recv_map__data__Map__wp3__alt >= 0 && inst__recv_map__data__Map__wp3__alt <= 15000 &&
+inst__recv_map__data__Map__wp4__lat >= -90 && inst__recv_map__data__Map__wp4__lat <= 90 && 
+inst__recv_map__data__Map__wp4__long >= -180 && inst__recv_map__data__Map__wp4__long <= 180 && 
+inst__recv_map__data__Map__wp4__alt >= 0 && inst__recv_map__data__Map__wp4__alt <= 15000 ;
+
+inst__Req003_FlightPlanner : Bool := 
+inst__flight_plan__data__wp1__lat >= -90 && inst__flight_plan__data__wp1__lat <= 90 && 
+inst__flight_plan__data__wp1__long >= -180 && inst__flight_plan__data__wp1__long <= 180 && 
+inst__flight_plan__data__wp1__alt >= 0 && inst__flight_plan__data__wp1__alt <= 15000 &&
+inst__flight_plan__data__wp2__lat >= -90 && inst__flight_plan__data__wp2__lat <= 90 && 
+inst__flight_plan__data__wp2__long >= -180 && inst__flight_plan__data__wp2__long <= 180 && 
+inst__flight_plan__data__wp2__alt >= 0 && inst__flight_plan__data__wp2__alt <= 15000 &&
+inst__flight_plan__data__wp3__lat >= -90 && inst__flight_plan__data__wp3__lat <= 90 && 
+inst__flight_plan__data__wp3__long >= -180 && inst__flight_plan__data__wp3__long <= 180 && 
+inst__flight_plan__data__wp3__alt >= 0 && inst__flight_plan__data__wp3__alt <= 15000 &&
+inst__flight_plan__data__wp4__lat >= -90 && inst__flight_plan__data__wp4__lat <= 90 && 
+inst__flight_plan__data__wp4__long >= -180 && inst__flight_plan__data__wp4__long <= 180 && 
+inst__flight_plan__data__wp4__alt >= 0 && inst__flight_plan__data__wp4__alt <= 15000 &&
+inst__flight_plan__data__wp5__lat >= -90 && inst__flight_plan__data__wp5__lat <= 90 && 
+inst__flight_plan__data__wp5__long >= -180 && inst__flight_plan__data__wp5__long <= 180 && 
+inst__flight_plan__data__wp5__alt >= 0 && inst__flight_plan__data__wp5__alt <= 15000 &&
+inst__flight_plan__data__wp6__lat >= -90 && inst__flight_plan__data__wp6__lat <= 90 && 
+inst__flight_plan__data__wp6__long >= -180 && inst__flight_plan__data__wp6__long <= 180 && 
+inst__flight_plan__data__wp6__alt >= 0 && inst__flight_plan__data__wp6__alt <= 15000 &&
+inst__flight_plan__data__wp7__lat >= -90 && inst__flight_plan__data__wp7__lat <= 90 && 
+inst__flight_plan__data__wp7__long >= -180 && inst__flight_plan__data__wp7__long <= 180 && 
+inst__flight_plan__data__wp7__alt >= 0 && inst__flight_plan__data__wp7__alt <= 15000 &&
+inst__flight_plan__data__wp8__lat >= -90 && inst__flight_plan__data__wp8__lat <= 90 && 
+inst__flight_plan__data__wp8__long >= -180 && inst__flight_plan__data__wp8__long <= 180 && 
+inst__flight_plan__data__wp8__alt >= 0 && inst__flight_plan__data__wp8__alt <= 15000 &&
+inst__flight_plan__data__wp9__lat >= -90 && inst__flight_plan__data__wp9__lat <= 90 && 
+inst__flight_plan__data__wp9__long >= -180 && inst__flight_plan__data__wp9__long <= 180 && 
+inst__flight_plan__data__wp9__alt >= 0 && inst__flight_plan__data__wp9__alt <= 15000 &&
+inst__flight_plan__data__wp10__lat >= -90 && inst__flight_plan__data__wp10__lat <= 90 && 
+inst__flight_plan__data__wp10__long >= -180 && inst__flight_plan__data__wp10__long <= 180 && 
+inst__flight_plan__data__wp10__alt >= 0 && inst__flight_plan__data__wp10__alt <= 15000 ;
+* 
+inst__assumption : Bool :=  inst__Req001_FlightPlanner && inst__Req002_FlightPlanner ;
+inst__guarantee : Bool :=  inst__Req003_FlightPlanner ;
+ */
+
+
+/* 
+WaypointManager_dot_Impl 
+
+ inst__flight_plan_data__wp1__lat : Int ;
+ inst__flight_plan_data__wp1__long : Int ;
+ inst__flight_plan_data__wp1__alt : Int ; 
+ inst__flight_plan_data__wp2__lat : Int ;
+ inst__flight_plan_data__wp2__long : Int ;
+ inst__flight_plan_data__wp2__alt : Int ;
+ inst__flight_plan_data__wp3__lat : Int ;
+ inst__flight_plan_data__wp3__long : Int ;
+ inst__flight_plan_data__wp3__alt : Int ;
+ inst__flight_plan_data__wp4__lat : Int ;
+ inst__flight_plan_data__wp4__long : Int ;
+ inst__flight_plan_data__wp4__alt : Int ;
+ inst__flight_plan_data__wp5__lat : Int ;
+ inst__flight_plan_data__wp5__long : Int ;
+ inst__flight_plan_data__wp5__alt : Int ; 
+ inst__flight_plan_data__wp6__lat : Int ;
+ inst__flight_plan_data__wp6__long : Int ;
+ inst__flight_plan_data__wp6__alt : Int ;
+ inst__flight_plan_data__wp7__lat : Int ;
+ inst__flight_plan_data__wp7__long : Int ;
+ inst__flight_plan_data__wp7__alt : Int ;
+ inst__flight_plan_data__wp8__lat : Int ;
+ inst__flight_plan_data__wp8__long : Int ;
+ inst__flight_plan_data__wp8__alt : Int ;
+ inst__flight_plan_data__wp9__lat : Int ;
+ inst__flight_plan_data__wp9__long : Int ;
+ inst__flight_plan_data__wp9__alt : Int ;
+ inst__flight_plan_data__wp10__lat : Int ;
+ inst__flight_plan_data__wp10__long : Int ;
+ inst__flight_plan_data__wp10__alt : Int ;
+ inst__waypoint__data__wp1__lat : Int ;
+ inst__waypoint__data__wp1__long : Int ;
+ inst__waypoint__data__wp1__alt : Int ; 
+ inst__waypoint__data__wp2__lat : Int ;
+ inst__waypoint__data__wp2__long : Int ;
+ inst__waypoint__data__wp2__alt : Int ;
+ inst__waypoint__data__wp3__lat : Int ;
+ inst__waypoint__data__wp3__long : Int ;
+ inst__waypoint__data__wp3__alt : Int ;
+ inst__waypoint__data__wp4__lat : Int ;
+ inst__waypoint__data__wp4__long : Int ;
+ inst__waypoint__data__wp4__alt : Int ;
+ inst__waypoint__data__crc : Bool ;
+ inst__position_status_data__lat : Int ;
+ inst__position_status_data__long : Int ;
+ inst__position_status_data__alt : Int ;
+ inst__Req001_WaypointManager : Bool := 
+ inst__flight_plan__data__wp1__lat >= -90 && inst__flight_plan__data__wp1__lat <= 90 && 
+inst__flight_plan__data__wp1__long >= -180 && inst__flight_plan__data__wp1__long <= 180 && 
+inst__flight_plan__data__wp1__alt >= 0 && inst__flight_plan__data__wp1__alt <= 15000 &&
+inst__flight_plan__data__wp2__lat >= -90 && inst__flight_plan__data__wp2__lat <= 90 && 
+inst__flight_plan__data__wp2__long >= -180 && inst__flight_plan__data__wp2__long <= 180 && 
+inst__flight_plan__data__wp2__alt >= 0 && inst__flight_plan__data__wp2__alt <= 15000 &&
+inst__flight_plan__data__wp3__lat >= -90 && inst__flight_plan__data__wp3__lat <= 90 && 
+inst__flight_plan__data__wp3__long >= -180 && inst__flight_plan__data__wp3__long <= 180 && 
+inst__flight_plan__data__wp3__alt >= 0 && inst__flight_plan__data__wp3__alt <= 15000 &&
+inst__flight_plan__data__wp4__lat >= -90 && inst__flight_plan__data__wp4__lat <= 90 && 
+inst__flight_plan__data__wp4__long >= -180 && inst__flight_plan__data__wp4__long <= 180 && 
+inst__flight_plan__data__wp4__alt >= 0 && inst__flight_plan__data__wp4__alt <= 15000 &&
+inst__flight_plan__data__wp5__lat >= -90 && inst__flight_plan__data__wp5__lat <= 90 && 
+inst__flight_plan__data__wp5__long >= -180 && inst__flight_plan__data__wp5__long <= 180 && 
+inst__flight_plan__data__wp5__alt >= 0 && inst__flight_plan__data__wp5__alt <= 15000 &&
+inst__flight_plan__data__wp6__lat >= -90 && inst__flight_plan__data__wp6__lat <= 90 && 
+inst__flight_plan__data__wp6__long >= -180 && inst__flight_plan__data__wp6__long <= 180 && 
+inst__flight_plan__data__wp6__alt >= 0 && inst__flight_plan__data__wp6__alt <= 15000 &&
+inst__flight_plan__data__wp7__lat >= -90 && inst__flight_plan__data__wp7__lat <= 90 && 
+inst__flight_plan__data__wp7__long >= -180 && inst__flight_plan__data__wp7__long <= 180 && 
+inst__flight_plan__data__wp7__alt >= 0 && inst__flight_plan__data__wp7__alt <= 15000 &&
+inst__flight_plan__data__wp8__lat >= -90 && inst__flight_plan__data__wp8__lat <= 90 && 
+inst__flight_plan__data__wp8__long >= -180 && inst__flight_plan__data__wp8__long <= 180 && 
+inst__flight_plan__data__wp8__alt >= 0 && inst__flight_plan__data__wp8__alt <= 15000 &&
+inst__flight_plan__data__wp9__lat >= -90 && inst__flight_plan__data__wp9__lat <= 90 && 
+inst__flight_plan__data__wp9__long >= -180 && inst__flight_plan__data__wp9__long <= 180 && 
+inst__flight_plan__data__wp9__alt >= 0 && inst__flight_plan__data__wp9__alt <= 15000 &&
+inst__flight_plan__data__wp10__lat >= -90 && inst__flight_plan__data__wp10__lat <= 90 && 
+inst__flight_plan__data__wp10__long >= -180 && inst__flight_plan__data__wp10__long <= 180 && 
+inst__flight_plan__data__wp10__alt >= 0 && inst__flight_plan__data__wp10__alt <= 15000 ;
+inst__Req002_WaypointManager : Bool := 
+inst__waypoint__data__wp1__lat >= -90 && inst__waypoint__data__wp1__lat <= 90 && 
+inst__waypoint__data__wp1__long >= -180 && inst__waypoint__data__wp1__long <= 180 && 
+inst__waypoint__data__wp1__alt >= 0 && inst__waypoint__data__wp1__alt <= 15000 &&
+inst__waypoint__data__wp2__lat >= -90 && inst__waypoint__data__wp2__lat <= 90 && 
+inst__waypoint__data__wp2__long >= -180 && inst__waypoint__data__wp2__long <= 180 && 
+inst__waypoint__data__wp2__alt >= 0 && inst__waypoint__data__wp2__alt <= 15000 &&
+inst__waypoint__data__wp3__lat >= -90 && inst__waypoint__data__wp3__lat <= 90 && 
+inst__waypoint__data__wp3__long >= -180 && inst__waypoint__data__wp3__long <= 180 && 
+inst__waypoint__data__wp3__alt >= 0 && inst__waypoint__data__wp3__alt <= 15000 &&
+inst__waypoint__data__wp4__lat >= -90 && inst__waypoint__data__wp4__lat <= 90 && 
+inst__waypoint__data__wp4__long >= -180 && inst__waypoint__data__wp4__long <= 180 && 
+inst__waypoint__data__wp4__alt >= 0 && inst__waypoint__data__wp4__alt <= 15000 ;
+inst__assumption : Bool :=   inst__Req001_WaypointManager ;
+inst__guarantee : Bool := inst__Req002_WaypointManager;
+ */
+
+
+/*
+UARTDriver_dot_Impl
+
+ inst__position_status_in_data__lat : Int ;
+ inst__position_status_in_data__long : Int ;
+ inst__position_status_in_data__alt : Int ;
+ inst__waypoint_out__data__wp1__lat : Int ;
+ inst__waypoint_out__data__wp1__long : Int ;
+ inst__waypoint_out__data__wp1__alt : Int ; 
+ inst__waypoint_out__data__wp2__lat : Int ;
+ inst__waypoint_out__data__wp2__long : Int ;
+ inst__waypoint_out__data__wp2__alt : Int ;
+ inst__waypoint_out__data__wp3__lat : Int ;
+ inst__waypoint_out__data__wp3__long : Int ;
+ inst__waypoint_out__data__wp3__alt : Int ;
+ inst__waypoint_out__data__wp4__lat : Int ;
+ inst__waypoint_out__data__wp4__long : Int ;
+ inst__waypoint_out__data__wp4__alt : Int ;
+ inst__waypoint_out__data__crc : Bool ;
+ inst__position_status_out_data__lat : Int ;
+ inst__position_status_out_data__long : Int ;
+ inst__position_status_out_data__alt : Int ;
+ inst__waypoint_in__data__wp1__lat : Int ;
+ inst__waypoint_in__data__wp1__long : Int ;
+ inst__waypoint_in__data__wp1__alt : Int ; 
+ inst__waypoint_in__data__wp2__lat : Int ;
+ inst__waypoint_in__data__wp2__long : Int ;
+ inst__waypoint_in__data__wp2__alt : Int ;
+ inst__waypoint_in__data__wp3__lat : Int ;
+ inst__waypoint_in__data__wp3__long : Int ;
+ inst__waypoint_in__data__wp3__alt : Int ;
+ inst__waypoint_in__data__wp4__lat : Int ;
+ inst__waypoint_in__data__wp4__long : Int ;
+ inst__waypoint_in__data__wp4__alt : Int ;
+ inst__waypoint_in__data__crc : Bool ;
+ 
+ 
+ inst__Req001_UARTDriver : Bool := inst__waypoint_in__data__wp1__lat >= -90 && inst__waypoint_in__data__wp1__lat <= 90 && 
+inst__waypoint_in__data__wp1__long >= -180 && inst__waypoint_in__data__wp1__long <= 180 && 
+inst__waypoint_in__data__wp1__alt >= 0 && inst__waypoint_in__data__wp1__alt <= 15000 &&
+inst__waypoint_in__data__wp2__lat >= -90 && inst__waypoint_in__data__wp2__lat <= 90 && 
+inst__waypoint_in__data__wp2__long >= -180 && inst__waypoint_in__data__wp2__long <= 180 && 
+inst__waypoint_in__data__wp2__alt >= 0 && inst__waypoint_in__data__wp2__alt <= 15000 &&
+inst__waypoint_in__data__wp3__lat >= -90 && inst__waypoint_in__data__wp3__lat <= 90 && 
+inst__waypoint_in__data__wp3__long >= -180 && inst__waypoint_in__data__wp3__long <= 180 && 
+inst__waypoint_in__data__wp3__alt >= 0 && inst__waypoint_in__data__wp3__alt <= 15000 &&
+inst__waypoint_in__data__wp4__lat >= -90 && inst__waypoint_in__data__wp4__lat <= 90 && 
+inst__waypoint_in__data__wp4__long >= -180 && inst__waypoint_in__data__wp4__long <= 180 && 
+inst__waypoint_in__data__wp4__alt >= 0 && inst__waypoint_in__data__wp4__alt <= 15000 ;
+ inst__Req002_UARTDriver : Bool := waypoint_out__data__crc ;
+ inst__assumption : Bool := inst__Req001_UARTDriver;
+ inst__guarantee : Bool := inst__Req002_UARTDriver ;
+ 
+ */
+
+/* 
+ good_coordinate
+inst__lat >= -90 && inst__lat <= 90 && 
+inst__long >= -180 && inst__long <= 180 && 
+inst__alt >= 0 && inst__alt <= 15000
+
+good_map
+inst__wp1__lat >= -90 && inst__wp1__lat <= 90 && 
+inst__wp1__long >= -180 && inst__wp1__long <= 180 && 
+inst__wp1__alt >= 0 && inst__wp1__alt <= 15000 &&
+inst__wp2__lat >= -90 && inst__wp2__lat <= 90 && 
+inst__wp2__long >= -180 && inst__wp2__long <= 180 && 
+inst__wp2__alt >= 0 && inst__wp2__alt <= 15000 &&
+inst__wp3__lat >= -90 && inst__wp3__lat <= 90 && 
+inst__wp3__long >= -180 && inst__wp3__long <= 180 && 
+inst__wp3__alt >= 0 && inst__wp3__alt <= 15000 &&
+inst__wp4__lat >= -90 && inst__wp4__lat <= 90 && 
+inst__wp4__long >= -180 && inst__wp4__long <= 180 && 
+inst__wp4__alt >= 0 && inst__wp4__alt <= 15000 
+
+good_gs_command
+inst__Map__wp1__lat >= -90 && inst__Map__wp1__lat <= 90 && 
+inst__Map__wp1__long >= -180 && inst__Map__wp1__long <= 180 && 
+inst__Map__wp1__alt >= 0 && inst__Map__wp1__alt <= 15000 &&
+inst__Map__wp2__lat >= -90 && inst__Map__wp2__lat <= 90 && 
+inst__Map__wp2__long >= -180 && inst__Map__wp2__long <= 180 && 
+inst__Map__wp2__alt >= 0 && inst__Map__wp2__alt <= 15000 &&
+inst__Map__wp3__lat >= -90 && inst__Map__wp3__lat <= 90 && 
+inst__Map__wp3__long >= -180 && inst__Map__wp3__long <= 180 && 
+inst__Map__wp3__alt >= 0 && inst__Map__wp3__alt <= 15000 &&
+inst__Map__wp4__lat >= -90 && inst__Map__wp4__lat <= 90 && 
+inst__Map__wp4__long >= -180 && inst__Map__wp4__long <= 180 && 
+inst__Map__wp4__alt >= 0 && inst__Map__wp4__alt <= 15000 
+
+
+good_mission
+inst__wp1__lat >= -90 && inst__wp1__lat <= 90 && 
+inst__wp1__long >= -180 && inst__wp1__long <= 180 && 
+inst__wp1__alt >= 0 && inst__wp1__alt <= 15000 &&
+inst__wp2__lat >= -90 && inst__wp2__lat <= 90 && 
+inst__wp2__long >= -180 && inst__wp2__long <= 180 && 
+inst__wp2__alt >= 0 && inst__wp2__alt <= 15000 &&
+inst__wp3__lat >= -90 && inst__wp3__lat <= 90 && 
+inst__wp3__long >= -180 && inst__wp3__long <= 180 && 
+inst__wp3__alt >= 0 && inst__wp3__alt <= 15000 &&
+inst__wp4__lat >= -90 && inst__wp4__lat <= 90 && 
+inst__wp4__long >= -180 && inst__wp4__long <= 180 && 
+inst__wp4__alt >= 0 && inst__wp4__alt <= 15000 &&
+inst__wp5__lat >= -90 && inst__wp5__lat <= 90 && 
+inst__wp5__long >= -180 && inst__wp5__long <= 180 && 
+inst__wp5__alt >= 0 && inst__wp5__alt <= 15000 &&
+inst__wp6__lat >= -90 && inst__wp6__lat <= 90 && 
+inst__wp6__long >= -180 && inst__wp6__long <= 180 && 
+inst__wp6__alt >= 0 && inst__wp6__alt <= 15000 &&
+inst__wp7__lat >= -90 && inst__wp7__lat <= 90 && 
+inst__wp7__long >= -180 && inst__wp7__long <= 180 && 
+inst__wp7__alt >= 0 && inst__wp7__alt <= 15000 &&
+inst__wp8__lat >= -90 && inst__wp8__lat <= 90 && 
+inst__wp8__long >= -180 && inst__wp8__long <= 180 && 
+inst__wp8__alt >= 0 && inst__wp8__alt <= 15000 &&
+inst__wp9__lat >= -90 && inst__wp9__lat <= 90 && 
+inst__wp9__long >= -180 && inst__wp9__long <= 180 && 
+inst__wp9__alt >= 0 && inst__wp9__alt <= 15000 &&
+inst__wp10__lat >= -90 && inst__wp10__lat <= 90 && 
+inst__wp10__long >= -180 && inst__wp10__long <= 180 && 
+inst__wp10__alt >= 0 && inst__wp10__alt <= 15000 
+
+good_mission_window
+inst__wp1__lat >= -90 && inst__wp1__lat <= 90 && 
+inst__wp1__long >= -180 && inst__wp1__long <= 180 && 
+inst__wp1__alt >= 0 && inst__wp1__alt <= 15000 &&
+inst__wp2__lat >= -90 && inst__wp2__lat <= 90 && 
+inst__wp2__long >= -180 && inst__wp2__long <= 180 && 
+inst__wp2__alt >= 0 && inst__wp2__alt <= 15000 &&
+inst__wp3__lat >= -90 && inst__wp3__lat <= 90 && 
+inst__wp3__long >= -180 && inst__wp3__long <= 180 && 
+inst__wp3__alt >= 0 && inst__wp3__alt <= 15000 &&
+inst__wp4__lat >= -90 && inst__wp4__lat <= 90 && 
+inst__wp4__long >= -180 && inst__wp4__long <= 180 && 
+inst__wp4__alt >= 0 && inst__wp4__alt <= 15000 
+ 
+ * */
+
+//Beginning of the MC_SW_dot_Impl model
+
+//recv_map
+ recv_map__data__Map__wp1__lat : Int ;
+ recv_map__data__Map__wp1__long : Int ;
+ recv_map__data__Map__wp1__alt : Int ; 
+ recv_map__data__Map__wp2__lat : Int ;
+ recv_map__data__Map__wp2__long : Int ;
+ recv_map__data__Map__wp2__alt : Int ;
+ recv_map__data__Map__wp3__lat : Int ;
+ recv_map__data__Map__wp3__long : Int ;
+ recv_map__data__Map__wp3__alt : Int ;
+ recv_map__data__Map__wp4__lat : Int ;
+ recv_map__data__Map__wp4__long : Int ;
+ recv_map__data__Map__wp4__alt : Int ;
+ recv_map__data__Pattern : Int ;
+ recv_map__data__HMAC : Bool ;
+ 
+ assert {recv_map__data__Pattern >= 0 && recv_map__data__Pattern <=2};
+
+//send_status
+send_status__data__lat : Int ;
+send_status__data__long : Int ;
+send_status__data__alt : Int ;
+
+//waypoint
+waypoint__data__wp1__lat : Int ;
+ waypoint__data__wp1__long : Int ;
+ waypoint__data__wp1__alt : Int ; 
+ waypoint__data__wp2__lat : Int ;
+ waypoint__data__wp2__long : Int ;
+ waypoint__data__wp2__alt : Int ;
+ waypoint__data__wp3__lat : Int ;
+ waypoint__data__wp3__long : Int ;
+ waypoint__data__wp3__alt : Int ;
+ waypoint__data__wp4__lat : Int ;
+ waypoint__data__wp4__long : Int ;
+ waypoint__data__wp4__alt : Int ;
+ waypoint__data__crc : Bool ;
+
+//position_status
+position_status__data__lat : Int ;
+position_status__data__long : Int ;
+position_status__data__alt : Int ;
+
+//Assumptions and guarantees
+Req001_MC_SW : Bool := recv_map__data__HMAC ;
+Req002_MC_SW : Bool := recv_map__data__HMAC ;
+Req003_MC_SW : Bool := waypoint__data__crc ;
+assumption : Bool := Req001_MC_SW && Req002_MC_SW ;
+guarantee : Bool := Req003_MC_SW ;
+
+//RADIO
+RADIO__recv_map_in__event : Bool ;
+ RADIO__recv_map_in__data__Map__wp1__lat : Int ;
+ RADIO__recv_map_in__data__Map__wp1__long : Int ;
+ RADIO__recv_map_in__data__Map__wp1__alt : Int ; 
+ RADIO__recv_map_in__data__Map__wp2__lat : Int ;
+ RADIO__recv_map_in__data__Map__wp2__long : Int ;
+ RADIO__recv_map_in__data__Map__wp2__alt : Int ;
+ RADIO__recv_map_in__data__Map__wp3__lat : Int ;
+ RADIO__recv_map_in__data__Map__wp3__long : Int ;
+ RADIO__recv_map_in__data__Map__wp3__alt : Int ;
+ RADIO__recv_map_in__data__Map__wp4__lat : Int ;
+ RADIO__recv_map_in__data__Map__wp4__long : Int ;
+ RADIO__recv_map_in__data__Map__wp4__alt : Int ;
+ RADIO__recv_map_in__data__Pattern : Int ;
+ 
+ assert {RADIO__recv_map_in__data__Pattern >= 0 && RADIO__recv_map_in__data__Pattern <=2};
+ 
+ RADIO__recv_map_in__data__HMAC : Bool ;
+ RADIO__send_status_out__event : Bool ;
+ RADIO__send_status_out__data__lat : Int ;
+ RADIO__send_status_out__data__long : Int ;
+ RADIO__send_status_out__data__alt : Int ;
+ RADIO__send_status_in__event : Bool ;
+ RADIO__send_status_in__data__lat : Int ;
+ RADIO__send_status_in__data__long : Int ;
+ RADIO__send_status_in__data__alt : Int ;
+ RADIO__recv_map_out__event : Bool ;
+ RADIO__recv_map_out__data__Map__wp1__lat : Int ;
+ RADIO__recv_map_out__data__Map__wp1__long : Int ;
+ RADIO__recv_map_out__data__Map__wp1__alt : Int ; 
+ RADIO__recv_map_out__data__Map__wp2__lat : Int ;
+ RADIO__recv_map_out__data__Map__wp2__long : Int ;
+ RADIO__recv_map_out__data__Map__wp2__alt : Int ;
+ RADIO__recv_map_out__data__Map__wp3__lat : Int ;
+ RADIO__recv_map_out__data__Map__wp3__long : Int ;
+ RADIO__recv_map_out__data__Map__wp3__alt : Int ;
+ RADIO__recv_map_out__data__Map__wp4__lat : Int ;
+ RADIO__recv_map_out__data__Map__wp4__long : Int ;
+ RADIO__recv_map_out__data__Map__wp4__alt : Int ;
+ RADIO__recv_map_out__data__Pattern : Int ;
+  assert {RADIO__recv_map_out__data__Pattern >= 0 && RADIO__recv_map_out__data__Pattern <=2};
+ 
+ RADIO__recv_map_out__data__HMAC : Bool ;
+ RADIO__Req001_RadioDriver : Bool := RADIO__recv_map_in__data__HMAC ;
+ RADIO__Req002_RadioDriver : Bool := RADIO__recv_map_out__data__HMAC ;
+ RADIO__assumption : Bool := RADIO__Req001_RadioDriver ;
+ RADIO__guarantee : Bool := RADIO__Req002_RadioDriver ;
+ 
+ //FPLN
+ FPLN__flight_plan__data__wp1__lat : Int ;
+ FPLN__flight_plan__data__wp1__long : Int ;
+ FPLN__flight_plan__data__wp1__alt : Int ; 
+ FPLN__flight_plan__data__wp2__lat : Int ;
+ FPLN__flight_plan__data__wp2__long : Int ;
+ FPLN__flight_plan__data__wp2__alt : Int ;
+ FPLN__flight_plan__data__wp3__lat : Int ;
+ FPLN__flight_plan__data__wp3__long : Int ;
+ FPLN__flight_plan__data__wp3__alt : Int ;
+ FPLN__flight_plan__data__wp4__lat : Int ;
+ FPLN__flight_plan__data__wp4__long : Int ;
+ FPLN__flight_plan__data__wp4__alt : Int ;
+ FPLN__flight_plan__data__wp5__lat : Int ;
+ FPLN__flight_plan__data__wp5__long : Int ;
+ FPLN__flight_plan__data__wp5__alt : Int ; 
+ FPLN__flight_plan__data__wp6__lat : Int ;
+ FPLN__flight_plan__data__wp6__long : Int ;
+ FPLN__flight_plan__data__wp6__alt : Int ;
+ FPLN__flight_plan__data__wp7__lat : Int ;
+ FPLN__flight_plan__data__wp7__long : Int ;
+ FPLN__flight_plan__data__wp7__alt : Int ;
+ FPLN__flight_plan__data__wp8__lat : Int ;
+ FPLN__flight_plan__data__wp8__long : Int ;
+ FPLN__flight_plan__data__wp8__alt : Int ;
+ FPLN__flight_plan__data__wp9__lat : Int ;
+ FPLN__flight_plan__data__wp9__long : Int ;
+ FPLN__flight_plan__data__wp9__alt : Int ;
+ FPLN__flight_plan__data__wp10__lat : Int ;
+ FPLN__flight_plan__data__wp10__long : Int ;
+ FPLN__flight_plan__data__wp10__alt : Int ; 
+ FPLN__recv_map__data__Map__wp1__lat : Int ;
+ FPLN__recv_map__data__Map__wp1__long : Int ;
+ FPLN__recv_map__data__Map__wp1__alt : Int ; 
+ FPLN__recv_map__data__Map__wp2__lat : Int ;
+ FPLN__recv_map__data__Map__wp2__long : Int ;
+ FPLN__recv_map__data__Map__wp2__alt : Int ;
+ FPLN__recv_map__data__Map__wp3__lat : Int ;
+ FPLN__recv_map__data__Map__wp3__long : Int ;
+ FPLN__recv_map__data__Map__wp3__alt : Int ;
+ FPLN__recv_map__data__Map__wp4__lat : Int ;
+ FPLN__recv_map__data__Map__wp4__long : Int ;
+ FPLN__recv_map__data__Map__wp4__alt : Int ;
+ FPLN__recv_map__data__Pattern : Int ;
+assert {FPLN__recv_map__data__Pattern >= 0 && FPLN__recv_map__data__Pattern <=2};
+ 
+ FPLN__recv_map__data__HMAC : Bool ;
+ FPLN__position_status__data__lat : Int ;
+ FPLN__position_status__data__long : Int ;
+ FPLN__position_status__data__alt : Int ;
+ FPLN__Req001_FlightPlanner : Bool := FPLN__recv_map__data__HMAC ;
+  FPLN__Req002_FlightPlanner : Bool := 
+  FPLN__recv_map__data__Map__wp1__lat >= -90 && FPLN__recv_map__data__Map__wp1__lat <= 90 && 
+FPLN__recv_map__data__Map__wp1__long >= -180 && FPLN__recv_map__data__Map__wp1__long <= 180 && 
+FPLN__recv_map__data__Map__wp1__alt >= 0 && FPLN__recv_map__data__Map__wp1__alt <= 15000 &&
+FPLN__recv_map__data__Map__wp2__lat >= -90 && FPLN__recv_map__data__Map__wp2__lat <= 90 && 
+FPLN__recv_map__data__Map__wp2__long >= -180 && FPLN__recv_map__data__Map__wp2__long <= 180 && 
+FPLN__recv_map__data__Map__wp2__alt >= 0 && FPLN__recv_map__data__Map__wp2__alt <= 15000 &&
+FPLN__recv_map__data__Map__wp3__lat >= -90 && FPLN__recv_map__data__Map__wp3__lat <= 90 && 
+FPLN__recv_map__data__Map__wp3__long >= -180 && FPLN__recv_map__data__Map__wp3__long <= 180 && 
+FPLN__recv_map__data__Map__wp3__alt >= 0 && FPLN__recv_map__data__Map__wp3__alt <= 15000 &&
+FPLN__recv_map__data__Map__wp4__lat >= -90 && FPLN__recv_map__data__Map__wp4__lat <= 90 && 
+FPLN__recv_map__data__Map__wp4__long >= -180 && FPLN__recv_map__data__Map__wp4__long <= 180 && 
+FPLN__recv_map__data__Map__wp4__alt >= 0 && FPLN__recv_map__data__Map__wp4__alt <= 15000 ;
+FPLN__assumption : Bool :=  FPLN__Req001_FlightPlanner && FPLN__Req002_FlightPlanner ;
+FPLN__Req003_FlightPlanner : Bool := 
+FPLN__flight_plan__data__wp1__lat >= -90 && FPLN__flight_plan__data__wp1__lat <= 90 && 
+FPLN__flight_plan__data__wp1__long >= -180 && FPLN__flight_plan__data__wp1__long <= 180 && 
+FPLN__flight_plan__data__wp1__alt >= 0 && FPLN__flight_plan__data__wp1__alt <= 15000 &&
+FPLN__flight_plan__data__wp2__lat >= -90 && FPLN__flight_plan__data__wp2__lat <= 90 && 
+FPLN__flight_plan__data__wp2__long >= -180 && FPLN__flight_plan__data__wp2__long <= 180 && 
+FPLN__flight_plan__data__wp2__alt >= 0 && FPLN__flight_plan__data__wp2__alt <= 15000 &&
+FPLN__flight_plan__data__wp3__lat >= -90 && FPLN__flight_plan__data__wp3__lat <= 90 && 
+FPLN__flight_plan__data__wp3__long >= -180 && FPLN__flight_plan__data__wp3__long <= 180 && 
+FPLN__flight_plan__data__wp3__alt >= 0 && FPLN__flight_plan__data__wp3__alt <= 15000 &&
+FPLN__flight_plan__data__wp4__lat >= -90 && FPLN__flight_plan__data__wp4__lat <= 90 && 
+FPLN__flight_plan__data__wp4__long >= -180 && FPLN__flight_plan__data__wp4__long <= 180 && 
+FPLN__flight_plan__data__wp4__alt >= 0 && FPLN__flight_plan__data__wp4__alt <= 15000 &&
+FPLN__flight_plan__data__wp5__lat >= -90 && FPLN__flight_plan__data__wp5__lat <= 90 && 
+FPLN__flight_plan__data__wp5__long >= -180 && FPLN__flight_plan__data__wp5__long <= 180 && 
+FPLN__flight_plan__data__wp5__alt >= 0 && FPLN__flight_plan__data__wp5__alt <= 15000 &&
+FPLN__flight_plan__data__wp6__lat >= -90 && FPLN__flight_plan__data__wp6__lat <= 90 && 
+FPLN__flight_plan__data__wp6__long >= -180 && FPLN__flight_plan__data__wp6__long <= 180 && 
+FPLN__flight_plan__data__wp6__alt >= 0 && FPLN__flight_plan__data__wp6__alt <= 15000 &&
+FPLN__flight_plan__data__wp7__lat >= -90 && FPLN__flight_plan__data__wp7__lat <= 90 && 
+FPLN__flight_plan__data__wp7__long >= -180 && FPLN__flight_plan__data__wp7__long <= 180 && 
+FPLN__flight_plan__data__wp7__alt >= 0 && FPLN__flight_plan__data__wp7__alt <= 15000 &&
+FPLN__flight_plan__data__wp8__lat >= -90 && FPLN__flight_plan__data__wp8__lat <= 90 && 
+FPLN__flight_plan__data__wp8__long >= -180 && FPLN__flight_plan__data__wp8__long <= 180 && 
+FPLN__flight_plan__data__wp8__alt >= 0 && FPLN__flight_plan__data__wp8__alt <= 15000 &&
+FPLN__flight_plan__data__wp9__lat >= -90 && FPLN__flight_plan__data__wp9__lat <= 90 && 
+FPLN__flight_plan__data__wp9__long >= -180 && FPLN__flight_plan__data__wp9__long <= 180 && 
+FPLN__flight_plan__data__wp9__alt >= 0 && FPLN__flight_plan__data__wp9__alt <= 15000 &&
+FPLN__flight_plan__data__wp10__lat >= -90 && FPLN__flight_plan__data__wp10__lat <= 90 && 
+FPLN__flight_plan__data__wp10__long >= -180 && FPLN__flight_plan__data__wp10__long <= 180 && 
+FPLN__flight_plan__data__wp10__alt >= 0 && FPLN__flight_plan__data__wp10__alt <= 15000 ;
+FPLN__guarantee : Bool :=  FPLN__Req003_FlightPlanner ;
+
+//WPM
+WPM__flight_plan__data__wp1__lat : Int ;
+ WPM__flight_plan__data__wp1__long : Int ;
+ WPM__flight_plan__data__wp1__alt : Int ; 
+ WPM__flight_plan__data__wp2__lat : Int ;
+ WPM__flight_plan__data__wp2__long : Int ;
+ WPM__flight_plan__data__wp2__alt : Int ;
+ WPM__flight_plan__data__wp3__lat : Int ;
+ WPM__flight_plan__data__wp3__long : Int ;
+ WPM__flight_plan__data__wp3__alt : Int ;
+ WPM__flight_plan__data__wp4__lat : Int ;
+ WPM__flight_plan__data__wp4__long : Int ;
+ WPM__flight_plan__data__wp4__alt : Int ;
+ WPM__flight_plan__data__wp5__lat : Int ;
+ WPM__flight_plan__data__wp5__long : Int ;
+ WPM__flight_plan__data__wp5__alt : Int ; 
+ WPM__flight_plan__data__wp6__lat : Int ;
+ WPM__flight_plan__data__wp6__long : Int ;
+ WPM__flight_plan__data__wp6__alt : Int ;
+ WPM__flight_plan__data__wp7__lat : Int ;
+ WPM__flight_plan__data__wp7__long : Int ;
+ WPM__flight_plan__data__wp7__alt : Int ;
+ WPM__flight_plan__data__wp8__lat : Int ;
+ WPM__flight_plan__data__wp8__long : Int ;
+ WPM__flight_plan__data__wp8__alt : Int ;
+ WPM__flight_plan__data__wp9__lat : Int ;
+ WPM__flight_plan__data__wp9__long : Int ;
+ WPM__flight_plan__data__wp9__alt : Int ;
+ WPM__flight_plan__data__wp10__lat : Int ;
+ WPM__flight_plan__data__wp10__long : Int ;
+ WPM__flight_plan__data__wp10__alt : Int ;
+ WPM__waypoint__data__wp1__lat : Int ;
+ WPM__waypoint__data__wp1__long : Int ;
+ WPM__waypoint__data__wp1__alt : Int ; 
+ WPM__waypoint__data__wp2__lat : Int ;
+ WPM__waypoint__data__wp2__long : Int ;
+ WPM__waypoint__data__wp2__alt : Int ;
+ WPM__waypoint__data__wp3__lat : Int ;
+ WPM__waypoint__data__wp3__long : Int ;
+ WPM__waypoint__data__wp3__alt : Int ;
+ WPM__waypoint__data__wp4__lat : Int ;
+ WPM__waypoint__data__wp4__long : Int ;
+ WPM__waypoint__data__wp4__alt : Int ;
+ WPM__waypoint__data__crc : Bool ;
+ WPM__position_status__data__lat : Int ;
+ WPM__position_status__data__long : Int ;
+ WPM__position_status__data__alt : Int ;
+ WPM__Req001_WaypointManager : Bool := 
+ WPM__flight_plan__data__wp1__lat >= -90 && WPM__flight_plan__data__wp1__lat <= 90 && 
+WPM__flight_plan__data__wp1__long >= -180 && WPM__flight_plan__data__wp1__long <= 180 && 
+WPM__flight_plan__data__wp1__alt >= 0 && WPM__flight_plan__data__wp1__alt <= 15000 &&
+WPM__flight_plan__data__wp2__lat >= -90 && WPM__flight_plan__data__wp2__lat <= 90 && 
+WPM__flight_plan__data__wp2__long >= -180 && WPM__flight_plan__data__wp2__long <= 180 && 
+WPM__flight_plan__data__wp2__alt >= 0 && WPM__flight_plan__data__wp2__alt <= 15000 &&
+WPM__flight_plan__data__wp3__lat >= -90 && WPM__flight_plan__data__wp3__lat <= 90 && 
+WPM__flight_plan__data__wp3__long >= -180 && WPM__flight_plan__data__wp3__long <= 180 && 
+WPM__flight_plan__data__wp3__alt >= 0 && WPM__flight_plan__data__wp3__alt <= 15000 &&
+WPM__flight_plan__data__wp4__lat >= -90 && WPM__flight_plan__data__wp4__lat <= 90 && 
+WPM__flight_plan__data__wp4__long >= -180 && WPM__flight_plan__data__wp4__long <= 180 && 
+WPM__flight_plan__data__wp4__alt >= 0 && WPM__flight_plan__data__wp4__alt <= 15000 &&
+WPM__flight_plan__data__wp5__lat >= -90 && WPM__flight_plan__data__wp5__lat <= 90 && 
+WPM__flight_plan__data__wp5__long >= -180 && WPM__flight_plan__data__wp5__long <= 180 && 
+WPM__flight_plan__data__wp5__alt >= 0 && WPM__flight_plan__data__wp5__alt <= 15000 &&
+WPM__flight_plan__data__wp6__lat >= -90 && WPM__flight_plan__data__wp6__lat <= 90 && 
+WPM__flight_plan__data__wp6__long >= -180 && WPM__flight_plan__data__wp6__long <= 180 && 
+WPM__flight_plan__data__wp6__alt >= 0 && WPM__flight_plan__data__wp6__alt <= 15000 &&
+WPM__flight_plan__data__wp7__lat >= -90 && WPM__flight_plan__data__wp7__lat <= 90 && 
+WPM__flight_plan__data__wp7__long >= -180 && WPM__flight_plan__data__wp7__long <= 180 && 
+WPM__flight_plan__data__wp7__alt >= 0 && WPM__flight_plan__data__wp7__alt <= 15000 &&
+WPM__flight_plan__data__wp8__lat >= -90 && WPM__flight_plan__data__wp8__lat <= 90 && 
+WPM__flight_plan__data__wp8__long >= -180 && WPM__flight_plan__data__wp8__long <= 180 && 
+WPM__flight_plan__data__wp8__alt >= 0 && WPM__flight_plan__data__wp8__alt <= 15000 &&
+WPM__flight_plan__data__wp9__lat >= -90 && WPM__flight_plan__data__wp9__lat <= 90 && 
+WPM__flight_plan__data__wp9__long >= -180 && WPM__flight_plan__data__wp9__long <= 180 && 
+WPM__flight_plan__data__wp9__alt >= 0 && WPM__flight_plan__data__wp9__alt <= 15000 &&
+WPM__flight_plan__data__wp10__lat >= -90 && WPM__flight_plan__data__wp10__lat <= 90 && 
+WPM__flight_plan__data__wp10__long >= -180 && WPM__flight_plan__data__wp10__long <= 180 && 
+WPM__flight_plan__data__wp10__alt >= 0 && WPM__flight_plan__data__wp10__alt <= 15000 ;
+WPM__Req002_WaypointManager : Bool := 
+WPM__waypoint__data__wp1__lat >= -90 && WPM__waypoint__data__wp1__lat <= 90 && 
+WPM__waypoint__data__wp1__long >= -180 && WPM__waypoint__data__wp1__long <= 180 && 
+WPM__waypoint__data__wp1__alt >= 0 && WPM__waypoint__data__wp1__alt <= 15000 &&
+WPM__waypoint__data__wp2__lat >= -90 && WPM__waypoint__data__wp2__lat <= 90 && 
+WPM__waypoint__data__wp2__long >= -180 && WPM__waypoint__data__wp2__long <= 180 && 
+WPM__waypoint__data__wp2__alt >= 0 && WPM__waypoint__data__wp2__alt <= 15000 &&
+WPM__waypoint__data__wp3__lat >= -90 && WPM__waypoint__data__wp3__lat <= 90 && 
+WPM__waypoint__data__wp3__long >= -180 && WPM__waypoint__data__wp3__long <= 180 && 
+WPM__waypoint__data__wp3__alt >= 0 && WPM__waypoint__data__wp3__alt <= 15000 &&
+WPM__waypoint__data__wp4__lat >= -90 && WPM__waypoint__data__wp4__lat <= 90 && 
+WPM__waypoint__data__wp4__long >= -180 && WPM__waypoint__data__wp4__long <= 180 && 
+WPM__waypoint__data__wp4__alt >= 0 && WPM__waypoint__data__wp4__alt <= 15000 ;
+WPM__assumption : Bool :=   WPM__Req001_WaypointManager ;
+WPM__guarantee : Bool := WPM__Req002_WaypointManager;
+
+//UART
+UART__position_status_in__data__lat : Int ;
+ UART__position_status_in__data__long : Int ;
+ UART__position_status_in__data__alt : Int ;
+ UART__waypoint_out__data__wp1__lat : Int ;
+ UART__waypoint_out__data__wp1__long : Int ;
+ UART__waypoint_out__data__wp1__alt : Int ; 
+ UART__waypoint_out__data__wp2__lat : Int ;
+ UART__waypoint_out__data__wp2__long : Int ;
+ UART__waypoint_out__data__wp2__alt : Int ;
+ UART__waypoint_out__data__wp3__lat : Int ;
+ UART__waypoint_out__data__wp3__long : Int ;
+ UART__waypoint_out__data__wp3__alt : Int ;
+ UART__waypoint_out__data__wp4__lat : Int ;
+ UART__waypoint_out__data__wp4__long : Int ;
+ UART__waypoint_out__data__wp4__alt : Int ;
+ UART__waypoint_out__data__crc : Bool ;
+ UART__position_status_out__data__lat : Int ;
+ UART__position_status_out__data__long : Int ;
+ UART__position_status_out__data__alt : Int ;
+ UART__waypoint_in__data__wp1__lat : Int ;
+ UART__waypoint_in__data__wp1__long : Int ;
+ UART__waypoint_in__data__wp1__alt : Int ; 
+ UART__waypoint_in__data__wp2__lat : Int ;
+ UART__waypoint_in__data__wp2__long : Int ;
+ UART__waypoint_in__data__wp2__alt : Int ;
+ UART__waypoint_in__data__wp3__lat : Int ;
+ UART__waypoint_in__data__wp3__long : Int ;
+ UART__waypoint_in__data__wp3__alt : Int ;
+ UART__waypoint_in__data__wp4__lat : Int ;
+ UART__waypoint_in__data__wp4__long : Int ;
+ UART__waypoint_in__data__wp4__alt : Int ;
+ UART__waypoint_in__data__crc : Bool ;
+ UART__Req001_UARTDriver : Bool := UART__waypoint_in__data__wp1__lat >= -90 && UART__waypoint_in__data__wp1__lat <= 90 && 
+UART__waypoint_in__data__wp1__long >= -180 && UART__waypoint_in__data__wp1__long <= 180 && 
+UART__waypoint_in__data__wp1__alt >= 0 && UART__waypoint_in__data__wp1__alt <= 15000 &&
+UART__waypoint_in__data__wp2__lat >= -90 && UART__waypoint_in__data__wp2__lat <= 90 && 
+UART__waypoint_in__data__wp2__long >= -180 && UART__waypoint_in__data__wp2__long <= 180 && 
+UART__waypoint_in__data__wp2__alt >= 0 && UART__waypoint_in__data__wp2__alt <= 15000 &&
+UART__waypoint_in__data__wp3__lat >= -90 && UART__waypoint_in__data__wp3__lat <= 90 && 
+UART__waypoint_in__data__wp3__long >= -180 && UART__waypoint_in__data__wp3__long <= 180 && 
+UART__waypoint_in__data__wp3__alt >= 0 && UART__waypoint_in__data__wp3__alt <= 15000 &&
+UART__waypoint_in__data__wp4__lat >= -90 && UART__waypoint_in__data__wp4__lat <= 90 && 
+UART__waypoint_in__data__wp4__long >= -180 && UART__waypoint_in__data__wp4__long <= 180 && 
+UART__waypoint_in__data__wp4__alt >= 0 && UART__waypoint_in__data__wp4__alt <= 15000 ;
+ UART__Req002_UARTDriver : Bool := UART__waypoint_out__data__crc ;
+ UART__assumption : Bool := UART__Req001_UARTDriver;
+ UART__guarantee : Bool := UART__Req002_UARTDriver ;
+
+//c1 : recv_map -> RADIO.recv_map_in
+assert{
+ recv_map__data__Map__wp1__lat = RADIO__recv_map_in__data__Map__wp1__lat &&
+ recv_map__data__Map__wp1__long = RADIO__recv_map_in__data__Map__wp1__long &&
+ recv_map__data__Map__wp1__alt = RADIO__recv_map_in__data__Map__wp1__alt && 
+ recv_map__data__Map__wp2__lat = RADIO__recv_map_in__data__Map__wp2__lat &&
+ recv_map__data__Map__wp2__long = RADIO__recv_map_in__data__Map__wp2__long &&
+ recv_map__data__Map__wp2__alt = RADIO__recv_map_in__data__Map__wp2__alt &&
+ recv_map__data__Map__wp3__lat =  RADIO__recv_map_in__data__Map__wp3__lat&&
+ recv_map__data__Map__wp3__long = RADIO__recv_map_in__data__Map__wp3__long &&
+ recv_map__data__Map__wp3__alt = RADIO__recv_map_in__data__Map__wp3__alt &&
+ recv_map__data__Map__wp4__lat =RADIO__recv_map_in__data__Map__wp4__lat&&
+ recv_map__data__Map__wp4__long = RADIO__recv_map_in__data__Map__wp4__long &&
+ recv_map__data__Map__wp4__alt = RADIO__recv_map_in__data__Map__wp4__alt &&
+ recv_map__data__Pattern = RADIO__recv_map_in__data__Pattern &&
+ recv_map__data__HMAC = RADIO__recv_map_in__data__HMAC
+};
+
+//c2 : RADIO.send_status_out -> send_status;
+assert{
+ send_status__data__lat =RADIO__send_status_out__data__lat  &&
+ send_status__data__long = RADIO__send_status_out__data__long &&
+ send_status__data__alt = RADIO__send_status_out__data__alt	
+};	
+
+//c3 : RADIO.recv_map_out -> FPLN.recv_map;
+assert{
+	FPLN__recv_map__data__Map__wp1__lat = RADIO__recv_map_out__data__Map__wp1__lat &&
+ FPLN__recv_map__data__Map__wp1__long = RADIO__recv_map_out__data__Map__wp1__long&&
+ FPLN__recv_map__data__Map__wp1__alt = RADIO__recv_map_out__data__Map__wp1__alt&& 
+ FPLN__recv_map__data__Map__wp2__lat = RADIO__recv_map_out__data__Map__wp2__lat&&
+ FPLN__recv_map__data__Map__wp2__long = RADIO__recv_map_out__data__Map__wp2__long&&
+ FPLN__recv_map__data__Map__wp2__alt = RADIO__recv_map_out__data__Map__wp2__alt&&
+ FPLN__recv_map__data__Map__wp3__lat = RADIO__recv_map_out__data__Map__wp3__lat&&
+ FPLN__recv_map__data__Map__wp3__long = RADIO__recv_map_out__data__Map__wp3__long&&
+ FPLN__recv_map__data__Map__wp3__alt = RADIO__recv_map_out__data__Map__wp3__alt&&
+ FPLN__recv_map__data__Map__wp4__lat = RADIO__recv_map_out__data__Map__wp4__lat&&
+ FPLN__recv_map__data__Map__wp4__long =RADIO__recv_map_out__data__Map__wp4__long &&
+ FPLN__recv_map__data__Map__wp4__alt = RADIO__recv_map_out__data__Map__wp4__alt&&
+ FPLN__recv_map__data__Pattern = RADIO__recv_map_out__data__Pattern&&
+ FPLN__recv_map__data__HMAC =RADIO__recv_map_out__data__HMAC 
+};
+
+//c5: FPLN.flight_plan -> WPM.flight_plan
+assert{
+ FPLN__flight_plan__data__wp1__lat = WPM__flight_plan__data__wp1__lat &&
+ FPLN__flight_plan__data__wp1__long = WPM__flight_plan__data__wp1__long&&
+ FPLN__flight_plan__data__wp1__alt = WPM__flight_plan__data__wp1__alt&& 
+ FPLN__flight_plan__data__wp2__lat = WPM__flight_plan__data__wp2__lat&&
+ FPLN__flight_plan__data__wp2__long = WPM__flight_plan__data__wp2__long&&
+ FPLN__flight_plan__data__wp2__alt = WPM__flight_plan__data__wp2__alt&&
+ FPLN__flight_plan__data__wp3__lat = WPM__flight_plan__data__wp3__lat&&
+ FPLN__flight_plan__data__wp3__long =WPM__flight_plan__data__wp3__long &&
+ FPLN__flight_plan__data__wp3__alt = WPM__flight_plan__data__wp3__alt&&
+ FPLN__flight_plan__data__wp4__lat =WPM__flight_plan__data__wp4__lat &&
+ FPLN__flight_plan__data__wp4__long = WPM__flight_plan__data__wp4__long&&
+ FPLN__flight_plan__data__wp4__alt = WPM__flight_plan__data__wp4__alt&&
+ FPLN__flight_plan__data__wp5__lat = WPM__flight_plan__data__wp5__lat&&
+ FPLN__flight_plan__data__wp5__long =WPM__flight_plan__data__wp5__long &&
+ FPLN__flight_plan__data__wp5__alt =WPM__flight_plan__data__wp5__alt && 
+ FPLN__flight_plan__data__wp6__lat =WPM__flight_plan__data__wp6__lat &&
+ FPLN__flight_plan__data__wp6__long = WPM__flight_plan__data__wp6__long&&
+ FPLN__flight_plan__data__wp6__alt = WPM__flight_plan__data__wp6__alt&&
+ FPLN__flight_plan__data__wp7__lat = WPM__flight_plan__data__wp7__lat&&
+ FPLN__flight_plan__data__wp7__long = WPM__flight_plan__data__wp7__long&&
+ FPLN__flight_plan__data__wp7__alt = WPM__flight_plan__data__wp7__alt&&
+ FPLN__flight_plan__data__wp8__lat = WPM__flight_plan__data__wp8__lat&&
+ FPLN__flight_plan__data__wp8__long = WPM__flight_plan__data__wp8__long&&
+ FPLN__flight_plan__data__wp8__alt = WPM__flight_plan__data__wp8__alt&&
+ FPLN__flight_plan__data__wp9__lat = WPM__flight_plan__data__wp9__lat&&
+ FPLN__flight_plan__data__wp9__long = WPM__flight_plan__data__wp9__long&&
+ FPLN__flight_plan__data__wp9__alt = WPM__flight_plan__data__wp9__alt&&
+ FPLN__flight_plan__data__wp10__lat = WPM__flight_plan__data__wp10__lat&&
+ FPLN__flight_plan__data__wp10__long = WPM__flight_plan__data__wp10__long&&
+ FPLN__flight_plan__data__wp10__alt =WPM__flight_plan__data__wp10__alt 
+};	
+
+//c6: WPM.waypoint -> UART.waypoint_in
+assert{
+ WPM__waypoint__data__wp1__lat = UART__waypoint_in__data__wp1__lat &&
+ WPM__waypoint__data__wp1__long = UART__waypoint_in__data__wp1__long&&
+ WPM__waypoint__data__wp1__alt = UART__waypoint_in__data__wp1__alt&& 
+ WPM__waypoint__data__wp2__lat = UART__waypoint_in__data__wp2__lat&&
+ WPM__waypoint__data__wp2__long = UART__waypoint_in__data__wp2__long&&
+ WPM__waypoint__data__wp2__alt = UART__waypoint_in__data__wp2__alt&&
+ WPM__waypoint__data__wp3__lat = UART__waypoint_in__data__wp3__lat&&
+ WPM__waypoint__data__wp3__long = UART__waypoint_in__data__wp3__long&&
+ WPM__waypoint__data__wp3__alt = UART__waypoint_in__data__wp3__alt&&
+ WPM__waypoint__data__wp4__lat = UART__waypoint_in__data__wp4__lat&&
+ WPM__waypoint__data__wp4__long =UART__waypoint_in__data__wp4__long &&
+ WPM__waypoint__data__wp4__alt = UART__waypoint_in__data__wp4__alt&&
+ WPM__waypoint__data__crc = UART__waypoint_in__data__crc 
+};
+
+//c7:  UART.position_status_out -> WPM.position_status
+assert{
+ UART__position_status_out__data__lat =WPM__position_status__data__lat  &&
+ UART__position_status_out__data__long = WPM__position_status__data__long &&
+ UART__position_status_out__data__alt = WPM__position_status__data__alt	
+};	
+
+// c8: UART.position_status_out -> FPLN.position_status
+assert{
+ UART__position_status_out__data__lat = FPLN__position_status__data__lat  &&
+ UART__position_status_out__data__long = FPLN__position_status__data__long &&
+ UART__position_status_out__data__alt = FPLN__position_status__data__alt	
+};	
+
+//c9:  UART.position_status_out -> RADIO.send_status_in
+assert{
+ UART__position_status_out__data__lat = RADIO__send_status_in__data__lat  &&
+ UART__position_status_out__data__long = RADIO__send_status_in__data__long &&
+ UART__position_status_out__data__alt = RADIO__send_status_in__data__alt	
+};	
+
+//c10: UART.waypoint_out -> waypoint
+assert {
+ waypoint__data__wp1__lat = UART__waypoint_out__data__wp1__lat &&
+ waypoint__data__wp1__long = UART__waypoint_out__data__wp1__long&&
+ waypoint__data__wp1__alt = UART__waypoint_out__data__wp1__alt&& 
+ waypoint__data__wp2__lat = UART__waypoint_out__data__wp2__lat&&
+ waypoint__data__wp2__long = UART__waypoint_out__data__wp2__long&&
+ waypoint__data__wp2__alt = UART__waypoint_out__data__wp2__alt&&
+ waypoint__data__wp3__lat = UART__waypoint_out__data__wp3__lat&&
+ waypoint__data__wp3__long = UART__waypoint_out__data__wp3__long&&
+ waypoint__data__wp3__alt = UART__waypoint_out__data__wp3__alt&&
+ waypoint__data__wp4__lat = UART__waypoint_out__data__wp4__lat&&
+ waypoint__data__wp4__long =UART__waypoint_out__data__wp4__long &&
+ waypoint__data__wp4__alt = UART__waypoint_out__data__wp4__alt&&
+ waypoint__data__crc = UART__waypoint_out__data__crc
+};
+
+//c11:  position_status -> UART.position_status_in
+assert{
+ position_status__data__lat = UART__position_status_in__data__lat  &&
+ position_status__data__long = UART__position_status_in__data__long &&
+ position_status__data__alt = UART__position_status_in__data__alt	
+};	
+
+//The following is a list of queries or goals to prove
+
+//q1 : Bool := 
+
+assert {(assumption && 
+(RADIO__assumption => RADIO__guarantee) &&
+(FPLN__assumption => FPLN__guarantee) &&
+(WPM__assumption => WPM__guarantee) &&
+(UART__assumption => UART__guarantee))};
+
+assert {guarantee};
+
+//
+//q2 : Bool := 
+//(assumption && 
+//(RADIO__assumption => RADIO__guarantee) &&
+//(FPLN__assumption => FPLN__guarantee) &&
+//(WPM__assumption => WPM__guarantee)) => UART__guarantee;
+//
+//q3 : Bool := 
+//(assumption && 
+//(RADIO__assumption => RADIO__guarantee) &&
+//(FPLN__assumption => FPLN__guarantee) &&
+//(UART__assumption => UART__guarantee)) => WPM__guarantee;
+//
+//q4 : Bool := 
+//(assumption && 
+//(RADIO__assumption => RADIO__guarantee) &&
+//(WPM__assumption => WPM__guarantee) &&
+//(UART__assumption => UART__guarantee)) => FPLN__guarantee;
+//
+//q5 : Bool := 
+//(assumption && 
+//(FPLN__assumption => FPLN__guarantee) &&
+//(WPM__assumption => WPM__guarantee) &&
+//(UART__assumption => UART__guarantee)) => RADIO__guarantee;
+//
+//
+// 
+
+
+ 

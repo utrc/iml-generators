@@ -93,6 +93,37 @@ class ModelSmtEncodingTest {
 		
 	}
 	
+	@Test
+	def void testAssessment3FlattenIml() {
+		
+		val files = FileUtil.readAllFilesUnderDir("./res/assessment3/flatten_iml.iml");
+		var ResourceSet rs;
+		for (file : files) {
+			if (rs !== null) {
+				rs = file.parse(rs).eResource.resourceSet			 
+			} else {
+				rs = file.parse.eResource.resourceSet
+			}
+		}
+		var Model swModel = null;
+		for (resource : rs.resources) {
+			if (resource.contents !== null && resource.contents.size > 0) {
+				val model = resource.contents.get(0);
+				if (model instanceof Model) {
+					model.assertNoErrors
+					if ((model as Model).name.equals("p")) {
+						swModel = model;
+					}
+				}
+			}
+		}
+		if (swModel !== null) {
+			encode(swModel as Model, null)
+			println(encoder.toString)
+		}
+		
+	}
+	
 	def encode(Model model, String ctName) {
 		model.assertNoErrors
 		if (ctName !== null) {
