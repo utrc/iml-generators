@@ -177,10 +177,7 @@ public class LustreGenerator {
 			LustreSymbol symbol = addSymbol(target, s, m.Bool, LustreElementType.LET);
 			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr));
 		}
-		
-  
 		return target;
-
 	}
 
 	public LustreNode generateType(LustreModel m, SimpleTypeReference tr) {
@@ -282,21 +279,6 @@ public class LustreGenerator {
 		return target;
 	}
 
-	private LustreSymbol generateInput_old(LustreNode m, Port p) {
-
-		if (p.getDataType() instanceof SimpleTypeReference) {
-			LustreSymbol target = new LustreSymbol(p.getName());
-			LustreNode nbound = generateType(m.getContainer(), (SimpleTypeReference) p.getDataType());
-			LustreTypeInstance ti = new LustreTypeInstance(nbound);
-			target.setType(ti);
-			target.setElementType(LustreElementType.PARAMETER);
-			m.addSymbol(target);
-			return target;
-		}
-
-		return new LustreSymbol("__UNSUPPORTED__");
-	}
-
 	private LustreSymbol generateInput(LustreNode m, Port p) {
 
 		if (p.getType() instanceof SimpleTypeReference) {
@@ -312,36 +294,6 @@ public class LustreGenerator {
 		return new LustreSymbol("__UNSUPPORTED__");
 	}
 	
-	
-	private LustreSymbol generateOutput_old(LustreNode m, Port p, SimpleTypeReference ctx) {
-
-		if (p.getDataType() instanceof SimpleTypeReference) {
-			LustreSymbol target = new LustreSymbol(p.getName());
-			LustreNode nbound = generateType(m.getContainer(), (SimpleTypeReference) p.getDataType());
-			LustreTypeInstance ti = new LustreTypeInstance(nbound);
-			target.setType(ti);
-			if (p.getDefinition() != null) {
-				// TODO need to generalize this
-				if (p.getDefinition() instanceof SignedAtomicFormula) {
-					if (p.getDefinition().getLeft() instanceof InstanceConstructor) {
-						InstanceConstructor cons = (InstanceConstructor) p.getDefinition().getLeft();
-						SymbolDeclaration var = cons.getRef();
-						Map<Symbol, String> remap = new HashMap<>();
-						remap.put(var, p.getName());
-						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap) ;
-						target.setDefinition(expr.replace(p.getName() + "=", ""));
-					}
-				}
-			}
-			target.setElementType(LustreElementType.RETURN);
-			
-			m.addSymbol(target);
-			return target;
-		}
-
-		return new LustreSymbol("__UNSUPPORTED__");
-	}
-
 	private LustreSymbol generateOutput(LustreNode m, Port p, SimpleTypeReference ctx) {
 
 		if (p.getType() instanceof SimpleTypeReference) {

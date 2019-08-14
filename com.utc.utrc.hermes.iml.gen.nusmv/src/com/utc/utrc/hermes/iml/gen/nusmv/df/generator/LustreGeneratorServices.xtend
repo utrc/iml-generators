@@ -61,7 +61,9 @@ class LustreGeneratorServices {
 	}
 
 	def String getNameFor(SimpleTypeReference tr) {
-		return ImlUtil.getTypeName(tr, qnp);
+		var String name = ImlUtil.getTypeName(tr, qnp);
+		name = typeNameWithReplacement(name);
+		return name;
 	}
 
 	def String getNameFor(ImlType imlType) {
@@ -71,7 +73,6 @@ class LustreGeneratorServices {
 		return "__NOT__SUPPORTED"
 	}
 	
-
 	def String getNameFor(FolFormula f) {
 		if (f instanceof TermMemberSelection) {
 			return getNameFor(f as TermMemberSelection);
@@ -115,6 +116,7 @@ class LustreGeneratorServices {
 			type «toLustreName(m)» = enum {
 				«FOR l : m.literals SEPARATOR ',\n'» «toLustreName(m) + "_dot_" +l» «ENDFOR»
 			} ;
+			
 			''';
 		}
 		if(m.isStruct()) {
@@ -123,39 +125,34 @@ class LustreGeneratorServices {
 			type «toLustreName(m)» = struct { 
 				«FOR f : m.fields.values SEPARATOR ';\n'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»
 			} ;
+			
 			'''
 		} 
 		var nodes = 
 		'''
-			node imported «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
+			node «needImported(m)» «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
 			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
 			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
+			«IF (isContract(m))»
 			(*@contract 
-«««				var
-«««				«FOR v : m.variables.values SEPARATOR '; \n' AFTER ';'» var «v.name» : «v.type.type.toLustreName»«ENDFOR» 
-				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n assume assumption ; \n guarantee guarantee ; '»var «v.name» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
-«««				«FOR v : m.components.values» 
-«««				«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
-«««				«ENDFOR»
+				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «v.name» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
+				«IF (hasAssumption(m))» assume assumption ; «ENDIF»
+				«IF (hasGuarantee(m))» guarantee guarantee ; «ENDIF»
 			*) 
-«««			«FOR v : m.variables.values» var «v.name» : «v.type.type.toLustreName» ; \n «ENDFOR» 
-«««			«FOR v : m.fields.values» «IF v.definition === null » var «v.name» : «v.type.type.toLustreName» ; \n «ENDIF» «ENDFOR» 
+			
+			«ENDIF»
 			«FOR v : m.components.values» 
 			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
 			«ENDFOR»
 			«ENDIF»
 			«IF (m.components.size > 0)»
 			let
-«««			«IF (m.components.size > 0)»
 			«FOR v : m.components.values » 
 			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
 			«ENDFOR» 
-«««			«ENDIF»
-«««			«IF (m.fields.size > 0)»
-«««			«FOR v : m.fields.values» «IF v.definition !== null» «v.name» = «v.definition» ; «'\n '» «ENDIF»«ENDFOR» 
-«««			«ENDIF»
-«««			«FOR v : m.lets.values AFTER '; \n'»«v.definition»«ENDFOR»
+			--%MAIN;
 			tel
+			
 			«ENDIF»
 		'''
 		var closed = new ArrayList<String>() ;
@@ -168,9 +165,7 @@ class LustreGeneratorServices {
 			functional_nodes.remove(fname) ;
 			closed.add(fname);
 		}
-		
 		return nodes ;
-		
 	}
 
 	def List<String> suffix(NuSmvSymbol s) {
@@ -241,15 +236,7 @@ class LustreGeneratorServices {
 				var literalname = serialize(e.member, ctx, map);
 				retval = '''«typename.replaceAll("\\.","_dot_")»_dot_«literalname»'''
 			} else {
-
-				// get the data field of the data port
-				if (isCarrierAccess(e.member)) {
-//					retval = '''«serialize(e.receiver,ctx,map)»'''
-					retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
-				} else {
-					retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
-				}
-
+				retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
 			}
 		} else if (e instanceof SymbolReferenceTerm) {
 			if (map.containsKey(e.symbol)) {
@@ -321,8 +308,9 @@ class LustreGeneratorServices {
 						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
 					«ENDIF»
 					let
-					_return = «serialize(expr.^return, null)» ;
+					    _return = «serialize(expr.^return, null)» ;
 					tel
+					
 				'''
 			} else {
 				var domain = type.domain;
@@ -350,9 +338,52 @@ class LustreGeneratorServices {
 			}
 
 		}
-		
 		return "" 
+	}
 
+	def  isContract(LustreNode m) {
+		if ( m.fields.size > 0) {
+			for (v : m.fields.values) {
+				if ((v.name.equals("assumption") || v.name.equals("guarantee")) && v.definition !== null) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	
+	def  hasAssumption(LustreNode m) {
+		if ( m.fields.size > 0) {
+			for (v : m.fields.values) {
+				if (v.name.equals("assumption") && v.definition !== null) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	
+	def hasGuarantee(LustreNode m) {
+		if ( m.fields.size > 0) {
+			for (v : m.fields.values) {
+				if (v.name.equals("guarantee") && v.definition !== null) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	
+	
+	def needImported(LustreNode m) {
+		if (m.components.size > 0) {
+			for (v : m.components.values) {
+				if (v.type.type.returns.toList.size > 0) {
+					return ""
+				}				
+			}
+		}
+		return "imported"
 	}
 
 	def isPort(TermExpression e) {
@@ -398,7 +429,9 @@ class LustreGeneratorServices {
 		if (m == LustreModel.Real) {
 			return "real";
 		}
-		return '''«m.name.replaceAll("\\.","_dot_")»'''
+		var String nm = m.name;
+		nm = typeNameWithReplacement(nm);
+		return '''«nm.replaceAll("\\.","_dot_")»'''
 	}
 
 	def String toLustreName(LustreNode m, String literal) {
@@ -415,7 +448,16 @@ class LustreGeneratorServices {
 			if (t.type === stdLibs.intType) return "int";
 			if (t.type === stdLibs.realType) return "real";
 		}
-		'''«ImlUtil.getTypeName(t,qnp).replaceAll("\\.","_dot_")»'''
+		var String name = ImlUtil.getTypeName(t,qnp);
+		name = typeNameWithReplacement(name);
+		'''«name.replaceAll("\\.","_dot_")»'''
+	}
+	
+	def String typeNameWithReplacement(String name) {
+		var String nm = name.replaceAll("<", "__");
+		nm = nm.replaceAll(", ", "__");
+		nm = nm.replaceAll(">", "__");
+		return nm;
 	}
 
 	def List<String> getSuffix(FolFormula e, SimpleTypeReference ctx) {
@@ -455,9 +497,7 @@ class LustreGeneratorServices {
 
 				}
 			}
-
 		}
 		return retval;
 	}
-
 }
