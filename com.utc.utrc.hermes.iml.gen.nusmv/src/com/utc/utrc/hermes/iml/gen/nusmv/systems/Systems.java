@@ -1,5 +1,7 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.systems;
 
+import static com.utc.utrc.hermes.iml.util.ImlUtil.getRelatedTypesWithProp;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.NamedType;
+import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
@@ -114,13 +117,57 @@ public class Systems {
 		// add ports and sub-components
 		// TODO we only process simple type references at the moment
 		// TODO we should also process arrays that are very convenient
-
+		
+		for (Relation rl : t.getType().getRelations()) {
+			if (rl instanceof TraitExhibition) {
+				TraitExhibition tr = (TraitExhibition) rl;
+				for (TypeWithProperties twp : tr.getExhibitions()) {
+					if (twp.getType() instanceof SimpleTypeReference) {
+						gatherFromExhibit((SimpleTypeReference) twp.getType(), c, connectors);
+					}
+				}
+			}
+		}
+		
 		// process connectors
 		for (SymbolDeclaration s : connectors) {
 			processConnector(s, c);
 		}
 
 		return c;
+	}
+
+	private void gatherFromExhibit(SimpleTypeReference str, ComponentType c, List<SymbolDeclaration> connectors) {
+		for (Symbol s : str.getType().getSymbols()) {
+			if (s instanceof SymbolDeclaration) {
+				SymbolDeclaration sd_s = (SymbolDeclaration) s;
+				ImlType s_type = sd_s.getType();
+				if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+					if (s_type instanceof SimpleTypeReference) {
+						ComponentType ct = processComponent((SimpleTypeReference) s_type);
+						ComponentInstance ci = new ComponentInstance(sd_s, ct);
+						c.addSub(ci);
+					}
+				} else if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Port"))) {
+					processPort(sd_s, s_type, c);
+				} else if (ImlUtil.hasType(s_type, stdLibs.getNamedType("iml.systems", "Connector"))) {
+					connectors.add(sd_s);
+				} else {
+					logger.info("Component {} also includes symbol { } which this class does not process.", c.getName(),
+							sd_s.getName());
+				}
+			}
+		}
+		for (Relation rl : str.getType().getRelations()) {
+			if (rl instanceof TraitExhibition) {
+				TraitExhibition tr = (TraitExhibition) rl;
+				for (TypeWithProperties twp : tr.getExhibitions()) {
+					if (twp instanceof SimpleTypeReference) {
+						gatherFromExhibit((SimpleTypeReference) twp, c, connectors);
+					}
+				}
+			}
+		}
 	}
 
 	public void processPort(SymbolDeclaration sd, ImlType t, ComponentType container) {

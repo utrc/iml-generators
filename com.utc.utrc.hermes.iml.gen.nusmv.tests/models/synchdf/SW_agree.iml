@@ -203,26 +203,26 @@ type  MC_SW_dot_Impl exhibits (MC_SWTrait) {
 	
 }
 // These functions check the well-formedness of message structures
-good_coordinate : Coordinate_dot_Impl -> Bool := fun(coord : Coordinate_dot_Impl) {
+good_coordinate : Coordinate_dot_Impl -> Bool := fun(coord : Coordinate_dot_Impl): Bool {
 																coord.lat >= -90 && 
 																coord.lat <= 90 && 
 																coord.long >= -180 && 
 																coord.long <= 180 && 
 																coord.alt >= 0 && 
 																coord.alt <= 15000 } ;
-good_map : Map_dot_Impl -> Bool := fun(map : Map_dot_Impl) {	
+good_map : Map_dot_Impl -> Bool := fun(map : Map_dot_Impl): Bool {	
 			 												good_coordinate(map.wp1) && 
 															good_coordinate(map.wp2) && 
 															good_coordinate(map.wp3) && 
 															good_coordinate(map.wp4) } ;
-good_pattern : FlightPattern -> Bool :=	fun(pattern : FlightPattern) {pattern = FlightPattern.ZigZag ||
+good_pattern : FlightPattern -> Bool :=	fun(pattern : FlightPattern): Bool {pattern = FlightPattern.ZigZag ||
 																			  (pattern = FlightPattern.StraightLine) ||
 																			   (pattern = FlightPattern.Perimeter)} ;
-good_HMAC : Bool -> Bool := fun(hmac : Bool) { (hmac = true) || (hmac = false) } ;
-good_gs_command : Command_dot_Impl -> Bool :=	fun(cmd : Command_dot_Impl) {good_map(cmd.Map) && 
+good_HMAC : Bool -> Bool := fun(hmac : Bool): Bool { (hmac = true) || (hmac = false) } ;
+good_gs_command : Command_dot_Impl -> Bool :=	fun(cmd : Command_dot_Impl): Bool {good_map(cmd.Map) && 
 																		good_pattern(cmd.Pattern) && 
 																		good_HMAC(cmd.HMAC) };
-good_mission : Mission_dot_Impl -> Bool :=	fun( mission : Mission_dot_Impl) {good_coordinate(mission.wp1) && 
+good_mission : Mission_dot_Impl -> Bool :=	fun( mission : Mission_dot_Impl): Bool {good_coordinate(mission.wp1) && 
 																		good_coordinate(mission.wp2) && 
 																		good_coordinate(mission.wp3) && 
 																		good_coordinate(mission.wp4) && 
@@ -232,7 +232,7 @@ good_mission : Mission_dot_Impl -> Bool :=	fun( mission : Mission_dot_Impl) {goo
 																		good_coordinate(mission.wp8) && 
 																		good_coordinate(mission.wp9) && 
 																		good_coordinate(mission.wp10) };
-good_mission_window : MissionWindow_dot_Impl -> Bool :=	fun(win : MissionWindow_dot_Impl) {good_coordinate(win.wp1) && 
+good_mission_window : MissionWindow_dot_Impl -> Bool :=	fun(win : MissionWindow_dot_Impl): Bool {good_coordinate(win.wp1) && 
 																				good_coordinate(win.wp2) && 
 																				good_coordinate(win.wp3) && 
 																				good_coordinate(win.wp4)};
