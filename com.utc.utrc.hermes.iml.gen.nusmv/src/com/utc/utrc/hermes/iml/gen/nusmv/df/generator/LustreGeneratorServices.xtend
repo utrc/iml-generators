@@ -105,7 +105,7 @@ class LustreGeneratorServices {
 	}
 
 	def String serialize(LustreModel m) {
-		'''«FOR n : m.nodes.values AFTER '\n'»«serialize(n)»«ENDFOR»'''
+		'''«FOR n : m.nodes.values AFTER '\n'»«serializeType(n)»«ENDFOR»«FOR n : m.nodes.values AFTER '\n'»«serializeNode(n)»«ENDFOR»'''
 	}
 
 	def String serialize(LustreNode m) {
@@ -167,6 +167,74 @@ class LustreGeneratorServices {
 		}
 		return nodes ;
 	}
+
+	def String serializeType(LustreNode m) {
+		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
+		if(m.isEnum()) {
+			return 
+			'''
+			type «toLustreName(m)» = enum {
+				«FOR l : m.literals SEPARATOR ',\n'» «toLustreName(m) + "_dot_" +l» «ENDFOR»
+			} ;
+			
+			''';
+		}
+		if(m.isStruct()) {
+			return 
+			'''
+			type «toLustreName(m)» = struct { 
+				«FOR f : m.fields.values SEPARATOR ';\n'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»
+			} ;
+			
+			'''
+		} 
+	}
+
+	def String serializeNode(LustreNode m) {
+		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
+		if(m.isEnum() || m.isStruct()) return "";
+		var nodes = 
+		'''
+			node «needImported(m)»«toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
+			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
+			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
+			«IF (isContract(m))»
+			(*@contract 
+				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «v.name» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
+				«IF (hasAssumption(m))» assume assumption ; «ENDIF»
+				«IF (hasGuarantee(m))» guarantee guarantee ; «ENDIF»
+			*) 
+			
+			«ENDIF»
+			«FOR v : m.components.values» 
+			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
+			«ENDFOR»
+			«ENDIF»
+			«IF (m.components.size > 0)»
+			let
+			«FOR v : m.components.values » 
+			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
+			«ENDFOR» 
+			--%MAIN;
+			tel
+			
+			«ENDIF»
+		'''
+		var closed = new ArrayList<String>() ;
+		while(functional_nodes.size > 0) {
+			var fname = functional_nodes.keySet.get(0) ;
+			if (! closed.contains(fname)) { 
+				var togen = functional_nodes.get(fname);
+				nodes = nodes + serializeFunctionalNode(togen);
+			}
+			functional_nodes.remove(fname) ;
+			closed.add(fname);
+		}
+		return nodes ;
+	}
+
+
+
 
 	def List<String> suffix(NuSmvSymbol s) {
 		var retval = new ArrayList<String>();
@@ -302,7 +370,7 @@ class LustreGeneratorServices {
 				return 
 				'''
 					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-					returns (_return : «toLustreName(lambda.returnType)» )
+					returns (_return : «toLustreName((type as FunctionType).range)» )
 					«IF expr.defs.size >0»
 						var
 						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
@@ -383,7 +451,7 @@ class LustreGeneratorServices {
 				}				
 			}
 		}
-		return "imported"
+		return "imported "
 	}
 
 	def isPort(TermExpression e) {
