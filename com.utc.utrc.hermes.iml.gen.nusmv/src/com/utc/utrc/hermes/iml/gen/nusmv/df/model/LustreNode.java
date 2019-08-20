@@ -15,7 +15,6 @@ public class LustreNode extends LustreType {
 	private Map<String, LustreSymbol> components;
 	private Map<String,LustreSymbol> lets;
 	
-	
 	public LustreNode(String name) {
 		super(name);
 		variables = new HashMap<String,LustreSymbol>();
@@ -41,6 +40,7 @@ public class LustreNode extends LustreType {
 	public List<LustreSymbol> getParameters() {
 		return parameters;
 	}
+
 	public Map<String,LustreSymbol> getComponents() {
 		return components;
 	}
@@ -53,8 +53,6 @@ public class LustreNode extends LustreType {
 		return lets;
 	}
 
-	
-
 	public void setContainer(LustreModel container) {
 		this.container = container ;
 	}
@@ -66,6 +64,7 @@ public class LustreNode extends LustreType {
 	public boolean hasType(String s) {
 		return container.getNodes().containsKey(s);
 	}
+	
 	public LustreNode getType(String s) {
 		return container.getNodes().get(s);
 	}
@@ -99,7 +98,5 @@ public class LustreNode extends LustreType {
 		}
 		return -1 ;
 	}	
-	
-	
 	
 }

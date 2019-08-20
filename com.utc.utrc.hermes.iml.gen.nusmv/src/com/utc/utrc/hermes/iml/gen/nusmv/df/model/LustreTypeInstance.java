@@ -13,13 +13,13 @@ public class LustreTypeInstance  {
 	public LustreTypeInstance() {
 		params = new ArrayList<LustreVariable>();
 	}
+	
 	public LustreTypeInstance(LustreTypeInstance other) {
 		this.type = other.type;
 		params = new ArrayList<LustreVariable>();
 		for(LustreVariable v : other.params) {
 			params.add(new LustreVariable(v));
 		}
-		
 	}
 	
 	
@@ -27,12 +27,15 @@ public class LustreTypeInstance  {
 		params = new ArrayList<LustreVariable>();
 		type = t;
 	}
+	
 	public LustreNode getType() {
 		return type;
 	}
+	
 	public void setType(LustreNode type) {
 		this.type = type;
 	}
+	
 	public List< LustreVariable> getParams() {
 		return params;
 	}
