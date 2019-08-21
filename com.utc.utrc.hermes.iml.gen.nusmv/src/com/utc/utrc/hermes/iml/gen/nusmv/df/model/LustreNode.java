@@ -98,5 +98,24 @@ public class LustreNode extends LustreType {
 		}
 		return -1 ;
 	}	
+
+
+	public boolean hasReturn(String name) {
+		for(LustreSymbol  v : returns) {
+			if (v.getName().equals(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public int returnIndex(String name) {
+		for(int index = 0 ; index < returns.size() ; index++) {
+			if (returns.get(index).getName().equals(name)) {
+				return index;
+			}
+		}
+		return -1 ;
+	}		
 	
 }

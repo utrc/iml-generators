@@ -207,13 +207,13 @@ class LustreGeneratorServices {
 			
 			«ENDIF»
 			«FOR v : m.components.values» 
-			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
+			«FOR p : v.type.type.returns» «IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» var «v.name»_«p.name» : «p.type.type.toLustreName» ; «ENDIF»«ENDFOR»
 			«ENDFOR»
 			«ENDIF»
 			«IF (m.components.size > 0)»
 			let
 			«FOR v : m.components.values » 
-			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
+			(«FOR p : v.type.outParams SEPARATOR ','» «p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
 			«ENDFOR»
 			«FOR l : m.lets.values» --%PROPERTY «l.definition» ; «'\n'»«ENDFOR»
 			 --%MAIN;

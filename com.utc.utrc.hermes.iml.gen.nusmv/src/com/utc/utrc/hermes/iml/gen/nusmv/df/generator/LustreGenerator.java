@@ -331,20 +331,29 @@ public class LustreGenerator {
 		if (conn.getTargetComponent() == ComponentInstance.self) {
 			// Need to take the output symbol
 			LustreSymbol out = m.getVariables().get(conn.getTargetPort().getName());
-//			if (out != null) {
 			if (out == null) {
-				LustreSymbol toadd = new LustreSymbol("");
-				FolFormula def = Phi.eq(
-						EcoreUtil.copy(
-								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
-										.getDefinition().getLeft()).getTail()).getElements().get(0).getLeft()),
-						EcoreUtil.copy(
-								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
-										.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
-				toadd.setName(m.getContainer().newSymbolName());
-				toadd.setElementType(LustreElementType.LET);
-				toadd.setDefinition(generatorServices.serialize(def, tr, "_"));
-				m.addSymbol(toadd);
+//				LustreSymbol toadd = new LustreSymbol("");
+//				FolFormula def = Phi.eq(
+//						EcoreUtil.copy(
+//								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
+//										.getDefinition().getLeft()).getTail()).getElements().get(0).getLeft()),
+//						EcoreUtil.copy(
+//								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
+//										.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
+//				toadd.setName(m.getContainer().newSymbolName());
+//				toadd.setElementType(LustreElementType.LET);
+//				toadd.setDefinition(generatorServices.serialize(def, tr, "_"));
+//				m.addSymbol(toadd);
+				
+				LustreSymbol machine = m.getComponents().get(conn.getSourceComponent().getName());
+				if (machine != null) {
+					int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
+					if (index != -1) {
+						String portname = conn.getTargetPort().getName();
+						LustreVariable param = new LustreVariable(portname);
+						machine.getType().setOutParam(index, param);
+					}
+				}
 			}
 		} else {
 			// otherwise
@@ -361,7 +370,19 @@ public class LustreGenerator {
 
 					LustreVariable param = new LustreVariable(portname);
 					machine.getType().setParam(index, param);
-					;
+				}
+			}
+			
+			if (conn.getSourceComponent() != ComponentInstance.self) {
+				machine = m.getComponents().get(conn.getSourceComponent().getName());
+				if (machine != null) {
+					int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
+					if (index != -1) {
+						String portname = conn.getSourceComponent().getName() + "_";
+						portname += conn.getSourcePort().getName();
+						LustreVariable param = new LustreVariable(portname);
+						machine.getType().setOutParam(index, param);
+					}
 				}
 			}
 		}
