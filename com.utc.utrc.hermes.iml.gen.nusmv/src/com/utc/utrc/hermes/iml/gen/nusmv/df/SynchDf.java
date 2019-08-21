@@ -152,6 +152,11 @@ public class SynchDf {
 	public boolean isLet(SymbolDeclaration s ) {
 		return (ImlUtil.hasAnnotation((SymbolDeclaration) s, (Annotation) stdLibs.getNamedType("iml.synchdf.ontological", "Let"))) ;
 	}
+
+	public void reset() {
+		nodes.clear();
+		otherTypes.clear();
+	}
 	
 	
 }

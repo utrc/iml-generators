@@ -300,4 +300,8 @@ public class Systems {
 		return (components.containsKey(ImlUtil.getTypeName(t, qnp)));
 	}
 
+	public void reset() {
+		components.clear();
+	}
+
 }

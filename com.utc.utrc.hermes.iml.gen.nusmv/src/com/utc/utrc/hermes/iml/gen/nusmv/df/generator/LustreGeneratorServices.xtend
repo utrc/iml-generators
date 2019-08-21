@@ -42,6 +42,7 @@ import com.utc.utrc.hermes.iml.iml.FunctionType
 import com.utc.utrc.hermes.iml.iml.LambdaExpression
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
 import com.utc.utrc.hermes.iml.iml.TupleType
+import com.google.common.collect.Maps
 
 class LustreGeneratorServices {
 
@@ -57,7 +58,7 @@ class LustreGeneratorServices {
 	private Map<String, SymbolDeclaration> functional_nodes ;
 
 	new() {
-		functional_nodes = newHashMap
+		functional_nodes = Maps.newHashMap()
 	}
 
 	def String getNameFor(SimpleTypeReference tr) {
