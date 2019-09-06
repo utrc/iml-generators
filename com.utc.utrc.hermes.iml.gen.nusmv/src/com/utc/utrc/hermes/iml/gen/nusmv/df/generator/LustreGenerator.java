@@ -175,7 +175,7 @@ public class LustreGenerator {
 		
 		for(String s : node.getLets().keySet()) {
 			LustreSymbol symbol = addSymbol(target, s, m.Bool, LustreElementType.LET);
-			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr));
+			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr, "."));
 		}
 		return target;
 	}
@@ -254,7 +254,7 @@ public class LustreGenerator {
 				name = target.getContainer().newSymbolName();
 			}
 			return addSymbol(target, name, target.getContainer().getType("iml.lang.Bool"), LustreElementType.ASSERTION,
-					generatorServices.serialize(sd.getDefinition(), ctx));
+					generatorServices.serialize(sd.getDefinition(), ctx, "."));
 		} else {
 			name = sd.getName();
 			bound = typing.bind(sd.getType());
@@ -262,7 +262,7 @@ public class LustreGenerator {
 				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
 				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
 				if (sd.getDefinition() != null) {
-					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx) );
+					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".") );
 				}
 				return toadd ;
 			}
@@ -309,7 +309,7 @@ public class LustreGenerator {
 						SymbolDeclaration var = cons.getRef();
 						Map<Symbol, String> remap = new HashMap<>();
 						remap.put(var, p.getName());
-						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap) ;
+						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap, ".") ;
 						target.setDefinition(expr.replace(p.getName() + "=", ""));
 					}
 				}
@@ -331,19 +331,29 @@ public class LustreGenerator {
 		if (conn.getTargetComponent() == ComponentInstance.self) {
 			// Need to take the output symbol
 			LustreSymbol out = m.getVariables().get(conn.getTargetPort().getName());
-			if (out != null) {
-				LustreSymbol toadd = new LustreSymbol("");
-				FolFormula def = Phi.eq(
-						EcoreUtil.copy(
-								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
-										.getDefinition().getLeft()).getTail()).getElements().get(0).getLeft()),
-						EcoreUtil.copy(
-								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
-										.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
-				toadd.setName(m.getContainer().newSymbolName());
-				toadd.setElementType(LustreElementType.LET);
-				toadd.setDefinition(generatorServices.serialize(def, tr));
-				m.addSymbol(toadd);
+			if (out == null) {
+//				LustreSymbol toadd = new LustreSymbol("");
+//				FolFormula def = Phi.eq(
+//						EcoreUtil.copy(
+//								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
+//										.getDefinition().getLeft()).getTail()).getElements().get(0).getLeft()),
+//						EcoreUtil.copy(
+//								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
+//										.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
+//				toadd.setName(m.getContainer().newSymbolName());
+//				toadd.setElementType(LustreElementType.LET);
+//				toadd.setDefinition(generatorServices.serialize(def, tr, "_"));
+//				m.addSymbol(toadd);
+				
+				LustreSymbol machine = m.getComponents().get(conn.getSourceComponent().getName());
+				if (machine != null) {
+					int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
+					if (index != -1) {
+						String portname = conn.getTargetPort().getName();
+						LustreVariable param = new LustreVariable(portname);
+						machine.getType().setOutParam(index, param);
+					}
+				}
 			}
 		} else {
 			// otherwise
@@ -360,7 +370,19 @@ public class LustreGenerator {
 
 					LustreVariable param = new LustreVariable(portname);
 					machine.getType().setParam(index, param);
-					;
+				}
+			}
+			
+			if (conn.getSourceComponent() != ComponentInstance.self) {
+				machine = m.getComponents().get(conn.getSourceComponent().getName());
+				if (machine != null) {
+					int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
+					if (index != -1) {
+						String portname = conn.getSourceComponent().getName() + "_";
+						portname += conn.getSourcePort().getName();
+						LustreVariable param = new LustreVariable(portname);
+						machine.getType().setOutParam(index, param);
+					}
 				}
 			}
 		}

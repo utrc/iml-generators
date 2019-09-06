@@ -208,15 +208,16 @@ class LustreGeneratorServices {
 			
 			«ENDIF»
 			«FOR v : m.components.values» 
-			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
+			«FOR p : v.type.type.returns» «IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» var «v.name»_«p.name» : «p.type.type.toLustreName» ; «ENDIF»«ENDFOR»
 			«ENDFOR»
 			«ENDIF»
 			«IF (m.components.size > 0)»
 			let
 			«FOR v : m.components.values » 
-			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
-			«ENDFOR» 
-			--%MAIN;
+			(«FOR p : v.type.outParams SEPARATOR ','» «p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
+			«ENDFOR»
+			«FOR l : m.lets.values» --%PROPERTY «l.definition» ; «'\n'»«ENDFOR»
+			 --%MAIN;
 			tel
 			
 			«ENDIF»
@@ -271,30 +272,30 @@ class LustreGeneratorServices {
 		return retval;
 	}
 
-	def String serialize(FolFormula e, SimpleTypeReference ctx) {
-		serialize(e, ctx, new HashMap<Symbol, String>());
+	def String serialize(FolFormula e, SimpleTypeReference ctx, String sp) {
+		serialize(e, ctx, new HashMap<Symbol, String>(), sp);
 	}
 
-	def String serialize(FolFormula e, SimpleTypeReference ctx, Map<Symbol, String> map) {
+	def String serialize(FolFormula e, SimpleTypeReference ctx, Map<Symbol, String> map, String sp) {
 		var String retval = "";
 		if (e.getOp() !== null &&
 			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
-			retval = '''«serialize(e.left,ctx,map)»  «convertOp(e.op)»  «serialize(e.right,ctx,map)» ''';
+			retval = '''«serialize(e.left, ctx, map, sp)»  «convertOp(e.op)»  «serialize(e.right, ctx, map, sp)» ''';
 		} else if (e instanceof AtomicExpression) {
 			if (e.rel === RelationKind.EQ) {
 				var suff = getSuffix(e.left, ctx);
 				if (suff.empty) {
-					retval = '''«serialize(e.left,ctx,map)»«e.rel.toString»  «serialize(e.right,ctx,map)»'''
+					retval = '''«serialize(e.left, ctx, map, sp)» «e.rel.toString» «serialize(e.right, ctx, map, sp)»'''
 				} else {
-					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left,ctx,map)»«suffix» «e.rel.toString»  «serialize(e.right,ctx,map)»«suffix» «ENDFOR»'''
+					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left, ctx, map, sp)»«suffix» «e.rel.toString» «serialize(e.right, ctx, map, sp)»«suffix» «ENDFOR»'''
 				}
 			} else {
-				retval = ''' «serialize(e.left,ctx,map)» «e.rel.toString»  «serialize(e.right,ctx,map)» ''';
+				retval = ''' «serialize(e.left, ctx, map, sp)» «e.rel.toString»  «serialize(e.right, ctx, map, sp)» ''';
 			}
 		} else if (e instanceof Addition) {
-			retval = ''' «serialize(e.left,ctx,map)» «e.sign» «serialize(e.right,ctx,map)»'''
+			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
 		} else if (e instanceof Multiplication) {
-			retval = ''' «serialize(e.left,ctx,map)» «e.sign» «serialize(e.right,ctx,map)»'''
+			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
 		} else if (e instanceof TermMemberSelection) {
 			// TODO this is a quick hack
 			if (e.receiver instanceof SymbolReferenceTerm &&
@@ -302,10 +303,10 @@ class LustreGeneratorServices {
 				var typename = qnp.getFullyQualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType).
 					toString();
 				
-				var literalname = serialize(e.member, ctx, map);
+				var literalname = serialize(e.member, ctx, map, sp);
 				retval = '''«typename.replaceAll("\\.","_dot_")»_dot_«literalname»'''
 			} else {
-				retval = '''«serialize(e.receiver,ctx,map)».«serialize(e.member,ctx,map)»'''
+				retval = '''«serialize(e.receiver, ctx, map, sp)»«sp»«serialize(e.member, ctx, map, sp)»'''
 			}
 		} else if (e instanceof SymbolReferenceTerm) {
 			if (map.containsKey(e.symbol)) {
@@ -314,11 +315,11 @@ class LustreGeneratorServices {
 				retval = e.symbol.name;
 			}
 		} else if (e instanceof TailedExpression) {
-			var prefix = serialize(e.left, ctx, map);
+			var prefix = serialize(e.left, ctx, map, sp);
 			var taile = e.tail;
 			var String tails = "";
 			if (taile instanceof TupleConstructor) {
-				tails = '''( «FOR tailelem : taile.elements SEPARATOR ','» «serialize(tailelem,ctx,map)» «ENDFOR» )'''
+				tails = '''( «FOR tailelem : taile.elements SEPARATOR ','» «serialize(tailelem, ctx, map, sp)» «ENDFOR» )'''
 				// add to queue of nodes to be generated
 				if (e.left instanceof SymbolReferenceTerm &&
 					(e.left as SymbolReferenceTerm).symbol instanceof SymbolDeclaration) {
@@ -328,28 +329,28 @@ class LustreGeneratorServices {
 			}
 			retval = prefix + tails;
 		} else if (e instanceof ParenthesizedTerm) {
-			retval = '''( «serialize(e.sub,ctx,map)» )'''
+			retval = '''( «serialize(e.sub, ctx, map, sp)» )'''
 		} else if (e instanceof IteTermExpression) {
 
 			if (e.right === null) {
-				retval = '''( «serialize(e.condition,ctx,map)» -> «serialize(e.left,ctx,map)» )'''
+				retval = '''( «serialize(e.condition, ctx, map, sp)» -> «serialize(e.left, ctx, map, sp)» )'''
 			} else {
-				retval = '''( «serialize(e.condition,ctx,map)» ? «serialize(e.left,ctx,map)» : «serialize(e.right,ctx,map)»'''
+				retval = '''( «serialize(e.condition, ctx, map, sp)» ? «serialize(e.left, ctx, map, sp)» : «serialize(e.right, ctx, map, sp)»'''
 			}
 		} else if (e instanceof CaseTermExpression) {
 
 			retval = '''
 				case 
-					«FOR index : 0..e.cases.size-1 SEPARATOR ";\n" AFTER ";\n"»«serialize(e.cases.get(index),ctx,map)» : «serialize(e.expressions.get(index),ctx,map)»«ENDFOR»
+					«FOR index : 0..e.cases.size-1 SEPARATOR ";\n" AFTER ";\n"»«serialize(e.cases.get(index), ctx, map, sp)» : «serialize(e.expressions.get(index), ctx, map, sp)»«ENDFOR»
 				esac
 			'''
 		} else if (e instanceof SequenceTerm) {
-			retval = '''( «serialize(e.^return,ctx,map)» )'''
+			retval = '''( «serialize(e.^return, ctx, map, sp)» )'''
 		} else if (e instanceof SignedAtomicFormula) {
 			if (e.neg) {
 				retval = retval + "not";
 			}
-			retval = retval + serialize(e.left, ctx, map);
+			retval = retval + serialize(e.left, ctx, map, sp);
 		} else if (e instanceof NumberLiteral) {
 			if (e.isNeg) {
 				retval += "-";
@@ -377,7 +378,7 @@ class LustreGeneratorServices {
 						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
 					«ENDIF»
 					let
-					    _return = «serialize(expr.^return, null)» ;
+					    _return = «serialize(expr.^return, null, ".")» ;
 					tel
 					
 				'''
