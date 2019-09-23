@@ -666,7 +666,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			if (symbolRef.getSymbol() instanceof SymbolDeclaration 
 					&& ((SymbolDeclaration) symbolRef.getSymbol()).getType() instanceof FunctionType
 					&& !(symbolRef.eContainer() instanceof TailedExpression)) { // Using function type without being inside tailed expression
-				throw new SMTEncodingException(((SymbolDeclaration) symbolRef.getSymbol()).getName() + " function can't be used as a variable");
+//				throw new SMTEncodingException(((SymbolDeclaration) symbolRef.getSymbol()).getName() + " function can't be used as a variable");
 			}
 			FormulaT symbolRefFormula = getSymbolAccessFormula(symbolRef, env.clone(), inst, scope);
 			return symbolRefFormula;
