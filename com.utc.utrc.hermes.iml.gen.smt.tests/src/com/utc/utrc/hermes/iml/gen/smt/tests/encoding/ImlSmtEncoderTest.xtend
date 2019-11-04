@@ -9,8 +9,6 @@ import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import com.utc.utrc.hermes.iml.tests.TestHelper
 import org.junit.Test
 import com.utc.utrc.hermes.iml.gen.smt.encoding.ImlSmtEncoder
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSort
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleFunDeclaration
 import static extension org.junit.Assert.*
 import java.util.List
 import org.eclipse.emf.ecore.EObject
@@ -22,7 +20,6 @@ import com.utc.utrc.hermes.iml.iml.ArrayType
 import com.utc.utrc.hermes.iml.typing.TypingServices
 import com.utc.utrc.hermes.iml.iml.ImlType
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSmtFormula
 import com.utc.utrc.hermes.iml.iml.Alias
 import com.utc.utrc.hermes.iml.gen.smt.encoding.SMTEncodingException
 import com.utc.utrc.hermes.iml.gen.smt.tests.SmtTestInjectorProvider
@@ -30,6 +27,9 @@ import com.utc.utrc.hermes.iml.ImlParseHelper
 import com.utc.utrc.hermes.iml.iml.Inclusion
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment
 import com.utc.utrc.hermes.iml.gen.smt.encoding.AtomicRelation
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSort
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleFunDeclaration
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSmtFormula
 
 @RunWith(XtextRunner)
 @InjectWith(SmtTestInjectorProvider)

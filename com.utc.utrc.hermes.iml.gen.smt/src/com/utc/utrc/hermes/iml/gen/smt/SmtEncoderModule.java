@@ -3,13 +3,11 @@ package com.utc.utrc.hermes.iml.gen.smt;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.utc.utrc.hermes.iml.AbstractImlRuntimeModule;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.SimpleSmtModelProvider;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSort;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleFunDeclaration;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSmtFormula;
-import com.utc.utrc.hermes.iml.gen.smt.encoding.SmtModelProvider;
-
-
+import com.utc.utrc.hermes.iml.gen.smt.model.SmtModelProvider;
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleFunDeclaration;
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSmtFormula;
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSmtModelProvider;
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSort;
 import com.google.inject.TypeLiteral;
 
 /**

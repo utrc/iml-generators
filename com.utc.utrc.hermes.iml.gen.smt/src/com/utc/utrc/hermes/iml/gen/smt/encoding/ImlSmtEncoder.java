@@ -1,5 +1,10 @@
 package com.utc.utrc.hermes.iml.gen.smt.encoding;
 
+import static com.utc.utrc.hermes.iml.util.ImlUtil.getRelatedTypesWithProp;
+import static com.utc.utrc.hermes.iml.util.ImlUtil.getTypeName;
+import static com.utc.utrc.hermes.iml.util.ImlUtil.isGlobalSymbol;
+import static com.utc.utrc.hermes.iml.util.ImlUtil.isNullOrEmpty;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,20 +17,19 @@ import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
+import com.utc.utrc.hermes.iml.gen.smt.model.AbstractSort;
+import com.utc.utrc.hermes.iml.gen.smt.model.SmtModelProvider;
 import com.utc.utrc.hermes.iml.iml.Addition;
 import com.utc.utrc.hermes.iml.iml.Alias;
 import com.utc.utrc.hermes.iml.iml.ArrayAccess;
 import com.utc.utrc.hermes.iml.iml.ArrayType;
 import com.utc.utrc.hermes.iml.iml.Assertion;
 import com.utc.utrc.hermes.iml.iml.AtomicExpression;
-import com.utc.utrc.hermes.iml.iml.NamedType;
-import com.utc.utrc.hermes.iml.iml.EnumRestriction;
 import com.utc.utrc.hermes.iml.iml.ExpressionTail;
 import com.utc.utrc.hermes.iml.iml.FloatNumberLiteral;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
@@ -37,6 +41,7 @@ import com.utc.utrc.hermes.iml.iml.IteTermExpression;
 import com.utc.utrc.hermes.iml.iml.LambdaExpression;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.Multiplication;
+import com.utc.utrc.hermes.iml.iml.NamedType;
 import com.utc.utrc.hermes.iml.iml.NumberLiteral;
 import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm;
 import com.utc.utrc.hermes.iml.iml.QuantifiedFormula;
@@ -62,8 +67,6 @@ import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.typing.TypingServices;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
-
-import static com.utc.utrc.hermes.iml.util.ImlUtil.*;
 /**
  * SMT implementation for {@link ImlEncoder}. The encoder is build for SMT v2.5.
  * This encoder abstracts the underlying SMT model by using {@link SmtModelProvider}
@@ -87,12 +90,18 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	@Inject ImlTypeProvider typeProvider;	
 	@Inject TypingServices typingServices;
 	
+	EncodeConfig config = EncodeConfig.Builder().build();
+	
 	Map<NamedType, ImlType> aliases = new HashMap<>();
 	
 	public static final String ARRAY_SELECT_FUNC_NAME = ".__array_select";
 	public static final String ALIAS_FUNC_NAME = ".__alias_value";
 	public static final String EXTENSION_BASE_FUNC_NAME = ".__base_";
 	public static final String INST_NAME = "__inst__";
+	
+	public void setConfig(EncodeConfig config) {
+		this.config = config;
+	}
 
 	@Override
 	public void encode(Model model) {
@@ -150,14 +159,18 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		}
 		
 		// Stage 2: declare functions
-		declareFuncs();
-		
-		// Stage 3: define formulas
-		try { // TODO shouldn't be handled here
-			defineAssertions();
+		try {
+			declareFuncs();
 		} catch (SMTEncodingException e) {
 			e.printStackTrace();
 		}
+		
+//		// Stage 3: define formulas
+//		try { // TODO shouldn't be handled here
+//			defineAssertions();
+//		} catch (SMTEncodingException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 	private void defineTypes(NamedType type) {
@@ -178,7 +191,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 
 			addTypeSort(type);
 
-			for (TypeWithProperties relationType : getRelationTypes(type)) {
+			for (TypeWithProperties relationType : getRelatedTypesWithProp(type)) {
 				defineTypes(env.bind(relationType.getType()));
 			}
 		} 
@@ -240,8 +253,8 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		SortT sort = null;
 		if (type instanceof TupleType){
 			sort = smtModelProvider.createTupleSort(sortName, getTupleSorts((TupleType) type));
-//		} else if (isEnum(type)) { // TODO Should check for other Restricitions
-////			sort = smtModelProvider.createEnum(sortName, getEnumList((NamedType) type));
+		} else if (isEnum(type)) { // TODO Should check for other Restricitions
+			sort = smtModelProvider.createEnum(sortName, ImlUtil.getLiterals((NamedType) type));
 		} else {
 			sort = smtModelProvider.createSort(sortName);
 		}
@@ -251,6 +264,16 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	}
 
 	
+	private boolean isEnum(EObject type) {
+		if (type instanceof NamedType) {
+			return ImlUtil.isEnum((NamedType) type);
+		} else if (type instanceof SimpleTypeReference) {
+			return ImlUtil.isEnum(((SimpleTypeReference) type).getType());
+		} else {
+			return false;
+		}
+	}
+
 	public SortT getOrCreateSort(EObject type, TypingEnvironment env) {
 		if (type instanceof NamedType || env == null) {
 			System.err.println("NamedType!!!!!");
@@ -268,76 +291,89 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		}
 	}
 	
-	private void defineAssertions() throws SMTEncodingException {
-		for (Entry<EncodedId, FuncDeclT> entry: new HashSet<>(symbolTable.getFunDeclsMap().entrySet())) {
-			EObject container = entry.getKey().getImlContainer();
-			TypingEnvironment env = new TypingEnvironment();
-			if (container instanceof SimpleTypeReference) {
-				env.addContext((SimpleTypeReference) container);
-			} else if(container instanceof NamedType) {
-				System.err.println("Found NamedType in the table!");
-				env.addContext((NamedType) container);
-			}
-
-			EObject symbol = entry.getKey().getImlObject();
-			
-			if (symbol instanceof SymbolDeclaration) {
-				if (((SymbolDeclaration) symbol).getDefinition() != null) {
-					defineSymbolAssertion(ImlCustomFactory.INST.createSymbolReferenceTerm((SymbolDeclaration) symbol), env);
-				}
-			} else if (symbol instanceof SymbolReferenceTerm) {
-				if (((SymbolDeclaration)((SymbolReferenceTerm) symbol).getSymbol()).getDefinition() != null) {
-					defineSymbolAssertion((SymbolReferenceTerm) symbol, env);
-				}
-			}
-		}
-	}
+//	private void defineAssertions() throws SMTEncodingException {
+//		for (Entry<EncodedId, FuncDeclT> entry: new HashSet<>(symbolTable.getFunDeclsMap().entrySet())) {
+//			EObject container = entry.getKey().getImlContainer();
+//			TypingEnvironment env = new TypingEnvironment();
+//			if (container instanceof SimpleTypeReference) {
+//				env.addContext((SimpleTypeReference) container);
+//			} else if(container instanceof NamedType) {
+//				System.err.println("Found NamedType in the table!");
+//				env.addContext((NamedType) container);
+//			}
+//
+//			EObject symbol = entry.getKey().getImlObject();
+//			
+//			if (symbol instanceof SymbolDeclaration) {
+//				if (((SymbolDeclaration) symbol).getDefinition() != null) {
+//					defineSymbolAssertion(ImlCustomFactory.INST.createSymbolReferenceTerm((SymbolDeclaration) symbol), env);
+//				}
+//			} else if (symbol instanceof SymbolReferenceTerm) {
+//				if (((SymbolDeclaration)((SymbolReferenceTerm) symbol).getSymbol()).getDefinition() != null) {
+//					defineSymbolAssertion((SymbolReferenceTerm) symbol, env);
+//				}
+//			}
+//		}
+//	}
 
 	private void defineSymbolAssertion(SymbolReferenceTerm symbolRef, TypingEnvironment env) throws SMTEncodingException {
 		SymbolDeclaration symbol = (SymbolDeclaration) symbolRef.getSymbol();
+		if (!(symbol instanceof Assertion) && config.allowFunDef()) {
+			return; // No need to add the assertion
+		}
 		if (symbol.getDefinition() == null) return;
 		env.addContext(symbolRef); // TODO is it needed?
 		
 		FormulaT inst = isGlobalSymbol(symbol)? null : smtModelProvider.createFormula(INST_NAME);
 		FormulaT definitionEncoding = encodeFormula(symbol.getDefinition(), env, inst, new ArrayList<>());
-		List<FormulaT> forallScope = new ArrayList<>();
 		EObject container = null;
 		if (!isGlobalSymbol(symbol)) {
 			container = env.getSelfContext();
-			forallScope.add(smtModelProvider.createFormula(INST_NAME, getOrCreateSort(container, env)));
 		}
 					
 		if (!(symbol instanceof Assertion))  {
-			List<FormulaT> functionParams = getFunctionParameterList(symbol, env, true);
-			if (!isGlobalSymbol(symbol)) {
-				functionParams.add(0, inst);
-			}
+			List<FormulaT> functionParams = getFunctionParameterList(symbol, env, false);
 			FuncDeclT symbolFuncDecl = null;
 			symbolFuncDecl = getOrCreateSymbolDeclFun(symbolRef, env);
 			
 			FormulaT symbolAccess = smtModelProvider.createFormula(symbolFuncDecl, functionParams);
 			
 			definitionEncoding = smtModelProvider.createFormula(OperatorType.EQ, Arrays.asList(symbolAccess, definitionEncoding));	
-			forallScope.addAll(getFunctionParameterList(symbol, env, false));
 		} 
-		FormulaT forall = smtModelProvider.createFormula(OperatorType.FOR_ALL, 
-				Arrays.asList(smtModelProvider.createFormula(forallScope), definitionEncoding));
-		FormulaT assertion = smtModelProvider.createFormula(OperatorType.ASSERT, Arrays.asList(forall));
+		FormulaT assertBody;
+		if (symbol instanceof Assertion && isGlobalSymbol(symbol)) {
+			assertBody = definitionEncoding;
+		} else {
+			List<FormulaT> forallScope = getFunctionParameterList(symbol, env, true);
+			FormulaT forall = smtModelProvider.createFormula(OperatorType.FOR_ALL, 
+					Arrays.asList(smtModelProvider.createFormula(forallScope), definitionEncoding));
+			assertBody = forall;
+		}
+		FormulaT assertion = smtModelProvider.createFormula(OperatorType.ASSERT, Arrays.asList(assertBody));
 		symbolTable.addFormula(container, symbolRef, assertion);
 	}
 
-	private List<FormulaT> getFunctionParameterList(SymbolDeclaration symbol, TypingEnvironment env, boolean nameOnly) {
+	private List<FormulaT> getFunctionParameterList(SymbolDeclaration symbol, TypingEnvironment env, boolean withTypes) {
 		FolFormula definition = symbol.getDefinition();
 		if (definition instanceof SignedAtomicFormula) {
 			definition = definition.getLeft();
 		}
+		FormulaT inst = isGlobalSymbol(symbol)? null : smtModelProvider.createFormula(INST_NAME);
 		List<FormulaT> result = new ArrayList<>();
+		if (!isGlobalSymbol(symbol)) {
+			if (withTypes) {
+				SimpleTypeReference container = env.getSelfContext();
+				result.add(smtModelProvider.createFormula(INST_NAME, getOrCreateSort(container, env)));
+			} else {
+				result.add(inst);
+			}
+		}
 		if (definition instanceof LambdaExpression) {
 			for (SymbolDeclaration param : ((LambdaExpression) definition).getParameters()) {
-				if (nameOnly) {
-					result.add(smtModelProvider.createFormula(param.getName()));
-				} else {
+				if (withTypes) {
 					result.add(smtModelProvider.createFormula(param.getName(), getOrCreateSort(param.getType(), env)));
+				} else {
+					result.add(smtModelProvider.createFormula(param.getName()));
 				}
 			}
 		}
@@ -356,8 +392,9 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 
 	/**
 	 * This method creates all necessary function declarations for all sorts already defined
+	 * @throws SMTEncodingException 
 	 */
-	private void declareFuncs() {
+	private void declareFuncs() throws SMTEncodingException {
 		// Go over all sorts that already defined
 		List<EncodedId> types = symbolTable.getEncodedIds();
 		for (EncodedId container : types) {
@@ -377,8 +414,9 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	 * Having {@link SimpleTypeReference} as a type in symbol table means it includes bindings 
 	 * which means we need to take in consideration the bindings
 	 * @param type
+	 * @throws SMTEncodingException 
 	 */
-	private void declareFuncs(SimpleTypeReference type) {
+	private void declareFuncs(SimpleTypeReference type) throws SMTEncodingException {
 		if (!type.getTypeBinding().isEmpty()) {
 			declareFuncs(type.getType(), new TypingEnvironment(type));
 		}
@@ -387,8 +425,9 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	/**
 	 * Declare all required functions for the given {@link NamedType}
 	 * @param container
+	 * @throws SMTEncodingException 
 	 */
-	private void declareFuncs(NamedType container) {
+	private void declareFuncs(NamedType container) throws SMTEncodingException {
 		declareFuncs(container, new TypingEnvironment(container));
 	}
 	
@@ -396,16 +435,18 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	 * Create all required functions for the given type. If context is provided then it will be used for any required template binding inside the type
 	 * @param container with templates e.g {@code type Pair<T,P>} or without templates e.g {@code type System}
 	 * @param context null or actual binding e.g {@code var1 : Pair<Int, Real>}
+	 * @throws SMTEncodingException 
 	 */
-	private void declareFuncs(NamedType container, TypingEnvironment env) {
+	private void declareFuncs(NamedType container, TypingEnvironment env) throws SMTEncodingException {
 		SimpleTypeReference encodingContainer = env.getSelfContext();
 		// encode type symbols first to enable shadowing
 		for (SymbolDeclaration symbol : container.getSymbols()) {
-			if (symbol instanceof Assertion) continue; // We don't need function declaration for assertions
-			
 			if (!symbol.getTypeParameter().isEmpty()) continue; // We don't encode polymorphic symbols now, only when we find symbolref with binding
 			
-			declareSymbolFunc(ImlCustomFactory.INST.createSymbolReferenceTerm(symbol), env);
+			if (! (symbol instanceof Assertion)) {
+				declareSymbolFunc(ImlCustomFactory.INST.createSymbolReferenceTerm(symbol), env);
+			} 
+			defineSymbolAssertion(ImlCustomFactory.INST.createSymbolReferenceTerm(symbol), env);
 		}
 		
 		List<AtomicRelation> relations = relationsToAtomicRelations(container.getRelations());
@@ -425,6 +466,10 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	}
 
 	private void declareSymbolFunc(SymbolReferenceTerm symbolRef, TypingEnvironment env) {
+		if (symbolRef.getSymbol() instanceof Assertion) {
+			return;
+		}
+		
 		SimpleTypeReference encodingContainer = env.getSelfContext();
 		String funName;
 		SymbolDeclaration symbol = (SymbolDeclaration) symbolRef.getSymbol();
@@ -434,23 +479,40 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			funName = getUniqueName(symbolRef, encodingContainer);
 		}
 		
-		ImlType symbolType = getActualType(symbol, env); // e.g if it was T~>P then maybe Int~>Real
+		ImlType symbolType = typeProvider.getSymbolType(symbol, env); // e.g if it was T~>P then maybe Int~>Real
+		
+		
+		SortT funOutoutSort = null;
 		List<SortT> funInputSorts = new ArrayList<>();
 		
 		if (!isGlobalSymbol(symbol)) {
 			funInputSorts.add(getOrCreateSort(encodingContainer, env));
 		}
 		
-		SortT funOutoutSort = null;
-		
 		if (symbolType instanceof FunctionType) { // Encode it as a function
-			funInputSorts.addAll(getDomainSorts(((FunctionType) symbolType).getDomain(), env)); // TODO what if domain is a tuple?
+			funInputSorts.addAll(getDomainSorts(((FunctionType) symbolType).getDomain(), env));
 			funOutoutSort = getOrCreateSort(((FunctionType) symbolType).getRange(), env);
 		} else { // Symbol is not a function
 			funOutoutSort = getOrCreateSort(symbolType, env);
 		}
-		
-		FuncDeclT symbolFunDecl = smtModelProvider.createFuncDecl(funName, funInputSorts, funOutoutSort);
+
+		FuncDeclT symbolFunDecl;
+		if (symbol.getDefinition() != null && config.allowFunDef()) {
+			// use define-fun
+			FormulaT inst = isGlobalSymbol(symbol)? null : smtModelProvider.createFormula(INST_NAME);
+			FormulaT funcDef;
+			try {
+				funcDef = encodeFormula(symbol.getDefinition(), env, inst, new ArrayList<>());
+			} catch (SMTEncodingException e) {
+				e.printStackTrace();
+				return; // TODO handle this better
+			}
+			List<FormulaT> inputParams = getFunctionParameterList(symbol, env, true);
+			symbolFunDecl = smtModelProvider.createFuncDef(funName, inputParams, funOutoutSort, funcDef);
+		} else {
+			// use declare-fun
+			symbolFunDecl = smtModelProvider.createFuncDecl(funName, funInputSorts, funOutoutSort);
+		}
 		if (!isGlobalSymbol(symbol)) {
 			symbolTable.addFunDecl(encodingContainer, symbolRef, symbolFunDecl); 
 		} else { // Public symbol container is the model
@@ -498,10 +560,10 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		FormulaT leftFormula = null;
 		FormulaT rightFormula = null; 
 		if (formula.getLeft() != null) {
-			leftFormula = encodeFormula(formula.getLeft(), env, inst, scope);
+			leftFormula = encodeFormula(formula.getLeft(), env.clone(), inst, scope);
 		}
 		if (formula.getRight() != null) {
-			rightFormula = encodeFormula(formula.getRight(), env, inst, scope);
+			rightFormula = encodeFormula(formula.getRight(), env.clone(), inst, scope);
 		}
 		
 		if (formula instanceof ParenthesizedTerm) {
@@ -547,9 +609,14 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		} else if (formula instanceof TermMemberSelection) {
 			TermExpression receiver = ((TermMemberSelection) formula).getReceiver();
 			TermExpression member = ((TermMemberSelection) formula).getMember();
+			if (isEnumSelection((TermMemberSelection) formula)) {
+				NamedType enumType = (NamedType) ((SymbolReferenceTerm)receiver).getSymbol();
+				encode(enumType);
+				return smtModelProvider.createFormula(((SymbolReferenceTerm)member).getSymbol().getName());
+			}
 			
-			FormulaT receiverFormula = encodeFormula(receiver, env, inst, scope);
-			ImlType receiverType = typeProvider.termExpressionType(receiver, env);
+			FormulaT receiverFormula = encodeFormula(receiver, env.clone(), inst, scope);
+			ImlType receiverType = typeProvider.termExpressionType(receiver, env.clone());
 			if (receiverType instanceof SimpleTypeReference) {
 				return encodeFormula(member, env.clone().addContext((SimpleTypeReference) receiverType), receiverFormula, scope);
 			}
@@ -569,9 +636,9 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			}
 		} else if (formula instanceof TupleConstructor) {
 			// TODO
-			ImlType tupleType = typeProvider.termExpressionType(formula, env);
+			ImlType tupleType = typeProvider.termExpressionType(formula, env.clone());
 			if (tupleType instanceof TupleType) {
-				SortT sort = getOrCreateSort(tupleType, env);
+				SortT sort = getOrCreateSort(tupleType, env.clone());
 				List<FormulaT> tupleFormulas = encodeTupleElements((TupleConstructor) formula, env, inst, scope);
 				
 				return smtModelProvider.createFormula(tupleFormulas);
@@ -599,7 +666,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			if (symbolRef.getSymbol() instanceof SymbolDeclaration 
 					&& ((SymbolDeclaration) symbolRef.getSymbol()).getType() instanceof FunctionType
 					&& !(symbolRef.eContainer() instanceof TailedExpression)) { // Using function type without being inside tailed expression
-				throw new SMTEncodingException(((SymbolDeclaration) symbolRef.getSymbol()).getName() + " function can't be used as a variable");
+//				throw new SMTEncodingException(((SymbolDeclaration) symbolRef.getSymbol()).getName() + " function can't be used as a variable");
 			}
 			FormulaT symbolRefFormula = getSymbolAccessFormula(symbolRef, env.clone(), inst, scope);
 			return symbolRefFormula;
@@ -608,15 +675,15 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			InstanceConstructor instanceConstructor = (InstanceConstructor) formula;
 			SymbolDeclaration instanceRef = instanceConstructor.getRef();
 			ImlType instanceType = env.bind(instanceRef.getType());
-			SortT contextSort = EcoreUtil2.getContainerOfType(formula, NamedType.class) != null? getOrCreateSort(env.getSelfContext(), env) : null;
-			SortT outputSort = getOrCreateSort(instanceRef.getType(), env);
+			SortT contextSort = EcoreUtil2.getContainerOfType(formula, NamedType.class) != null? getOrCreateSort(env.getSelfContext(), env.clone()) : null;
+			SortT outputSort = getOrCreateSort(instanceRef.getType(), env.clone());
 			
 			// Create a function for the instance constructor inside the same context
 			List<SortT> inputSorts = new ArrayList<>();
 			if (contextSort != null) {
 				inputSorts.add(contextSort);
 			}
-			inputSorts.addAll(scope.stream().map(symbol -> getOrCreateSort(symbol.getType(), env)).collect(Collectors.toList()));
+			inputSorts.addAll(scope.stream().map(symbol -> getOrCreateSort(symbol.getType(), env.clone())).collect(Collectors.toList()));
 			String funName = getUniqueName(instanceConstructor, instanceType);
 			FuncDeclT instanceConstructorFun = smtModelProvider.createFuncDecl(funName, inputSorts, outputSort);
 			symbolTable.addFunDecl(instanceType, instanceConstructor, instanceConstructorFun);
@@ -627,9 +694,9 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 				forallScope.add(smtModelProvider.createFormula(INST_NAME, contextSort));
 			}
 			forallScope.addAll(scope.stream().map(symbol -> smtModelProvider.createFormula(
-					symbol.getName(), getOrCreateSort(symbol.getType(), env))).collect(Collectors.toList()));
+					symbol.getName(), getOrCreateSort(symbol.getType(), env.clone()))).collect(Collectors.toList()));
 			
-			String newInst = ((inst != null)? inst + " " : "") + scope.stream().map(symbol -> symbol.getName()).reduce((curr, acc) -> acc + " " + curr).orElse(""); // TODO really bad hack, need better solution
+			String newInst = ((inst != null)? inst + " " : "") + scope.stream().map(symbol -> symbol.getName()).reduce((acc, curr) -> acc + " " + curr).orElse(""); // TODO really bad hack, need better solution
 			
 			FormulaT instanceConsDef = encodeFormula(instanceConstructor.getDefinition(), env, smtModelProvider.createFormula(newInst), scope);
 			instanceConsDef = smtModelProvider.createFormula(OperatorType.ASSERT, 
@@ -665,7 +732,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			return smtModelProvider.createFormula(((TruthValue) formula).isTRUE());
 		} else if (formula instanceof SequenceTerm) {
 			scope.addAll(((SequenceTerm) formula).getDefs());
-			FormulaT returnFormula = encodeFormula(((SequenceTerm) formula).getReturn(), env, inst, scope);
+			FormulaT returnFormula = encodeFormula(((SequenceTerm) formula).getReturn(), env.clone(), inst, scope);
 			
 			if (!isNullOrEmpty(((SequenceTerm) formula).getDefs())) {
 				for (int i=((SequenceTerm) formula).getDefs().size()-1 ; i >= 0 ; i--) {
@@ -685,6 +752,15 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 			throw new SMTEncodingException("Unsupported formula: " + formula);
 		}
 		throw new SMTEncodingException("Couldn't encode the formula to SMT!" + formula);
+	}
+
+	private boolean isEnumSelection(TermMemberSelection formula) {
+		if (formula.getReceiver() instanceof SymbolReferenceTerm && ((SymbolReferenceTerm) formula.getReceiver()).getSymbol() instanceof NamedType) {
+			NamedType reciever = (NamedType) ((SymbolReferenceTerm) formula.getReceiver()).getSymbol();
+			List<String> literals = ImlUtil.getLiterals(reciever);
+			return formula.getMember() instanceof SymbolReferenceTerm && literals.contains(((SymbolReferenceTerm) formula.getMember()).getSymbol().getName());
+		}
+		return false;
 	}
 
 	private boolean isAssertion(FolFormula formula) {
@@ -708,6 +784,7 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		
 		if (symbolRef.getSymbol() instanceof NamedType) { // Check for NamedType symbol
 			// TODO We only support enum now
+			encode((NamedType) symbolRef.getSymbol());
 		}
 		
 		FuncDeclT symbolAccess = getOrCreateSymbolDeclFun(symbolRef, env);
@@ -841,7 +918,19 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 	}
 
 	public FormulaT encodeFormula(FolFormula formula, SymbolDeclaration symbol) throws SMTEncodingException {
-		return encodeFormula(formula, new TypingEnvironment((SimpleTypeReference) symbol.getType()),  smtModelProvider.createFormula(symbol.getName()), new ArrayList<>());
+		if (symbol == null) {
+			return encodeFormula(formula, new TypingEnvironment(), null, new ArrayList<>());
+		} else {
+			return encodeFormula(formula, new TypingEnvironment((SimpleTypeReference) symbol.getType()),  smtModelProvider.createFormula(symbol.getName()), new ArrayList<>());
+		}
+	}
+	
+	/**
+	 * Reset the encoder to allow encoding new models
+	 */
+	public void reset() {
+		symbolTable.clear();
+		aliases.clear();
 	}
 	
 }

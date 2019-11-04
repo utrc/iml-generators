@@ -1,0 +1,50 @@
+package aadl;
+import iml.lang.*;
+import iml.systems.*;
+import iml.synchdf.ontological.*;
+import iml.software.*;
+
+good_HMAC : (Bool) -> Bool := fun (hmac: Bool):Bool{
+     ((hmac) = (true)) || ((hmac) = (false));
+};
+
+good_command : (Bool) -> Bool := fun (cmd: Bool):Bool{
+     good_HMAC(cmd);
+};
+
+              
+type Filter_impl includes(Filter){
+    INTERNALTEST : InternalTest;
+    c1 : Connector<iml.systems.InEventDataPort<Command_Impl, Command_Impl>, iml.systems.InEventDataPort<Command_Impl, Command_Impl>> := connect<iml.systems.InEventDataPort<Command_Impl, Command_Impl>, iml.systems.InEventDataPort<Command_Impl, Command_Impl>>(filter_in, INTERNALTEST.inport);
+    c2 : Connector<iml.systems.OutEventDataPort<Command_Impl, Command_Impl>, iml.systems.OutEventDataPort<Command_Impl, Command_Impl>> := connect<iml.systems.OutEventDataPort<Command_Impl, Command_Impl>, iml.systems.OutEventDataPort<Command_Impl, Command_Impl>>(INTERNALTEST.outport, filter_out);
+};
+
+type Command  {
+};
+
+type Command_Impl includes(Command){
+    HMAC : Bool;
+};
+
+type InternalTest exhibits(iml.systems.System, iml.synchdf.ontological.Synchronous, iml.systems.Component) {
+    inport: iml.systems.InEventDataPort<Command_Impl, Command_Impl>;
+    outport: iml.systems.OutEventDataPort<Command_Impl, Command_Impl>;
+};
+
+type Filter  exhibits(iml.systems.System, iml.synchdf.ontological.Synchronous, iml.systems.Component) {
+    filter_in: InEventDataPort<Command_Impl,Command_Impl>;
+    filter_out: OutEventDataPort<Command_Impl, Command_Impl>;
+    
+    REQ1 : Bool := (filter_in.data.HMAC)  = (true);
+    
+    REQ2 : Bool := (filter_out.data.HMAC) = (true);
+    
+    REQ3 : Bool := good_command(filter_out.data.HMAC);
+        
+    assumption: Bool := REQ1;
+    
+    guarantee: Bool := REQ2 && REQ3;        
+};
+
+type InternalTest_impl includes(InternalTest){    
+};

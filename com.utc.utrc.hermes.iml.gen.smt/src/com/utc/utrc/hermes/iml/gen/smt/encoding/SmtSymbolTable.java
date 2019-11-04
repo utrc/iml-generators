@@ -2,6 +2,7 @@ package com.utc.utrc.hermes.iml.gen.smt.encoding;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 	
 	public SmtSymbolTable() {
 		sorts = new HashMap<>();
-		funDecls = new HashMap<>();
+		funDecls = new LinkedHashMap<>();
 		assertions = new HashMap<>();
 	}
 	
@@ -109,6 +110,13 @@ public class SmtSymbolTable<SortT, FunDeclT, FormulaT> {
 
 	public void setAssertions(Map<EncodedId, FormulaT> assertions) {
 		this.assertions = assertions;
+	}
+
+	public void clear() {
+		encodedIdFactory.reset();
+		assertions.clear();
+		funDecls.clear();
+		sorts.clear();
 	}
 
 }

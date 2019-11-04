@@ -13,5 +13,4 @@ public class NuSmvConstraint {
 	public void setF(FolFormula f) {
 		this.f = f;
 	}
-	
 }

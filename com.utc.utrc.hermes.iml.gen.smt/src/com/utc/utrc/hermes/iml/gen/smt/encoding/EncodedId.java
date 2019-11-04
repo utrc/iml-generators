@@ -106,16 +106,15 @@ public class EncodedId {
 				name = ((SymbolDeclaration) imlEObject).getName();
 			}
 		} else if (imlEObject instanceof SymbolReferenceTerm) {
-			if (imlContainer == null) {
-				this._imlContainer = ((SymbolReferenceTerm) imlEObject).getSymbol().eContainer();
-				this.containerFqn = getContainerFqn(this._imlContainer, qnp);
-			}
-			name = ((SymbolReferenceTerm) imlEObject).getSymbol().getName();
+			EncodedId symbolId = new EncodedId(((SymbolReferenceTerm) imlEObject).getSymbol(), imlContainer, qnp);
+			this._imlContainer = symbolId._imlContainer;
+			this.containerFqn = symbolId.containerFqn;
+			name = symbolId.name;
 			if (!((SymbolReferenceTerm) imlEObject).getTypeBinding().isEmpty()) { // Add the symbolref type binding to the name
 				name = name + "<";
 				name = name + ((SymbolReferenceTerm) imlEObject).getTypeBinding().stream()
 					.map(type -> ImlUtil.getTypeName(type, qnp))
-					.reduce((curr, acc) ->  acc + ", " +  curr).get();
+					.reduce((acc, curr) ->  acc + ", " +  curr).get();
 				name = name + ">";
 			}
 		} else if (imlEObject instanceof InstanceConstructor) {

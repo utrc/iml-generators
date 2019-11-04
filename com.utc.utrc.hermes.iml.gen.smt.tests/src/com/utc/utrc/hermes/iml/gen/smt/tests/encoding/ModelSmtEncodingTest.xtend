@@ -2,9 +2,6 @@ package com.utc.utrc.hermes.iml.gen.smt.tests.encoding
 
 import com.google.inject.Inject
 import com.utc.utrc.hermes.iml.gen.smt.encoding.ImlSmtEncoder
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleFunDeclaration
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSmtFormula
-import com.utc.utrc.hermes.iml.gen.smt.encoding.simplesmt.SimpleSort
 import com.utc.utrc.hermes.iml.iml.Model
 import com.utc.utrc.hermes.iml.tests.TestHelper
 import org.eclipse.xtext.testing.InjectWith
@@ -18,6 +15,9 @@ import com.utc.utrc.hermes.iml.util.FileUtil
 import org.eclipse.emf.ecore.resource.ResourceSet
 import com.utc.utrc.hermes.iml.gen.smt.tests.SmtTestInjectorProvider
 import com.utc.utrc.hermes.iml.ImlParseHelper
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSort
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleFunDeclaration
+import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSmtFormula
 
 @RunWith(XtextRunner)
 @InjectWith(SmtTestInjectorProvider)
@@ -57,6 +57,68 @@ class ModelSmtEncodingTest {
 		}
 		if (swModel !== null) {
 			encode(swModel as Model, "MC_SW_dot_Impl")
+			println(encoder.toString)
+		}
+		
+	}
+	
+	@Test
+	def void testAssessment3SW() {
+		
+		val files = FileUtil.readAllFilesUnderDir("./res/assessment3/SW_static.iml");
+		var ResourceSet rs;
+		for (file : files) {
+			if (rs !== null) {
+				rs = file.parse(rs).eResource.resourceSet			 
+			} else {
+				rs = file.parse.eResource.resourceSet
+			}
+		}
+		var Model swModel = null;
+		for (resource : rs.resources) {
+			if (resource.contents !== null && resource.contents.size > 0) {
+				val model = resource.contents.get(0);
+				if (model instanceof Model) {
+					model.assertNoErrors
+					if ((model as Model).name.equals("examples.SW.static")) {
+						swModel = model;
+					}
+				}
+			}
+		}
+		if (swModel !== null) {
+			encode(swModel as Model, "MC_SW_dot_Impl")
+			println(encoder.toString)
+		}
+		
+	}
+	
+	@Test
+	def void testAssessment3FlattenIml() {
+		
+		val files = FileUtil.readAllFilesUnderDir("./res/assessment3/flatten_iml.iml");
+		var ResourceSet rs;
+		for (file : files) {
+			if (rs !== null) {
+				rs = file.parse(rs).eResource.resourceSet			 
+			} else {
+				rs = file.parse.eResource.resourceSet
+			}
+		}
+		var Model swModel = null;
+		for (resource : rs.resources) {
+			if (resource.contents !== null && resource.contents.size > 0) {
+				val model = resource.contents.get(0);
+				if (model instanceof Model) {
+					model.assertNoErrors
+					if ((model as Model).name.equals("p")) {
+						swModel = model;
+					}
+				}
+			}
+		}
+		if (swModel !== null) {
+			encode(swModel as Model, null)
 			println(encoder.toString)
 		}
 		

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
+
 public class NuSmvModule  {
 	
 	private String name ;
