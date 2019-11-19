@@ -65,13 +65,17 @@ public class LustreGenerator {
 	private Configuration conf;
 
 	private SynchDf sdf;
+	
+	private Map<String, String> lustre2Iml;
 
 	public LustreGenerator() {
+		lustre2Iml = new HashMap<>();
 	}
 
 	public LustreGenerator(Configuration conf, SynchDf sdf) {
 		this.conf = conf;
 		this.sdf = sdf;
+		lustre2Iml = new HashMap<>();
 	}
 
 	public void setSdf(SynchDf sdf) {
@@ -175,8 +179,13 @@ public class LustreGenerator {
 		
 		for(String s : node.getLets().keySet()) {
 			LustreSymbol symbol = addSymbol(target, s, m.Bool, LustreElementType.LET);
-			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr, "."));
+			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr, ".", lustre2Iml));
 		}
+		
+		// At this point, the luster model has been generated
+		
+		
+		
 		return target;
 	}
 
@@ -254,7 +263,7 @@ public class LustreGenerator {
 				name = target.getContainer().newSymbolName();
 			}
 			return addSymbol(target, name, target.getContainer().getType("iml.lang.Bool"), LustreElementType.ASSERTION,
-					generatorServices.serialize(sd.getDefinition(), ctx, "."));
+					generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml));
 		} else {
 			name = sd.getName();
 			bound = typing.bind(sd.getType());
@@ -262,7 +271,7 @@ public class LustreGenerator {
 				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
 				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
 				if (sd.getDefinition() != null) {
-					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".") );
+					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml) );
 				}
 				return toadd ;
 			}
@@ -437,13 +446,24 @@ public class LustreGenerator {
 	}
 	
 	public String serialize(LustreModel m) {
-		return generatorServices.serialize(m);
+		return generatorServices.serialize(m, lustre2Iml);
 	}
 
+//	public String serializeAndMap(LustreModel m) {
+//		return generatorServices.serialize(m, lustre2Iml);
+//	}	
 	
 	public String serialize(LustreNode n) {
 		return generatorServices.serialize(n);
 	}
 
-
+	public Map<String, String> getMapLustre2Iml() {
+		return lustre2Iml;
+	}
+	
+	public void displayMapLustre2Iml() {
+		for (String s : lustre2Iml.keySet()) {
+			System.out.println(s + " : " + lustre2Iml.get(s));
+		}
+	}
 }

@@ -43,6 +43,8 @@ import com.utc.utrc.hermes.iml.iml.LambdaExpression
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
 import com.utc.utrc.hermes.iml.iml.TupleType
 import com.google.common.collect.Maps
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreSymbol
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreVariable
 
 class LustreGeneratorServices {
 
@@ -56,6 +58,8 @@ class LustreGeneratorServices {
 	private ImlStdLib stdLibs;
 
 	private Map<String, SymbolDeclaration> functional_nodes ;
+
+	private Map<String, String> lustre2Iml;
 
 	new() {
 		functional_nodes = Maps.newHashMap()
@@ -105,8 +109,43 @@ class LustreGeneratorServices {
 		return s.getSymbol().getName();
 	}
 
-	def String serialize(LustreModel m) {
+	def String serialize(LustreModel m, Map<String, String> map) {
+		lustre2Iml = map;
 		'''«FOR n : m.nodes.values AFTER '\n'»«serializeType(n)»«ENDFOR»«FOR n : m.nodes.values AFTER '\n'»«serializeNode(n)»«ENDFOR»'''
+	}
+
+	def String serializeEnum(LustreNode m, String l) {
+		var String imlName = m.name + "." + l;
+		var String name = toLustreName(m) + "_dot_" +l;
+		if (!lustre2Iml.containsKey(name)) {
+			lustre2Iml.put(name, imlName)
+		}
+		return name
+	}
+
+	def String serializeLustreSymbol(LustreSymbol f) {
+		var String res = f.name;
+		if (!lustre2Iml.containsKey(res)) {
+			lustre2Iml.put(res, res);
+		}
+		return res;
+	}
+
+	def String serializeLustreVariable(LustreVariable f) {
+		var String res = f.name;
+		if (!lustre2Iml.containsKey(res)) {
+			lustre2Iml.put(res, res);
+		}
+		return res;
+	}
+
+	def String serializeLustreSymbol(LustreSymbol fType, LustreSymbol fReturn) {
+		var String imlName = fType.name + "." + fReturn;
+		var String res = fType.name + "_" + fReturn;
+		if (!lustre2Iml.containsKey(res)) {
+			lustre2Iml.put(res, imlName);
+		}
+		return res;
 	}
 
 	def String serialize(LustreNode m) {
@@ -115,7 +154,7 @@ class LustreGeneratorServices {
 			return 
 			'''
 			type «toLustreName(m)» = enum {
-				«FOR l : m.literals SEPARATOR ',\n'» «toLustreName(m) + "_dot_" +l» «ENDFOR»
+				«FOR l : m.literals SEPARATOR ',\n'» «serializeEnum(m, l)» «ENDFOR»
 			} ;
 			
 			''';
@@ -124,32 +163,32 @@ class LustreGeneratorServices {
 			return 
 			'''
 			type «toLustreName(m)» = struct { 
-				«FOR f : m.fields.values SEPARATOR ';\n'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»
+				«FOR f : m.fields.values SEPARATOR ';\n'» «serializeLustreSymbol(f)» : «toLustreName(f.type.type)» «ENDFOR»
 			} ;
 			
 			'''
 		} 
 		var nodes = 
 		'''
-			node «needImported(m)» «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
-			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
+			node «needImported(m)» «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(p)» : «p.type.type.toLustreName» «ENDFOR»
+			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «ENDFOR»
 			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
 			«IF (isContract(m))»
 			(*@contract 
-				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «v.name» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
+				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
 				«IF (hasAssumption(m))» assume assumption ; «ENDIF»
 				«IF (hasGuarantee(m))» guarantee guarantee ; «ENDIF»
 			*) 
 			
 			«ENDIF»
 			«FOR v : m.components.values» 
-			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «v.name»_«p.name» : «p.type.type.toLustreName» «ENDFOR»
+			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» «ENDFOR»
 			«ENDFOR»
 			«ENDIF»
 			«IF (m.components.size > 0)»
 			let
 			«FOR v : m.components.values » 
-			(«FOR p : v.type.type.returns SEPARATOR ','» «v.name»_«p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
+			(«FOR p : v.type.type.returns SEPARATOR ','» «serializeLustreSymbol(v, p)» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
 			«ENDFOR» 
 			--%MAIN;
 			tel
@@ -175,7 +214,7 @@ class LustreGeneratorServices {
 			return 
 			'''
 			type «toLustreName(m)» = enum {
-				«FOR l : m.literals SEPARATOR ',\n'» «toLustreName(m) + "_dot_" +l» «ENDFOR»
+				«FOR l : m.literals SEPARATOR ',\n'» «serializeEnum(m, l)» «ENDFOR»
 			} ;
 			
 			''';
@@ -184,7 +223,7 @@ class LustreGeneratorServices {
 			return 
 			'''
 			type «toLustreName(m)» = struct { 
-				«FOR f : m.fields.values SEPARATOR ';\n'» «f.name» : «toLustreName(f.type.type)» «ENDFOR»
+				«FOR f : m.fields.values SEPARATOR ';\n'» «serializeLustreSymbol(f)» : «toLustreName(f.type.type)» «ENDFOR»
 			} ;
 			
 			'''
@@ -196,25 +235,25 @@ class LustreGeneratorServices {
 		if(m.isEnum() || m.isStruct()) return "";
 		var nodes = 
 		'''
-			node «needImported(m)»«toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «p.name» : «p.type.type.toLustreName» «ENDFOR»
-			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «v.name» : «v.type.type.toLustreName» «ENDFOR»
+			node «needImported(m)»«toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(p)» : «p.type.type.toLustreName» «ENDFOR»
+			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «ENDFOR»
 			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
 			«IF (isContract(m))»
 			(*@contract 
-				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «v.name» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
+				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
 				«IF (hasAssumption(m))» assume assumption ; «ENDIF»
 				«IF (hasGuarantee(m))» guarantee guarantee ; «ENDIF»
 			*) 
 			
 			«ENDIF»
 			«FOR v : m.components.values» 
-			«FOR p : v.type.type.returns» «IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» var «v.name»_«p.name» : «p.type.type.toLustreName» ; «ENDIF»«ENDFOR»
+			«FOR p : v.type.type.returns» «IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» ; «ENDIF»«ENDFOR»
 			«ENDFOR»
 			«ENDIF»
 			«IF (m.components.size > 0)»
 			let
 			«FOR v : m.components.values » 
-			(«FOR p : v.type.outParams SEPARATOR ','» «p.name» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
+			(«FOR p : v.type.outParams SEPARATOR ','» «serializeLustreVariable(p)» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR») ; «'\n '» 
 			«ENDFOR»
 			«FOR l : m.lets.values» --%PROPERTY «l.definition» ; «'\n'»«ENDFOR»
 			 --%MAIN;
@@ -272,7 +311,8 @@ class LustreGeneratorServices {
 		return retval;
 	}
 
-	def String serialize(FolFormula e, SimpleTypeReference ctx, String sp) {
+	def String serialize(FolFormula e, SimpleTypeReference ctx, String sp, Map<String, String> map) {
+		lustre2Iml = map;
 		serialize(e, ctx, new HashMap<Symbol, String>(), sp);
 	}
 
@@ -304,15 +344,21 @@ class LustreGeneratorServices {
 					toString();
 				
 				var literalname = serialize(e.member, ctx, map, sp);
-				retval = '''«typename.replaceAll("\\.","_dot_")»_dot_«literalname»'''
+				retval = '''«toLustreName(typename, literalname)»'''
 			} else {
 				retval = '''«serialize(e.receiver, ctx, map, sp)»«sp»«serialize(e.member, ctx, map, sp)»'''
 			}
+			if (!lustre2Iml.containsKey(retval)) {
+				lustre2Iml.put(retval, retval)
+			}			
 		} else if (e instanceof SymbolReferenceTerm) {
 			if (map.containsKey(e.symbol)) {
 				retval = map.get(e.symbol);
 			} else {
 				retval = e.symbol.name;
+			}
+			if (!lustre2Iml.containsKey(retval)) {
+				lustre2Iml.put(retval, retval)
 			}
 		} else if (e instanceof TailedExpression) {
 			var prefix = serialize(e.left, ctx, map, sp);
@@ -378,7 +424,7 @@ class LustreGeneratorServices {
 						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
 					«ENDIF»
 					let
-					    _return = «serialize(expr.^return, null, ".")» ;
+					    _return = «serialize(expr.^return, null, ".", lustre2Iml)» ;
 					tel
 					
 				'''
@@ -499,28 +545,57 @@ class LustreGeneratorServices {
 		if (m == LustreModel.Real) {
 			return "real";
 		}
-		var String nm = m.name;
-		nm = typeNameWithReplacement(nm);
-		return '''«nm.replaceAll("\\.","_dot_")»'''
+		var String imlName = m.name;
+		
+		var String nm = typeNameWithReplacement(imlName);
+		var String res = '''«nm.replaceAll("\\.","_dot_")»'''
+		if (!lustre2Iml.containsKey(res)) {
+			lustre2Iml.put(res, imlName);
+		}		
+		return res
 	}
 
 	def String toLustreName(LustreNode m, String literal) {
-		'''"«toLustreName(m)»_dot_«literal»"'''
+		var String imlName = m.name;
+		imlName += "." + literal;
+		var String res = '''"«toLustreName(m)»_dot_«literal»"'''
+		if (!lustre2Iml.containsKey(res)) {
+			lustre2Iml.put(res, imlName);
+		}		
+		return res
 	}
 
 	def String toLustreName(SymbolDeclaration sd) {
-		'''«qnp.getFullyQualifiedName(sd).toString().replaceAll("\\.","_dot_")»'''
+		var String imlName = qnp.getFullyQualifiedName(sd).toString()
+		var String name = '''«imlName.replaceAll("\\.","_dot_")»''';
+		if (!lustre2Iml.containsKey(name)) {
+			lustre2Iml.put(name, imlName);
+		}
+		return name;
 	}
 
+	def String toLustreName(String name, String literal) {
+		var String imlName = name + "." + literal
+		var String lustreName = name.replaceAll("\\.","_dot_") + "_dot_" + literal;
+		if (!lustre2Iml.containsKey(lustreName)) {
+			lustre2Iml.put(lustreName, imlName);
+		}
+		return name;
+	}
+	
 	def String toLustreName(ImlType t) {
 		if (t instanceof SimpleTypeReference) {
 			if (t.type === stdLibs.boolType) return "bool" ;
 			if (t.type === stdLibs.intType) return "int";
 			if (t.type === stdLibs.realType) return "real";
 		}
-		var String name = ImlUtil.getTypeName(t,qnp);
-		name = typeNameWithReplacement(name);
-		'''«name.replaceAll("\\.","_dot_")»'''
+		var String imlName = ImlUtil.getTypeName(t,qnp);
+		var String name = typeNameWithReplacement(imlName);
+		name = name.replaceAll("\\.","_dot_");
+		if (!lustre2Iml.containsKey(name)) {
+			lustre2Iml.put(name, imlName);
+		}
+		'''name'''
 	}
 	
 	def String typeNameWithReplacement(String name) {
@@ -570,4 +645,5 @@ class LustreGeneratorServices {
 		}
 		return retval;
 	}
+	
 }

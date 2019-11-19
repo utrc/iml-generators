@@ -102,7 +102,28 @@ class LustreTranslatorTests {
 		var LustreModel lus = new LustreModel() ;
 		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
 		var output = gen.serialize(lus);
+		gen.displayMapLustre2Iml();
 		System.out.println(output);
 	}	
+
+	@Test
+	def void testSWAgreeImlDeliveryDrone() {
+		
+		//var Model m = parse(FileUtil.readFileContent("models/agree/DeliveryDrone.iml"),true) ;
+		var rs = parseDir("models/agree",true) ;
+		var m = rs.resources.map[it.contents.get(0) as Model].findFirst[it.name == "agree.DeliveryDrone"]
+		
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("DeliveryDroneSystem_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}	
+
 }
 
