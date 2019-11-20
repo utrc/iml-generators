@@ -580,7 +580,7 @@ class LustreGeneratorServices {
 		if (!lustre2Iml.containsKey(lustreName)) {
 			lustre2Iml.put(lustreName, imlName);
 		}
-		return name;
+		return lustreName;
 	}
 	
 	def String toLustreName(ImlType t) {
@@ -595,7 +595,7 @@ class LustreGeneratorServices {
 		if (!lustre2Iml.containsKey(name)) {
 			lustre2Iml.put(name, imlName);
 		}
-		'''name'''
+		return name;
 	}
 	
 	def String typeNameWithReplacement(String name) {
