@@ -140,8 +140,8 @@ class LustreGeneratorServices {
 	}
 
 	def String serializeLustreSymbol(LustreSymbol fType, LustreSymbol fReturn) {
-		var String imlName = fType.name + "." + fReturn;
-		var String res = fType.name + "_" + fReturn;
+		var String imlName = fType.name + "." + fReturn.name;
+		var String res = fType.name + "_" + fReturn.name;
 		if (!lustre2Iml.containsKey(res)) {
 			lustre2Iml.put(res, imlName);
 		}
