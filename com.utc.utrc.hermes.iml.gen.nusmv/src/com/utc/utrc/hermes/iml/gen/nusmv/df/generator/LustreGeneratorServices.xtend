@@ -600,8 +600,11 @@ class LustreGeneratorServices {
 	
 	def String typeNameWithReplacement(String name) {
 		var String nm = name.replaceAll("<", "__");
+		nm = nm.replaceAll("\\(", "__");
 		nm = nm.replaceAll(", ", "__");
+		nm = nm.replaceAll("->", "__")
 		nm = nm.replaceAll(">", "__");
+		nm = nm.replaceAll("\\)", "__");
 		return nm;
 	}
 
