@@ -148,66 +148,6 @@ class LustreGeneratorServices {
 		return res;
 	}
 
-	def String serialize(LustreNode m) {
-		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
-		if(m.isEnum()) {
-			return 
-			'''
-			type «toLustreName(m)» = enum {
-				«FOR l : m.literals SEPARATOR ',\n'» «serializeEnum(m, l)» «ENDFOR»
-			} ;
-			
-			''';
-		}
-		if(m.isStruct()) {
-			return 
-			'''
-			type «toLustreName(m)» = struct { 
-				«FOR f : m.fields.values SEPARATOR ';\n'» «serializeLustreSymbol(f)» : «toLustreName(f.type.type)» «ENDFOR»
-			} ;
-			
-			'''
-		} 
-		var nodes = 
-		'''
-			node «needImported(m)» «toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(p)» : «p.type.type.toLustreName» «ENDFOR»
-			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «ENDFOR»
-			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
-			«IF (isContract(m))»
-			(*@contract 
-				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
-				«IF (hasAssumption(m))» assume assumption ; «ENDIF»
-				«IF (hasGuarantee(m))» guarantee guarantee ; «ENDIF»
-			*) 
-			
-			«ENDIF»
-			«FOR v : m.components.values» 
-			«FOR p : v.type.type.returns SEPARATOR ';\n' AFTER ';'» var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» «ENDFOR»
-			«ENDFOR»
-			«ENDIF»
-			«IF (m.components.size > 0)»
-			let
-			«FOR v : m.components.values » 
-			(«FOR p : v.type.type.returns SEPARATOR ','» «serializeLustreSymbol(v, p)» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «param.name»«ENDFOR») ; «'\n '» 
-			«ENDFOR» 
-			--%MAIN;
-			tel
-			
-			«ENDIF»
-		'''
-		var closed = new ArrayList<String>() ;
-		while(functional_nodes.size > 0) {
-			var fname = functional_nodes.keySet.get(0) ;
-			if (! closed.contains(fname)) { 
-				var togen = functional_nodes.get(fname);
-				nodes = nodes + serializeFunctionalNode(togen);
-			}
-			functional_nodes.remove(fname) ;
-			closed.add(fname);
-		}
-		return nodes ;
-	}
-
 	def String serializeType(LustreNode m) {
 		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
 		if(m.isEnum()) {
@@ -372,6 +312,11 @@ class LustreGeneratorServices {
 					var symbol = (e.left as SymbolReferenceTerm).symbol as SymbolDeclaration;
 					functional_nodes.put(symbol.name, symbol);
 				}
+				if (e.left instanceof TermMemberSelection &&
+					(e.left as TermMemberSelection).member instanceof SymbolReferenceTerm) {
+					var symbol =  ((e.left as TermMemberSelection).member as SymbolReferenceTerm).symbol as SymbolDeclaration;
+					functional_nodes.put(prefix, symbol)
+				}
 			}
 			retval = prefix + tails;
 		} else if (e instanceof ParenthesizedTerm) {
@@ -445,7 +390,7 @@ class LustreGeneratorServices {
 				}
 				return 
 				'''
-					node «toLustreName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(sd.type)»«ENDFOR» )
+					node «toLustreName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
 					returns (_return : «toLustreName(range)» )
 					let
 					tel

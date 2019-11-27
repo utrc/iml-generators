@@ -24,6 +24,8 @@ import com.utc.utrc.hermes.iml.gen.nusmv.df.SynchDf
 import com.utc.utrc.hermes.iml.gen.nusmv.df.generator.LustreGenerator
 import com.utc.utrc.hermes.iml.gen.nusmv.df.generator.LustreGeneratorServices
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreModel
+import com.utc.utrc.hermes.iml.iml.Import
+import com.utc.utrc.hermes.iml.gen.nusmv.df.Node
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
@@ -106,21 +108,62 @@ class LustreTranslatorTests {
 		System.out.println(output);
 	}	
 
+
 	@Test
-	def void testSWAgreeImlDeliveryDrone() {
+	def void testUTRC_Explain_yes() {
 		
-		//var Model m = parse(FileUtil.readFileContent("models/agree/DeliveryDrone.iml"),true) ;
-		var rs = parseDir("models/agree",true) ;
-		var m = rs.resources.map[it.contents.get(0) as Model].findFirst[it.name == "agree.DeliveryDrone"]
-		
-		m.assertNoErrors;
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/UTRC_Explain_yes.iml"),true) ;
 		sys.process(m) ;
 		sdf.systems = sys;
 		sdf.process(m);
 		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("top_level_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		gen.displayMapLustre2Iml();
+		System.out.println(output);
+	}	
+	
+
+	@Test
+	def void testSWAgreeImlDeliveryDrone() {
+		
+		var mList = newArrayList();
+		
+		//var Model m = parse(FileUtil.readFileContent("models/agree/DeliveryDrone.iml"),true) ;
+		var rs = parseDir("models/agree",true) ;
+		var Model m = rs.resources.map[it.contents.get(0) as Model].findFirst[it.name == "agree.DeliveryDrone"]
+		m.assertNoErrors;
+		mList.add(m);
+		
+		for (Import i : m.imports) {
+			val String nm = i.importedNamespace.replace(".*", "");
+			val mi = rs.resources.map[it.contents.get(0) as Model].findFirst[it.name == nm]
+			mi.assertNoErrors;
+			mList.add(mi);
+		}
+		
+		for (Model mi : mList) {
+			sys.process(mi) ;			
+		}
+//		sys.process(m) ;			
+
+		sdf.systems = sys;
+		
+		for (Model mi : mList) {
+			sdf.process(mi);			
+		}		
+//		sdf.process(m);			
+
+		gen.sdf = sdf;
 		var NamedType nodetype = m.findSymbol("DeliveryDroneSystem_dot_Impl") as NamedType;
 		var LustreModel lus = new LustreModel() ;
 		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+
+//		for (Node n : sdf. {
+//			
+//		}
 		var output = gen.serialize(lus);
 		System.out.println(output);
 	}	

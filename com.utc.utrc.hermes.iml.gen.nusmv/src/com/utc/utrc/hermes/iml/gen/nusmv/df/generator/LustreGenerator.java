@@ -10,6 +10,7 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.xbase.lib.Extension;
 
 import com.google.inject.Inject;
+import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.Node;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.SynchDf;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreElementType;
@@ -24,21 +25,34 @@ import com.utc.utrc.hermes.iml.gen.nusmv.systems.ComponentType;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Connection;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Direction;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Port;
+import com.utc.utrc.hermes.iml.iml.Addition;
 import com.utc.utrc.hermes.iml.iml.Assertion;
+import com.utc.utrc.hermes.iml.iml.AtomicExpression;
+import com.utc.utrc.hermes.iml.iml.CaseTermExpression;
+import com.utc.utrc.hermes.iml.iml.ExpressionTail;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
+import com.utc.utrc.hermes.iml.iml.FunctionType;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
+import com.utc.utrc.hermes.iml.iml.IteTermExpression;
+import com.utc.utrc.hermes.iml.iml.Multiplication;
 import com.utc.utrc.hermes.iml.iml.NamedType;
+import com.utc.utrc.hermes.iml.iml.NumberLiteral;
+import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm;
 import com.utc.utrc.hermes.iml.iml.Refinement;
 import com.utc.utrc.hermes.iml.iml.Relation;
+import com.utc.utrc.hermes.iml.iml.SequenceTerm;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
+import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
 import com.utc.utrc.hermes.iml.iml.TailedExpression;
 import com.utc.utrc.hermes.iml.iml.TermExpression;
+import com.utc.utrc.hermes.iml.iml.TermMemberSelection;
 import com.utc.utrc.hermes.iml.iml.Trait;
 import com.utc.utrc.hermes.iml.iml.TraitExhibition;
+import com.utc.utrc.hermes.iml.iml.TruthValue;
 import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
@@ -161,17 +175,25 @@ public class LustreGenerator {
 				if (! sdf.isLet(sd)) {
 					if (sd.getType() instanceof SimpleTypeReference) {
 						generateType(m, (SimpleTypeReference) typing.bind(sd.getType()));
-						addSymbol(target, sd, tr);
+						addSymbol(m, target, sd, tr);
 					}
+//					else  if (sd.getType() instanceof FunctionType) {
+//						System.out.println("TEST");
+//					}
 				}
 			}
 		} else {
 			for (Symbol sd : node.getNodeType().getType().getSymbols()) {
 				if (sd instanceof SymbolDeclaration) {
 					if (! sdf.isLet( (SymbolDeclaration) sd)) {
-						if ( ((SymbolDeclaration)sd).getType() instanceof SimpleTypeReference) {
-							addSymbol(target, (SymbolDeclaration) sd, tr);
+						ImlType t = ((SymbolDeclaration)sd).getType();
+						if ( t instanceof SimpleTypeReference) {
+							addSymbol(m, target, (SymbolDeclaration) sd, tr);
 						}
+//						else if (t instanceof FunctionType) {
+//							addSymbol(m, target, (SymbolDeclaration) sd, tr);
+//							System.out.println("TEST");
+//						}
 					}
 				}
 			}
@@ -210,7 +232,7 @@ public class LustreGenerator {
 			for (Symbol s : tr.getType().getSymbols()) {
 				if (s instanceof SymbolDeclaration) {
 					SymbolDeclaration sd = (SymbolDeclaration) s;
-					addSymbol(target, sd, tr);
+					addSymbol(m, target, sd, tr);
 				}
 			}
 			
@@ -221,12 +243,52 @@ public class LustreGenerator {
 		}
 	}
 
+//	public LustreNode generateType(LustreModel m, FunctionType ft) {
+//		// start from the definition
+//		String type_name = ImlUtil.getTypeName(ft, qnp);
+//		if (m.hasType(type_name)) {
+//			return m.getType(type_name);
+//		}
+//		
+//		ImlType dt = ft.getDomain();
+//		ImlType rt = ft.getRange();
+//		
+//		
+//		if (ImlUtil.isEnum(ft.getDomain())) {
+//			return generateEnumType(m, tr.getType());
+//		} else {
+//			for (ImlType b : tr.getTypeBinding()) {
+//				if (b instanceof SimpleTypeReference) {
+//					generateType(m, (SimpleTypeReference) b);
+//				}
+//			}
+//			LustreNode target = new LustreNode(type_name);
+//			m.addNode(target);
+//			target.setStruct(true);
+//			
+//			for (Symbol s : tr.getType().getSymbols()) {
+//				if (s instanceof SymbolDeclaration) {
+//					SymbolDeclaration sd = (SymbolDeclaration) s;
+//					addSymbol(m, target, sd, tr);
+//				}
+//			}
+//			
+//			// process relations
+//			gatherFromRelation(m, tr, target);
+//
+//			return target;
+//		}
+//		return null;
+//	}
+
+
+	
 	private void gatherFromRelation(LustreModel m, SimpleTypeReference str, LustreNode target) {
 		String type_name = ImlUtil.getTypeName(str, qnp);
 		for (Symbol s : str.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
-				addSymbol(target, sd, str);
+				addSymbol(m, target, sd, str);
 			}
 		}	
 		TypingEnvironment tEnv = new TypingEnvironment(str);
@@ -252,7 +314,7 @@ public class LustreGenerator {
 		}		
 	}
 
-	public LustreSymbol addSymbol(LustreNode target, SymbolDeclaration sd, SimpleTypeReference ctx) {
+	public LustreSymbol addSymbol(LustreModel m, LustreNode target, SymbolDeclaration sd, SimpleTypeReference ctx) {
 		TypingEnvironment typing = new TypingEnvironment(ctx);
 		ImlType bound = null;
 		String name = null;
@@ -272,13 +334,111 @@ public class LustreGenerator {
 				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
 				if (sd.getDefinition() != null) {
 					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml) );
+					// parse the definition to generate symbols
+//					parseDefForNodes(m, sd.getDefinition());
 				}
 				return toadd ;
 			}
+//			if (bound instanceof FunctionType) {
+//				//
+//				System.out.println("What to do here");
+//				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
+//				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
+//				if (sd.getDefinition() != null) {
+//					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml) );
+//					// parse the definition to generate symbols
+//					parseDefForNodes(m, sd.getDefinition());
+//				}
+//				return toadd ;
+//			}
 
 		}
 		return (new LustreSymbol("__ERROR__"));
 	}
+
+//	/**
+//	 * @param m
+//	 * @param definition
+//	 */
+//	private void parseDefForNodes(LustreModel m, FolFormula def) {
+//		if (def.getOp() != null &&
+//			(def.getOp().equals("=>") || def.getOp().equals("<=>") || 
+//					def.getOp().equals("&&") || def.getOp().equals("||"))) {
+//			parseDefForNodes(m, def.getLeft());
+//			parseDefForNodes(m, def.getRight());
+//		} else if (def instanceof AtomicExpression) {
+//			parseDefForNodes(m, def.getLeft());
+//			parseDefForNodes(m, def.getRight());
+//		} else if (def instanceof Addition) {
+//			parseDefForNodes(m, def.getLeft());
+//			parseDefForNodes(m, def.getRight());
+//		} else if (def instanceof Multiplication) {
+//			parseDefForNodes(m, def.getLeft());
+//			parseDefForNodes(m, def.getRight());
+//		} else if (def instanceof TermMemberSelection) {
+//			TermMemberSelection tm = (TermMemberSelection) def;
+//			if (tm.getReceiver() instanceof SymbolReferenceTerm &&
+//				((SymbolReferenceTerm) tm.getReceiver()).getSymbol() instanceof NamedType) {
+//				// Process receiver 
+//				NamedType nt = (NamedType)((SymbolReferenceTerm) tm.getReceiver()).getSymbol();
+//				generateLustreNode(m, sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nt)));
+//		
+//				parseDefForNodes(m, tm.getMember());
+//			} else {
+//				parseDefForNodes(m, tm.getReceiver());
+//				parseDefForNodes(m, tm.getMember());
+//			}
+//		} else if (def instanceof SymbolReferenceTerm) {
+//			SymbolReferenceTerm srt = (SymbolReferenceTerm) def;
+//			if (srt instanceof NamedType) {
+//				NamedType nt = (NamedType)srt;
+//				generateLustreNode(m, sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nt)));
+//			}
+//		} else if (def instanceof TailedExpression) {
+//			TailedExpression te = (TailedExpression) def;
+//			parseDefForNodes(m, te.getLeft());
+//			ExpressionTail taile = te.getTail();
+//			if (taile instanceof TupleConstructor) {
+//				for (FolFormula ele : ((TupleConstructor) taile).getElements()) {
+//					parseDefForNodes(m, ele);
+//				}
+//				// add to queue of nodes to be generated
+////				if (def.getLeft() instanceof SymbolReferenceTerm &&
+////					((SymbolReferenceTerm) def.getLeft()).getSymbol() instanceof SymbolDeclaration) {
+////					var symbol = (def.getLeft() as SymbolReferenceTerm).symbol as SymbolDeclaration;
+////					functional_nodes.put(symbol.name, symbol);
+////				}
+//			}
+//		} else if (def instanceof ParenthesizedTerm) {
+//			parseDefForNodes(m, ((ParenthesizedTerm) def).getSub());
+//		} else if (def instanceof IteTermExpression) {
+//			IteTermExpression ite = (IteTermExpression) def;
+//			if (ite.getRight() == null) {
+//				parseDefForNodes(m, ite.getCondition());
+//				parseDefForNodes(m, ite.getLeft());
+//			} else {
+//				parseDefForNodes(m, ite.getCondition());
+//				parseDefForNodes(m, ite.getLeft());
+//				parseDefForNodes(m, ite.getRight());
+//			}
+//		} else if (def instanceof CaseTermExpression) {
+//			CaseTermExpression cte = (CaseTermExpression) def;
+//			for (FolFormula f : cte.getCases()) {
+//				parseDefForNodes(m, f);
+//			}
+//			for (TermExpression f : cte.getExpressions()) {
+//				parseDefForNodes(m, f);
+//			}
+//		} else if (def instanceof SequenceTerm) {
+//			parseDefForNodes(m, ((SequenceTerm) def).getReturn());
+//		} else if (def instanceof SignedAtomicFormula) {
+//			parseDefForNodes(m, ((SignedAtomicFormula)def).getLeft());
+//		} else if (def instanceof NumberLiteral) {
+//			;
+//		} else if (def instanceof TruthValue) {
+//			;
+//		}
+//	}
 
 	private LustreNode generateEnumType(LustreModel m, NamedType type) {
 		LustreNode target = new LustreNode(qnp.getFullyQualifiedName(type).toString());
@@ -453,9 +613,9 @@ public class LustreGenerator {
 //		return generatorServices.serialize(m, lustre2Iml);
 //	}	
 	
-	public String serialize(LustreNode n) {
-		return generatorServices.serialize(n);
-	}
+//	public String serialize(LustreNode n) {
+//		return generatorServices.serialize(n);
+//	}
 
 	public Map<String, String> getMapLustre2Iml() {
 		return lustre2Iml;
