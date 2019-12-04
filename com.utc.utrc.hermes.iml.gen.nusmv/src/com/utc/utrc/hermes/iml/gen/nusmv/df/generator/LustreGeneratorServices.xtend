@@ -45,6 +45,14 @@ import com.utc.utrc.hermes.iml.iml.TupleType
 import com.google.common.collect.Maps
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreSymbol
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreVariable
+import org.eclipse.emf.ecore.util.EcoreUtil
+import com.utc.utrc.hermes.iml.iml.Model
+import com.utc.utrc.hermes.iml.iml.FloatNumberLiteral
+
+import com.utc.utrc.hermes.iml.lib.ImlStdLib;
+import com.utc.utrc.hermes.iml.iml.EnumRestriction
+import com.utc.utrc.hermes.iml.iml.QuantifiedFormula
+import com.utc.utrc.hermes.iml.services.ImlGrammarAccess.SymbolDeclarationElements
 
 class LustreGeneratorServices {
 
@@ -57,7 +65,8 @@ class LustreGeneratorServices {
 	@Inject
 	private ImlStdLib stdLibs;
 
-	private Map<String, SymbolDeclaration> functional_nodes ;
+//	private Map<String, SymbolDeclaration> functional_nodes ;
+	private Map<String, SymbolReferenceTerm> functional_nodes ;
 
 	private Map<String, String> lustre2Iml;
 
@@ -270,19 +279,17 @@ class LustreGeneratorServices {
 					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left, ctx, map, sp)»«suffix» «e.rel.toString» «serialize(e.right, ctx, map, sp)»«suffix» «ENDFOR»'''
 				}
 			} else {
-				retval = ''' «serialize(e.left, ctx, map, sp)» «e.rel.toString»  «serialize(e.right, ctx, map, sp)» ''';
+				retval = ''' «serialize(e.left, ctx, map, sp)» «e.rel.toString.equals("!=") ? "<>" : e.rel.toString»  «serialize(e.right, ctx, map, sp)» ''';
 			}
 		} else if (e instanceof Addition) {
 			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
 		} else if (e instanceof Multiplication) {
 			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
 		} else if (e instanceof TermMemberSelection) {
-			// TODO this is a quick hack
 			if (e.receiver instanceof SymbolReferenceTerm &&
 				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
 				var typename = qnp.getFullyQualifiedName((e.receiver as SymbolReferenceTerm).symbol as NamedType).
-					toString();
-				
+					toString();				
 				var literalname = serialize(e.member, ctx, map, sp);
 				retval = '''«toLustreName(typename, literalname)»'''
 			} else {
@@ -294,29 +301,57 @@ class LustreGeneratorServices {
 		} else if (e instanceof SymbolReferenceTerm) {
 			if (map.containsKey(e.symbol)) {
 				retval = map.get(e.symbol);
-			} else {
+			} else {	
 				retval = e.symbol.name;
-			}
-			if (!lustre2Iml.containsKey(retval)) {
-				lustre2Iml.put(retval, retval)
+//				var String imlRetval = qnp.getFullyQualifiedName(e.symbol).toString()
+//				retval = retval.replaceAll("\\.","_dot_");
+				if (!lustre2Iml.containsKey(retval)) {
+//					lustre2Iml.put(retval, imlRetval);
+					lustre2Iml.put(retval, retval);
+				}
+				map.put(e.symbol, retval);				
+				if (e.symbol.eContainer instanceof Model) {	// Global
+						functional_nodes.put(retval, e);
+				}
 			}
 		} else if (e instanceof TailedExpression) {
-			var prefix = serialize(e.left, ctx, map, sp);
+			var String prefix;
+			if (e.left instanceof SymbolReferenceTerm) {
+//				prefix = toLustreName((e.left as SymbolReferenceTerm).symbol as SymbolDeclaration);
+				prefix = toLustreName(e.left as SymbolReferenceTerm);
+			} else {
+				prefix = serialize(e.left, ctx, map, sp);	
+			}
 			var taile = e.tail;
 			var String tails = "";
 			if (taile instanceof TupleConstructor) {
-				tails = '''( «FOR tailelem : taile.elements SEPARATOR ','» «serialize(tailelem, ctx, map, sp)» «ENDFOR» )'''
-				// add to queue of nodes to be generated
+				var del = ",";
+				var startSymbol = "(";
 				if (e.left instanceof SymbolReferenceTerm &&
 					(e.left as SymbolReferenceTerm).symbol instanceof SymbolDeclaration) {
 					var symbol = (e.left as SymbolReferenceTerm).symbol as SymbolDeclaration;
-					functional_nodes.put(symbol.name, symbol);
+					if (!isInit(e.left as SymbolReferenceTerm) && !isPre(e.left as SymbolReferenceTerm)) {			
+						functional_nodes.put(symbol.name, (e.left as SymbolReferenceTerm));
+						functional_nodes.put(prefix, (e.left as SymbolReferenceTerm));
+					}
+					if (isInit(e.left as SymbolReferenceTerm)) {			
+						del = " ->";
+						prefix = "";
+					}
+					if (isPre(e.left as SymbolReferenceTerm)) {			
+						startSymbol = "pre(";
+						prefix = "";
+					}
 				}
 				if (e.left instanceof TermMemberSelection &&
 					(e.left as TermMemberSelection).member instanceof SymbolReferenceTerm) {
-					var symbol =  ((e.left as TermMemberSelection).member as SymbolReferenceTerm).symbol as SymbolDeclaration;
-					functional_nodes.put(prefix, symbol)
+					functional_nodes.put(prefix, ((e.left as TermMemberSelection).member as SymbolReferenceTerm))
+					if (isAgreeAnnexNode(e.left as TermMemberSelection)) {
+						prefix = agreeAnnexNodeName(e.left as TermMemberSelection);
+					}
 				}
+				tails = '''«startSymbol» «FOR tailelem : taile.elements SEPARATOR del» «serialize(tailelem, ctx, map, sp)» «ENDFOR» )'''
+				// add to queue of nodes to be generated
 			}
 			retval = prefix + tails;
 		} else if (e instanceof ParenthesizedTerm) {
@@ -324,9 +359,11 @@ class LustreGeneratorServices {
 		} else if (e instanceof IteTermExpression) {
 
 			if (e.right === null) {
-				retval = '''( «serialize(e.condition, ctx, map, sp)» -> «serialize(e.left, ctx, map, sp)» )'''
+//				retval = '''( «serialize(e.condition, ctx, map, sp)» -> «serialize(e.left, ctx, map, sp)» )'''
+				retval = '''( «serialize(e.condition, ctx, map, sp)» => «serialize(e.left, ctx, map, sp)» )'''
 			} else {
 				retval = '''( «serialize(e.condition, ctx, map, sp)» ? «serialize(e.left, ctx, map, sp)» : «serialize(e.right, ctx, map, sp)»'''
+				retval = ''' if «serialize(e.condition, ctx, map, sp)» then «serialize(e.left, ctx, map, sp)» else «serialize(e.right, ctx, map, sp)»'''
 			}
 		} else if (e instanceof CaseTermExpression) {
 
@@ -339,10 +376,15 @@ class LustreGeneratorServices {
 			retval = '''( «serialize(e.^return, ctx, map, sp)» )'''
 		} else if (e instanceof SignedAtomicFormula) {
 			if (e.neg) {
-				retval = retval + "not";
+				retval = retval + "not (";
 			}
-			retval = retval + serialize(e.left, ctx, map, sp);
+			retval = retval + serialize(e.left, ctx, map, sp) + (e.neg ? ")" : "");
 		} else if (e instanceof NumberLiteral) {
+			if (e.isNeg) {
+				retval += "-";
+			}
+			retval = e.value.toString;
+		} else if (e instanceof FloatNumberLiteral) {
 			if (e.isNeg) {
 				retval += "-";
 			}
@@ -354,7 +396,80 @@ class LustreGeneratorServices {
 	}
 
 	def serializeFunctionalNode(SymbolDeclaration sd) {
+		var type = sd.type;
+		if (type instanceof FunctionType) {
+			if (sd.definition !== null) {
+				var lambda = (sd.definition.left as LambdaExpression)
+				var expr = lambda.definition as SequenceTerm
+				return 
+				'''
+					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+					returns (_return : «toLustreName((type as FunctionType).range)» )
+					«IF expr.defs.size >0»
+						var
+						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
+					«ENDIF»
+					let
+					    _return = «serialize(expr.^return, null, ".", lustre2Iml)» ;
+					tel					
+				'''
+			} else {
+				if (isContainerAgreeAnnexNode(sd)) {
+					var domain = type.domain;
+					var range = type.range;
+					var parameters = new ArrayList<SymbolDeclaration>() ;
+					
+					if (domain instanceof SimpleTypeReference) {
+						var p = ImlCustomFactory.INST.createSymbolDeclaration("_x0_", domain) ;
+						parameters.add(p) ; 
+					} else if (domain instanceof TupleType) {
+						var index = 0 ;
+						for(t : domain.types) {
+							var p = ImlCustomFactory.INST.createSymbolDeclaration("_x" + index + "_", t) ;
+							parameters.add(p) ; 
+						}
+					}
+					return 
+					'''
+						node «containerAgreeAnnexNodeName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+						returns (_return : «toLustreName(range)» )
+						let
+						blah
+						tel
+					'''					
+				} else {
+					var domain = type.domain;
+					var range = type.range;
+					var parameters = new ArrayList<SymbolDeclaration>() ;
+					
+					if (domain instanceof SimpleTypeReference) {
+						var p = ImlCustomFactory.INST.createSymbolDeclaration("_x0_", domain) ;
+						parameters.add(p) ; 
+					} else if (domain instanceof TupleType) {
+						var index = 0 ;
+						for(t : domain.types) {
+							var p = ImlCustomFactory.INST.createSymbolDeclaration("_x" + index + "_", t) ;
+							parameters.add(p) ; 
+						}
+					}
+					return 
+					'''
+						node «toLustreName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+						returns (_return : «toLustreName(range)» )
+						let
+						tel
+					'''					
+				}
+			}
 
+		}
+		return "" 
+	}
+
+	def serializeFunctionalNode(SymbolReferenceTerm sr) {
+		val TypingEnvironment te = new TypingEnvironment();
+		te.addContext(sr);		
+		var sd = sr.symbol as SymbolDeclaration;
 		var type = sd.type;
 		if (type instanceof FunctionType) {
 			if (sd.definition !== null) {
@@ -374,30 +489,66 @@ class LustreGeneratorServices {
 					
 				'''
 			} else {
-				var domain = type.domain;
-				var range = type.range;
-				var parameters = new ArrayList<SymbolDeclaration>() ;
-				
-				if (domain instanceof SimpleTypeReference) {
-					var p = ImlCustomFactory.INST.createSymbolDeclaration("_x0_", domain) ;
-					parameters.add(p) ; 
-				} else if (domain instanceof TupleType) {
-					var index = 0 ;
-					for(t : domain.types) {
-						var p = ImlCustomFactory.INST.createSymbolDeclaration("_x" + index + "_", t) ;
-						parameters.add(p) ; 
+				if (isContainerAgreeAnnexNode(sd)) {
+					var domain = type.domain;
+					var range = type.range;
+					if (! sr.typeBinding.empty) {
+						range = te.bind(range);
 					}
+					var Assertion a = null;
+					for (SymbolDeclaration t : (sd.eContainer as NamedType).symbols) {
+						if (t instanceof Assertion) {
+							a = t;	// want to break, but not supported, only expect one assertion?
+						}	
+					}
+					var scopes = containerAgreeAnnexNodeAssertionScope(a) ;
+					var returns = containerAgreeAnnexNodeAssertionOutput(a) ;
+					var letContent = containerAgreeAnnexNodeAssertionLet(a);					
+					return 
+					'''
+						node «containerAgreeAnnexNodeName(sd)» ( «FOR v : scopes SEPARATOR ';'» «v»«ENDFOR» )
+						returns («FOR v : returns SEPARATOR ';'» «v»«ENDFOR» )
+						let
+						«letContent»;
+						tel
+					'''					
+				} else {				
+					var domain = type.domain;
+					var range = type.range;
+					if (! sr.typeBinding.empty) {
+						range = te.bind(range);
+					}
+					var parameters = new ArrayList<SymbolDeclaration>() ;
+					if (domain instanceof SimpleTypeReference) {
+						if (! sr.typeBinding.empty) {
+							domain = te.bind(domain);
+						}
+						var p = ImlCustomFactory.INST.createSymbolDeclaration("_x0_", domain);
+						parameters.add(p) ; 
+					} else if (domain instanceof TupleType) {
+						var index = 0 ;
+						for(t : domain.types) {
+							var tBound = (sr.typeBinding.empty) ? t : te.bind(t);
+							var p = ImlCustomFactory.INST.createSymbolDeclaration("_x" + index + "_", EcoreUtil.copy(tBound)) ;
+							parameters.add(p) ; 
+							index = index + 1;
+						}
+					}
+					return 
+					'''
+						node «toLustreName(sr)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+						returns (_return : «toLustreName(range)» )
+						let
+						tel
+					'''					
 				}
-				return 
-				'''
-					node «toLustreName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-					returns (_return : «toLustreName(range)» )
-					let
-					tel
-				'''
-
 			}
-
+		}
+		if (type instanceof SimpleTypeReference) {
+			return 
+			'''
+			const «toLustreNameGlobal(sd)» : «toLustreName(type)» = «serialize(sd.definition, null, ".", lustre2Iml)»;
+			'''
 		}
 		return "" 
 	}
@@ -411,6 +562,145 @@ class LustreGeneratorServices {
 			}
 		}
 		return false
+	}
+	
+	def isInit(SymbolReferenceTerm srt) {
+		var sd = srt.symbol as SymbolDeclaration;
+		return (sd.name.equals("init") && sd.definition === null );
+	}
+	
+	def isPre(SymbolReferenceTerm srt) {
+		var sd = srt.symbol as SymbolDeclaration;
+		return (sd.name.equals("pre") && sd.definition === null );
+	}
+	
+	def isAgreeAnnexNode (TermMemberSelection tms) {
+		var retval = false;
+		var TermExpression rcv = tms.receiver;
+		while (rcv instanceof TermMemberSelection) {
+			rcv = rcv.receiver;
+		}
+		if (rcv instanceof SymbolReferenceTerm && 
+			(rcv as SymbolReferenceTerm).symbol instanceof NamedType) {
+			var NamedType nt = (rcv as SymbolReferenceTerm).symbol as NamedType;
+			var Trait t = (stdLibs.getNamedType("iml.synchdf.ontological", "Synchronous") as Trait)
+			var singleElementEnum = false;
+			if (nt.restriction instanceof EnumRestriction) {
+				var enumRestriction = (nt.restriction) as EnumRestriction;
+				singleElementEnum = (enumRestriction.literals.size == 1);
+			} 
+			if (ImlUtil.exhibits(nt, t) && singleElementEnum) {
+				retval = true;
+			}
+		}		
+		return retval;
+	}
+
+	def agreeAnnexNodeName (TermMemberSelection tms) {
+		var TermExpression rcv = tms.receiver;
+		while (rcv instanceof TermMemberSelection) {
+			rcv = rcv.receiver;
+		}
+		return (rcv as SymbolReferenceTerm).symbol.name;
+	}
+
+	def isContainerAgreeAnnexNode (SymbolDeclaration sd) {
+		var retval = false;
+		if (sd.eContainer instanceof NamedType) {
+			var NamedType nt = sd.eContainer as NamedType;
+			var Trait t = (stdLibs.getNamedType("iml.synchdf.ontological", "Synchronous") as Trait)
+			var singleElementEnum = false;
+			if (nt.restriction instanceof EnumRestriction) {
+				var enumRestriction = (nt.restriction) as EnumRestriction;
+				singleElementEnum = (enumRestriction.literals.size == 1);
+			} 
+			if (ImlUtil.exhibits(nt, t) && singleElementEnum) {
+				retval = true;
+			}
+		}		
+		return retval;
+	}
+
+	def containerAgreeAnnexNodeName (SymbolDeclaration sd) {
+		var retval = "";
+		if (sd.eContainer instanceof NamedType) {
+			var NamedType nt = sd.eContainer as NamedType;
+			return nt.name;
+		}		
+		return retval;
+	}
+	
+	// a.definition instanceof SequencxeTerm
+	
+		//return_ SignedAtomicFormula
+			//left QuantifiedFormula
+				//left SequenceTerm
+					//defs output
+					//returns let
+				//op forall
+				//scope	EOBjectCon
+				 
+	def containerAgreeAnnexNodeAssertionScope(Assertion a) {
+		var retval = new ArrayList<String>()
+		if (a !== null) {
+			if (a.definition instanceof SequenceTerm) {
+				var SequenceTerm st = a.definition as SequenceTerm;
+				if (st.^return instanceof SignedAtomicFormula) {
+					var SignedAtomicFormula saf = st.^return as SignedAtomicFormula;
+					if (saf.left instanceof QuantifiedFormula) {
+						var QuantifiedFormula qf = saf.left as QuantifiedFormula;
+						for (SymbolDeclaration sd : qf.scope) {
+							var String v = sd.name + " : " + toLustreName(sd.type);
+							retval.add(v);
+						}
+					}
+				}
+			}
+		}
+		return retval
+	}
+	
+	def containerAgreeAnnexNodeAssertionOutput(Assertion a) {
+		var retval = new ArrayList<String>()
+		if (a !== null) {		
+			if (a.definition instanceof SequenceTerm) {
+				var SequenceTerm st = a.definition as SequenceTerm;
+				if (st.^return instanceof SignedAtomicFormula) {
+					var SignedAtomicFormula saf = st.^return as SignedAtomicFormula;
+					if (saf.left instanceof QuantifiedFormula) {
+						var QuantifiedFormula qf = saf.left as QuantifiedFormula;
+						if (qf.left instanceof SequenceTerm) {
+							var SequenceTerm st2 = qf.left as SequenceTerm;
+							for (SymbolDeclaration sd : st2.defs) {
+								var String v = sd.name + " : " + toLustreName(sd.type);
+								retval.add(v);
+							}
+						}
+					}
+				}
+			}
+		}
+		return retval		
+	}
+
+	def containerAgreeAnnexNodeAssertionLet(Assertion a) {
+		var retval = "";
+		if (a !== null) {
+			if (a.definition instanceof SequenceTerm) {
+				var SequenceTerm st = a.definition as SequenceTerm;
+				if (st.^return instanceof SignedAtomicFormula) {
+					var SignedAtomicFormula saf = st.^return as SignedAtomicFormula;
+					if (saf.left instanceof QuantifiedFormula) {
+						var QuantifiedFormula qf = saf.left as QuantifiedFormula;
+						if (qf.left instanceof SequenceTerm) {
+							var SequenceTerm st2 = qf.left as SequenceTerm;
+							return serialize(st2.^return, ImlCustomFactory.INST.createSimpleTypeReference(a.eContainer as NamedType), new HashMap<Symbol, String>(), '.');
+						}
+					}
+				}
+			}
+		}
+		return retval		
 	}
 	
 	def  hasAssumption(LustreNode m) {
@@ -518,6 +808,36 @@ class LustreGeneratorServices {
 		}
 		return name;
 	}
+
+	def String toLustreNameGlobal(SymbolDeclaration sd) {
+		var String name = sd.name;
+		if (!lustre2Iml.containsKey(name)) {
+			lustre2Iml.put(name, name);
+		}
+		return name;
+	}
+	
+	def String toLustreName(SymbolReferenceTerm sr) {
+		var String imlName = qnp.getFullyQualifiedName((sr.symbol as SymbolDeclaration).eContainer).toString();
+		imlName = imlName + "." + (sr.symbol as SymbolDeclaration).name;
+		var String bt = ""
+		if (!sr.typeBinding.empty) {
+			bt = "<";
+			for (ImlType t : sr.typeBinding) {
+				bt = bt + ImlUtil.getTypeName(t, qnp) + ",";
+			}
+			bt += ">";
+			bt = bt.replaceAll(",\\>", "\\>")
+		}		
+		imlName = imlName + bt;
+		var String lustreName = typeNameWithReplacement(imlName);
+		lustreName = lustreName.replaceAll("\\.","_dot_");
+		if (!lustre2Iml.containsKey(lustreName)) {
+			lustre2Iml.put(lustreName, imlName);
+		}
+		return lustreName;
+	}
+
 
 	def String toLustreName(String name, String literal) {
 		var String imlName = name + "." + literal
