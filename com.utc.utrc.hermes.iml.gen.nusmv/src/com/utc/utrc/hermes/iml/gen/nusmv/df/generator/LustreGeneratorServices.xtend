@@ -341,7 +341,7 @@ class LustreGeneratorServices {
 					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left, ctx, map, sp)»«suffix» «e.rel.toString» «serialize(e.right, ctx, map, sp)»«suffix» «ENDFOR»'''
 				}
 			} else {
-				retval = ''' «serialize(e.left, ctx, map, sp)» «IF e.rel.toString.equals("!=")» "<>" «ELSE» «e.rel.toString» «ENDIF»  «serialize(e.right, ctx, map, sp)» ''';
+				retval = ''' «serialize(e.left, ctx, map, sp)» «IF e.rel.toString.equals("!=")» <> «ELSE» «e.rel.toString» «ENDIF»  «serialize(e.right, ctx, map, sp)» ''';
 			}
 		} else if (e instanceof Addition) {
 			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
