@@ -341,7 +341,7 @@ class LustreGeneratorServices {
 					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left, ctx, map, sp)»«suffix» «e.rel.toString» «serialize(e.right, ctx, map, sp)»«suffix» «ENDFOR»'''
 				}
 			} else {
-				retval = ''' «serialize(e.left, ctx, map, sp)» «e.rel.toString.equals("!=") ? "<>" : e.rel.toString»  «serialize(e.right, ctx, map, sp)» ''';
+				retval = ''' «serialize(e.left, ctx, map, sp)» «IF e.rel.toString.equals("!=")» "<>" «ELSE» «e.rel.toString» «ENDIF»  «serialize(e.right, ctx, map, sp)» ''';
 			}
 		} else if (e instanceof Addition) {
 			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
@@ -436,7 +436,7 @@ class LustreGeneratorServices {
 //				retval = '''( «serialize(e.condition, ctx, map, sp)» -> «serialize(e.left, ctx, map, sp)» )'''
 				retval = '''( «serialize(e.condition, ctx, map, sp)» => «serialize(e.left, ctx, map, sp)» )'''
 			} else {
-				retval = '''( «serialize(e.condition, ctx, map, sp)» ? «serialize(e.left, ctx, map, sp)» : «serialize(e.right, ctx, map, sp)»'''
+//				retval = '''( «serialize(e.condition, ctx, map, sp)» ? «serialize(e.left, ctx, map, sp)» : «serialize(e.right, ctx, map, sp)»'''
 				retval = ''' if «serialize(e.condition, ctx, map, sp)» then «serialize(e.left, ctx, map, sp)» else «serialize(e.right, ctx, map, sp)»'''
 			}
 		} else if (e instanceof CaseTermExpression) {
@@ -452,7 +452,10 @@ class LustreGeneratorServices {
 			if (e.neg) {
 				retval = retval + "not (";
 			}
-			retval = retval + serialize(e.left, ctx, map, sp) + (e.neg ? ")" : "");
+			retval = retval + serialize(e.left, ctx, map, sp)
+			if (e.neg) {
+				retval = retval + ")"
+			}
 		} else if (e instanceof NumberLiteral) {
 			if (e.isNeg) {
 				retval += "-";
@@ -614,7 +617,12 @@ class LustreGeneratorServices {
 					} else if (domain instanceof TupleType) {
 						var index = 0 ;
 						for(t : domain.types) {
-							var tBound = (sr.typeBinding.empty) ? t : te.bind(t);
+							var ImlType tBound
+							if (sr.typeBinding.empty) {
+								tBound = t
+							} else {
+								tBound = te.bind(t);
+							}
 							var p = ImlCustomFactory.INST.createSymbolDeclaration("_x" + index + "_", EcoreUtil.copy(tBound)) ;
 							parameters.add(p) ; 
 							index = index + 1;
