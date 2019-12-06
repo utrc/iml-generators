@@ -1,6 +1,7 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.df.generator;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,15 +82,24 @@ public class LustreGenerator {
 	private SynchDf sdf;
 	
 	private Map<String, String> lustre2Iml;
+	private ArrayList<String> nodeCallOrder;
+//	private Map<Integer, String> callGVetex2String;
+//	private Graph callGraph;
 
 	public LustreGenerator() {
 		lustre2Iml = new HashMap<>();
+		nodeCallOrder = new ArrayList<>();
+//		callGraph = new Graph(true);
+//		callGVetex2String = new HashMap<>();
 	}
 
 	public LustreGenerator(Configuration conf, SynchDf sdf) {
 		this.conf = conf;
 		this.sdf = sdf;
 		lustre2Iml = new HashMap<>();
+		nodeCallOrder = new ArrayList<>();
+//		callGraph = new Graph(true);
+//		callGVetex2String = new HashMap<>();
 	}
 
 	public void setSdf(SynchDf sdf) {
@@ -136,16 +146,30 @@ public class LustreGenerator {
 
 	public LustreNode generateLustreNode(LustreModel m, ImlType t) {
 		if (t instanceof SimpleTypeReference) {
-			return generateLustreNode(m, sdf.getNode(t));
+			return generateLustreNodeR(m, sdf.getNode(t));
 		}
 		return (new LustreNode("__EMPTY__"));
 	}
 
-	public LustreNode generateLustreNode(LustreModel m, Node node) {
+	public LustreNode generateLustreNode(LustreModel m, Node node) {		
+		generatorServices.setAuxiliaryDS(lustre2Iml, nodeCallOrder);
+		return generateLustreNodeR(m, node);
+	}	
+	public LustreNode generateLustreNodeR(LustreModel m, Node node) {		
+//		generatorServices.setAuxiliaryDS(lustre2Iml, nodeCallOrder);
 
 		String type_name = ImlUtil.getTypeName(node.getNodeType(), qnp);
-		if (m.hasType(type_name))
+		
+		if (!nodeCallOrder.contains(type_name)) {
+			nodeCallOrder.add(type_name);
+		} else {
+			nodeCallOrder.remove(type_name);
+			nodeCallOrder.add(type_name);	// forget the old
+		}
+				
+		if (m.hasType(type_name)) {
 			return m.getType(type_name);
+		}
 
 		LustreNode target = new LustreNode(type_name);
 		m.addNode(target);
@@ -160,7 +184,7 @@ public class LustreGenerator {
 				generateOutput(target, p, tr);
 			}
 			for (ComponentInstance sub : ct.getSubs().values()) {
-				LustreNode gensm = generateLustreNode(target.getContainer(),
+				LustreNode gensm = generateLustreNodeR(target.getContainer(),
 						sdf.getNode(sub.getComponentType().getType()));
 				addSymbol(target, sub.getName(), gensm, LustreElementType.COMPONENT);
 			}
@@ -177,9 +201,6 @@ public class LustreGenerator {
 						generateType(m, (SimpleTypeReference) typing.bind(sd.getType()));
 						addSymbol(m, target, sd, tr);
 					}
-//					else  if (sd.getType() instanceof FunctionType) {
-//						System.out.println("TEST");
-//					}
 				}
 			}
 		} else {
@@ -190,10 +211,6 @@ public class LustreGenerator {
 						if ( t instanceof SimpleTypeReference) {
 							addSymbol(m, target, (SymbolDeclaration) sd, tr);
 						}
-//						else if (t instanceof FunctionType) {
-//							addSymbol(m, target, (SymbolDeclaration) sd, tr);
-//							System.out.println("TEST");
-//						}
 					}
 				}
 			}
@@ -201,13 +218,8 @@ public class LustreGenerator {
 		
 		for(String s : node.getLets().keySet()) {
 			LustreSymbol symbol = addSymbol(target, s, m.Bool, LustreElementType.LET);
-			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr, ".", lustre2Iml));
+			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr, "."));
 		}
-		
-		// At this point, the luster model has been generated
-		
-		
-		
 		return target;
 	}
 
@@ -325,7 +337,7 @@ public class LustreGenerator {
 				name = target.getContainer().newSymbolName();
 			}
 			return addSymbol(target, name, target.getContainer().getType("iml.lang.Bool"), LustreElementType.ASSERTION,
-					generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml));
+					generatorServices.serialize(sd.getDefinition(), ctx, "."));
 		} else {
 			name = sd.getName();
 			bound = typing.bind(sd.getType());
@@ -333,112 +345,14 @@ public class LustreGenerator {
 				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
 				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
 				if (sd.getDefinition() != null) {
-					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml) );
-					// parse the definition to generate symbols
-//					parseDefForNodes(m, sd.getDefinition());
+					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".") );
 				}
 				return toadd ;
 			}
-//			if (bound instanceof FunctionType) {
-//				//
-//				System.out.println("What to do here");
-//				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
-//				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
-//				if (sd.getDefinition() != null) {
-//					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".", lustre2Iml) );
-//					// parse the definition to generate symbols
-//					parseDefForNodes(m, sd.getDefinition());
-//				}
-//				return toadd ;
-//			}
-
 		}
 		return (new LustreSymbol("__ERROR__"));
 	}
 
-//	/**
-//	 * @param m
-//	 * @param definition
-//	 */
-//	private void parseDefForNodes(LustreModel m, FolFormula def) {
-//		if (def.getOp() != null &&
-//			(def.getOp().equals("=>") || def.getOp().equals("<=>") || 
-//					def.getOp().equals("&&") || def.getOp().equals("||"))) {
-//			parseDefForNodes(m, def.getLeft());
-//			parseDefForNodes(m, def.getRight());
-//		} else if (def instanceof AtomicExpression) {
-//			parseDefForNodes(m, def.getLeft());
-//			parseDefForNodes(m, def.getRight());
-//		} else if (def instanceof Addition) {
-//			parseDefForNodes(m, def.getLeft());
-//			parseDefForNodes(m, def.getRight());
-//		} else if (def instanceof Multiplication) {
-//			parseDefForNodes(m, def.getLeft());
-//			parseDefForNodes(m, def.getRight());
-//		} else if (def instanceof TermMemberSelection) {
-//			TermMemberSelection tm = (TermMemberSelection) def;
-//			if (tm.getReceiver() instanceof SymbolReferenceTerm &&
-//				((SymbolReferenceTerm) tm.getReceiver()).getSymbol() instanceof NamedType) {
-//				// Process receiver 
-//				NamedType nt = (NamedType)((SymbolReferenceTerm) tm.getReceiver()).getSymbol();
-//				generateLustreNode(m, sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nt)));
-//		
-//				parseDefForNodes(m, tm.getMember());
-//			} else {
-//				parseDefForNodes(m, tm.getReceiver());
-//				parseDefForNodes(m, tm.getMember());
-//			}
-//		} else if (def instanceof SymbolReferenceTerm) {
-//			SymbolReferenceTerm srt = (SymbolReferenceTerm) def;
-//			if (srt instanceof NamedType) {
-//				NamedType nt = (NamedType)srt;
-//				generateLustreNode(m, sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nt)));
-//			}
-//		} else if (def instanceof TailedExpression) {
-//			TailedExpression te = (TailedExpression) def;
-//			parseDefForNodes(m, te.getLeft());
-//			ExpressionTail taile = te.getTail();
-//			if (taile instanceof TupleConstructor) {
-//				for (FolFormula ele : ((TupleConstructor) taile).getElements()) {
-//					parseDefForNodes(m, ele);
-//				}
-//				// add to queue of nodes to be generated
-////				if (def.getLeft() instanceof SymbolReferenceTerm &&
-////					((SymbolReferenceTerm) def.getLeft()).getSymbol() instanceof SymbolDeclaration) {
-////					var symbol = (def.getLeft() as SymbolReferenceTerm).symbol as SymbolDeclaration;
-////					functional_nodes.put(symbol.name, symbol);
-////				}
-//			}
-//		} else if (def instanceof ParenthesizedTerm) {
-//			parseDefForNodes(m, ((ParenthesizedTerm) def).getSub());
-//		} else if (def instanceof IteTermExpression) {
-//			IteTermExpression ite = (IteTermExpression) def;
-//			if (ite.getRight() == null) {
-//				parseDefForNodes(m, ite.getCondition());
-//				parseDefForNodes(m, ite.getLeft());
-//			} else {
-//				parseDefForNodes(m, ite.getCondition());
-//				parseDefForNodes(m, ite.getLeft());
-//				parseDefForNodes(m, ite.getRight());
-//			}
-//		} else if (def instanceof CaseTermExpression) {
-//			CaseTermExpression cte = (CaseTermExpression) def;
-//			for (FolFormula f : cte.getCases()) {
-//				parseDefForNodes(m, f);
-//			}
-//			for (TermExpression f : cte.getExpressions()) {
-//				parseDefForNodes(m, f);
-//			}
-//		} else if (def instanceof SequenceTerm) {
-//			parseDefForNodes(m, ((SequenceTerm) def).getReturn());
-//		} else if (def instanceof SignedAtomicFormula) {
-//			parseDefForNodes(m, ((SignedAtomicFormula)def).getLeft());
-//		} else if (def instanceof NumberLiteral) {
-//			;
-//		} else if (def instanceof TruthValue) {
-//			;
-//		}
-//	}
 
 	private LustreNode generateEnumType(LustreModel m, NamedType type) {
 		LustreNode target = new LustreNode(qnp.getFullyQualifiedName(type).toString());
@@ -606,7 +520,7 @@ public class LustreGenerator {
 	}
 	
 	public String serialize(LustreModel m) {
-		return generatorServices.serialize(m, lustre2Iml);
+		return generatorServices.serialize(m);
 	}
 
 //	public String serializeAndMap(LustreModel m) {

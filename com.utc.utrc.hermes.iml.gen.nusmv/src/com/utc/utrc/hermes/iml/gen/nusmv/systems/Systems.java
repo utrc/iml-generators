@@ -36,6 +36,7 @@ import com.utc.utrc.hermes.iml.iml.TraitExhibition;
 import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
+import com.utc.utrc.hermes.iml.lib.SystemsServices;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 
@@ -43,6 +44,9 @@ public class Systems {
 
 	@Inject
 	private ImlStdLib stdLibs;
+	
+	@Inject
+	private SystemsServices systemsServices;
 
 	@Inject
 	@Extension
@@ -75,6 +79,7 @@ public class Systems {
 			if (s instanceof NamedType && !ImlUtil.isPolymorphic(s)) {
 				NamedType nt = (NamedType) s;
 				if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+//				if (systemsServices.isComponent(nt)) {
 					SimpleTypeReference ref = ImlCustomFactory.INST.createSimpleTypeReference(nt);
 					ComponentType c = processComponent(ref);
 					components.put(ImlUtil.getTypeName(ref, qnp), c);

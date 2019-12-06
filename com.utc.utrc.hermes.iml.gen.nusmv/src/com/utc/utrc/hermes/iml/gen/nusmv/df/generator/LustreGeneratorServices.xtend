@@ -67,11 +67,17 @@ class LustreGeneratorServices {
 
 //	private Map<String, SymbolDeclaration> functional_nodes ;
 	private Map<String, SymbolReferenceTerm> functional_nodes ;
+	private Map<String, SymbolDeclaration> global_constants ;
 
 	private Map<String, String> lustre2Iml;
+	private List<String> nodeCallOrder;
+	
+//	private Map<Integer, String> callGVetex2String;
+//	private Graph callGraph;	
 
 	new() {
 		functional_nodes = Maps.newHashMap()
+		global_constants = Maps.newHashMap();
 	}
 
 	def String getNameFor(SimpleTypeReference tr) {
@@ -118,9 +124,23 @@ class LustreGeneratorServices {
 		return s.getSymbol().getName();
 	}
 
-	def String serialize(LustreModel m, Map<String, String> map) {
-		lustre2Iml = map;
-		'''«FOR n : m.nodes.values AFTER '\n'»«serializeType(n)»«ENDFOR»«FOR n : m.nodes.values AFTER '\n'»«serializeNode(n)»«ENDFOR»'''
+
+//	def setAuxiliaryDS(Map<String, String> LustreMapIml, Map<Integer, String> callGVMap, Graph g) {
+	def setAuxiliaryDS(Map<String, String> LustreMapIml, List<String> callOrder) {
+		lustre2Iml = LustreMapIml;
+		nodeCallOrder = callOrder;
+//		callGVetex2String = callGVMap;
+//		callGraph = g;		
+	}
+
+
+	def String serialize(LustreModel m) {
+		var types = '''«FOR n : m.nodes.values AFTER '\n'»«serializeType(n)»«ENDFOR»''';
+		var constants = '''«serializeGlobalConstants()»''';
+		var functions = '''«serializeFunctionalNodes()»'''
+		var nodes = '''«serializeNodes(m)»''';
+//		var nodes = '''«FOR n : m.nodes.values AFTER '\n'»«serializeNode(n)»«ENDFOR»''';
+		return types + constants + functions + nodes;
 	}
 
 	def String serializeEnum(LustreNode m, String l) {
@@ -178,6 +198,48 @@ class LustreGeneratorServices {
 			'''
 		} 
 	}
+	
+	def String serializeGlobalConstants() {
+		var nodes = "";
+		var closed = new ArrayList<String>() ;
+		while(global_constants.size > 0) {
+			var fname = global_constants.keySet.get(0) ;
+			if (! closed.contains(fname)) { 
+				var togen = global_constants.get(fname);
+				nodes = nodes + serializeGlobalConstant(togen);
+			}
+			global_constants.remove(fname) ;
+			closed.add(fname);
+		}
+		return nodes + "\n" ;		
+	}
+	
+	def String serializeFunctionalNodes() {
+		var nodes = "";
+		var closed = new ArrayList<String>() ;
+		while(functional_nodes.size > 0) {
+			var fname = functional_nodes.keySet.get(0) ;
+			if (! closed.contains(fname)) { 
+				var togen = functional_nodes.get(fname);
+				nodes = nodes + serializeFunctionalNode(togen) + "\n";
+			}
+			functional_nodes.remove(fname) ;
+			closed.add(fname);
+		}
+		return nodes;
+	}
+
+	def String serializeNodes(LustreModel m) {
+//		var nodes = '''«FOR n : m.nodes.values AFTER '\n'»«serializeNode(n)»«ENDFOR»''';
+		var nodes = "";
+		for (var i = nodeCallOrder.size - 1; i >= 0; i--) {
+			if (m.nodes.keySet.contains(nodeCallOrder.get(i))) {
+				nodes = nodes + serializeNode(m.nodes.get(nodeCallOrder.get(i))) + "\n";
+			}
+		} 
+		return nodes;
+	}
+
 
 	def String serializeNode(LustreNode m) {
 		if(m.name.equals("iml.lang.Bool") || m.name.equals("iml.lang.Int") || m.name.equals("iml.lang.Real")) return "";
@@ -210,20 +272,18 @@ class LustreGeneratorServices {
 			
 			«ENDIF»
 		'''
-		var closed = new ArrayList<String>() ;
-		while(functional_nodes.size > 0) {
-			var fname = functional_nodes.keySet.get(0) ;
-			if (! closed.contains(fname)) { 
-				var togen = functional_nodes.get(fname);
-				nodes = nodes + serializeFunctionalNode(togen);
-			}
-			functional_nodes.remove(fname) ;
-			closed.add(fname);
-		}
+//		var closed = new ArrayList<String>() ;
+//		while(functional_nodes.size > 0) {
+//			var fname = functional_nodes.keySet.get(0) ;
+//			if (! closed.contains(fname)) { 
+//				var togen = functional_nodes.get(fname);
+//				nodes = nodes + serializeFunctionalNode(togen);
+//			}
+//			functional_nodes.remove(fname) ;
+//			closed.add(fname);
+//		}
 		return nodes ;
 	}
-
-
 
 
 	def List<String> suffix(NuSmvSymbol s) {
@@ -243,6 +303,7 @@ class LustreGeneratorServices {
 		return retval;
 	}
 
+
 	def List<String> suffix(NuSmvTypeInstance s) {
 		var retval = new ArrayList<String>();
 		for (field : s.type.variables.keySet) {
@@ -260,10 +321,11 @@ class LustreGeneratorServices {
 		return retval;
 	}
 
-	def String serialize(FolFormula e, SimpleTypeReference ctx, String sp, Map<String, String> map) {
-		lustre2Iml = map;
+
+	def String serialize(FolFormula e, SimpleTypeReference ctx, String sp) {
 		serialize(e, ctx, new HashMap<Symbol, String>(), sp);
 	}
+
 
 	def String serialize(FolFormula e, SimpleTypeReference ctx, Map<Symbol, String> map, String sp) {
 		var String retval = "";
@@ -311,7 +373,7 @@ class LustreGeneratorServices {
 				}
 				map.put(e.symbol, retval);				
 				if (e.symbol.eContainer instanceof Model) {	// Global
-						functional_nodes.put(retval, e);
+						global_constants.put(retval, e.symbol as SymbolDeclaration);
 				}
 			}
 		} else if (e instanceof TailedExpression) {
@@ -331,8 +393,14 @@ class LustreGeneratorServices {
 					(e.left as SymbolReferenceTerm).symbol instanceof SymbolDeclaration) {
 					var symbol = (e.left as SymbolReferenceTerm).symbol as SymbolDeclaration;
 					if (!isInit(e.left as SymbolReferenceTerm) && !isPre(e.left as SymbolReferenceTerm)) {			
-						functional_nodes.put(symbol.name, (e.left as SymbolReferenceTerm));
+//						functional_nodes.put(symbol.name, (e.left as SymbolReferenceTerm));
 						functional_nodes.put(prefix, (e.left as SymbolReferenceTerm));
+								if (!nodeCallOrder.contains(prefix)) {
+									nodeCallOrder.add(prefix);
+								} else {
+									nodeCallOrder.remove(prefix);
+									nodeCallOrder.add(prefix);	// forget the old
+								}						
 					}
 					if (isInit(e.left as SymbolReferenceTerm)) {			
 						del = " ->";
@@ -345,7 +413,13 @@ class LustreGeneratorServices {
 				}
 				if (e.left instanceof TermMemberSelection &&
 					(e.left as TermMemberSelection).member instanceof SymbolReferenceTerm) {
-					functional_nodes.put(prefix, ((e.left as TermMemberSelection).member as SymbolReferenceTerm))
+					functional_nodes.put(prefix, ((e.left as TermMemberSelection).member as SymbolReferenceTerm));
+					if (!nodeCallOrder.contains(prefix)) {
+						nodeCallOrder.add(prefix);
+					} else {
+						nodeCallOrder.remove(prefix);
+						nodeCallOrder.add(prefix); // forget the old
+					}						
 					if (isAgreeAnnexNode(e.left as TermMemberSelection)) {
 						prefix = agreeAnnexNodeName(e.left as TermMemberSelection);
 					}
@@ -410,7 +484,7 @@ class LustreGeneratorServices {
 						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
 					«ENDIF»
 					let
-					    _return = «serialize(expr.^return, null, ".", lustre2Iml)» ;
+					    _return = «serialize(expr.^return, null, ".")» ;
 					tel					
 				'''
 			} else {
@@ -466,6 +540,17 @@ class LustreGeneratorServices {
 		return "" 
 	}
 
+	def serializeGlobalConstant(SymbolDeclaration sd) {
+		var type = sd.type;
+		if (type instanceof SimpleTypeReference) {
+			return 
+			'''
+			const «toLustreNameGlobal(sd)» : «toLustreName(type)» = «serialize(sd.definition, null, ".")»;
+			'''
+		}
+		return "" 
+	}
+
 	def serializeFunctionalNode(SymbolReferenceTerm sr) {
 		val TypingEnvironment te = new TypingEnvironment();
 		te.addContext(sr);		
@@ -477,14 +562,15 @@ class LustreGeneratorServices {
 				var expr = lambda.definition as SequenceTerm
 				return 
 				'''
-					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+					node «toLustreName(sd)» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+«««					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
 					returns (_return : «toLustreName((type as FunctionType).range)» )
 					«IF expr.defs.size >0»
 						var
 						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
 					«ENDIF»
 					let
-					    _return = «serialize(expr.^return, null, ".", lustre2Iml)» ;
+					    _return = «serialize(expr.^return, null, ".")» ;
 					tel
 					
 				'''
@@ -543,12 +629,6 @@ class LustreGeneratorServices {
 					'''					
 				}
 			}
-		}
-		if (type instanceof SimpleTypeReference) {
-			return 
-			'''
-			const «toLustreNameGlobal(sd)» : «toLustreName(type)» = «serialize(sd.definition, null, ".", lustre2Iml)»;
-			'''
 		}
 		return "" 
 	}
