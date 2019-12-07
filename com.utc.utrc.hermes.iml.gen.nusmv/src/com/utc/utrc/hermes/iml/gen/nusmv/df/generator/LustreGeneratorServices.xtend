@@ -1,21 +1,31 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.df.generator
 
+import com.google.common.collect.Maps
 import com.google.inject.Inject
+import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreModel
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreNode
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreSymbol
+import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreVariable
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvSymbol
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvTypeInstance
 import com.utc.utrc.hermes.iml.iml.Addition
 import com.utc.utrc.hermes.iml.iml.Assertion
 import com.utc.utrc.hermes.iml.iml.AtomicExpression
 import com.utc.utrc.hermes.iml.iml.CaseTermExpression
+import com.utc.utrc.hermes.iml.iml.EnumRestriction
+import com.utc.utrc.hermes.iml.iml.FloatNumberLiteral
 import com.utc.utrc.hermes.iml.iml.FolFormula
+import com.utc.utrc.hermes.iml.iml.FunctionType
 import com.utc.utrc.hermes.iml.iml.ImlType
 import com.utc.utrc.hermes.iml.iml.IteTermExpression
+import com.utc.utrc.hermes.iml.iml.LambdaExpression
+import com.utc.utrc.hermes.iml.iml.Model
 import com.utc.utrc.hermes.iml.iml.Multiplication
 import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.iml.NumberLiteral
 import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm
+import com.utc.utrc.hermes.iml.iml.QuantifiedFormula
 import com.utc.utrc.hermes.iml.iml.RelationKind
 import com.utc.utrc.hermes.iml.iml.SequenceTerm
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula
@@ -29,6 +39,7 @@ import com.utc.utrc.hermes.iml.iml.TermMemberSelection
 import com.utc.utrc.hermes.iml.iml.Trait
 import com.utc.utrc.hermes.iml.iml.TruthValue
 import com.utc.utrc.hermes.iml.iml.TupleConstructor
+import com.utc.utrc.hermes.iml.iml.TupleType
 import com.utc.utrc.hermes.iml.lib.ImlStdLib
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment
@@ -37,22 +48,8 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.List
 import java.util.Map
-import org.eclipse.xtext.naming.IQualifiedNameProvider
-import com.utc.utrc.hermes.iml.iml.FunctionType
-import com.utc.utrc.hermes.iml.iml.LambdaExpression
-import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
-import com.utc.utrc.hermes.iml.iml.TupleType
-import com.google.common.collect.Maps
-import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreSymbol
-import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreVariable
 import org.eclipse.emf.ecore.util.EcoreUtil
-import com.utc.utrc.hermes.iml.iml.Model
-import com.utc.utrc.hermes.iml.iml.FloatNumberLiteral
-
-import com.utc.utrc.hermes.iml.lib.ImlStdLib;
-import com.utc.utrc.hermes.iml.iml.EnumRestriction
-import com.utc.utrc.hermes.iml.iml.QuantifiedFormula
-import com.utc.utrc.hermes.iml.services.ImlGrammarAccess.SymbolDeclarationElements
+import org.eclipse.xtext.naming.IQualifiedNameProvider
 
 class LustreGeneratorServices {
 
@@ -258,13 +255,24 @@ class LustreGeneratorServices {
 			
 			«ENDIF»
 			«FOR v : m.components.values» 
-			«FOR p : v.type.type.returns» «IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» ; «ENDIF»«ENDFOR»
+			«FOR p : v.type.type.returns» 
+				«IF (v.type.outParams.size > v.type.type.returns.indexOf(p))»
+					«IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» 
+						var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» ; 
+					«ENDIF»
+					«IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name.equals("__NOT__SET__"))» 
+						var «v.name»_«p.name» : «p.type.type.toLustreName» ; 
+					«ENDIF»					
+				«ELSE»
+					var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» ;
+				«ENDIF»				
+			«ENDFOR»
 			«ENDFOR»
 			«ENDIF»
 			«IF (m.components.size > 0)»
 			let
 			«FOR v : m.components.values » 
-			(«FOR p : v.type.outParams SEPARATOR ','» «serializeLustreVariable(p)» «ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR») ; «'\n '» 
+			( «FOR p : v.type.outParams SEPARATOR ', '»«IF (p.name.equals("__NOT__SET__"))»«v.name»_«(v.type.type.returns.get(v.type.outParams.indexOf(p))).name»«ELSE»«serializeLustreVariable(p)»«ENDIF»«ENDFOR»«FOR p : v.type.type.returns»«IF (v.type.type.returns.indexOf(p) >= v.type.outParams.size)», «v.name»_«p.name»«ENDIF»«ENDFOR» ) = «v.type.type.toLustreName» ( «FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR» ) ; «'\n '» 
 			«ENDFOR»
 			«FOR l : m.lets.values» --%PROPERTY «l.definition» ; «'\n'»«ENDFOR»
 			 --%MAIN;

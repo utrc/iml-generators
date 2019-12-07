@@ -3,22 +3,18 @@ package com.utc.utrc.hermes.iml.gen.nusmv.df.generator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.xbase.lib.Extension;
 
 import com.google.inject.Inject;
-import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.Node;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.SynchDf;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreElementType;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreModel;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreNode;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreSymbol;
-import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreType;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreTypeInstance;
 import com.utc.utrc.hermes.iml.gen.nusmv.df.model.LustreVariable;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.ComponentInstance;
@@ -26,41 +22,23 @@ import com.utc.utrc.hermes.iml.gen.nusmv.systems.ComponentType;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Connection;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Direction;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Port;
-import com.utc.utrc.hermes.iml.iml.Addition;
 import com.utc.utrc.hermes.iml.iml.Assertion;
-import com.utc.utrc.hermes.iml.iml.AtomicExpression;
-import com.utc.utrc.hermes.iml.iml.CaseTermExpression;
-import com.utc.utrc.hermes.iml.iml.ExpressionTail;
-import com.utc.utrc.hermes.iml.iml.FolFormula;
-import com.utc.utrc.hermes.iml.iml.FunctionType;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
-import com.utc.utrc.hermes.iml.iml.IteTermExpression;
-import com.utc.utrc.hermes.iml.iml.Multiplication;
 import com.utc.utrc.hermes.iml.iml.NamedType;
-import com.utc.utrc.hermes.iml.iml.NumberLiteral;
-import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm;
 import com.utc.utrc.hermes.iml.iml.Refinement;
 import com.utc.utrc.hermes.iml.iml.Relation;
-import com.utc.utrc.hermes.iml.iml.SequenceTerm;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
-import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
-import com.utc.utrc.hermes.iml.iml.TailedExpression;
-import com.utc.utrc.hermes.iml.iml.TermExpression;
-import com.utc.utrc.hermes.iml.iml.TermMemberSelection;
 import com.utc.utrc.hermes.iml.iml.Trait;
 import com.utc.utrc.hermes.iml.iml.TraitExhibition;
-import com.utc.utrc.hermes.iml.iml.TruthValue;
-import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
-import com.utc.utrc.hermes.iml.util.Phi;
 
 public class LustreGenerator {
 
@@ -189,8 +167,20 @@ public class LustreGenerator {
 				addSymbol(target, sub.getName(), gensm, LustreElementType.COMPONENT);
 			}
 			// add all connections
+			// first process connections to higher level
+			Map<String, String> outputPort2OutputPort = new HashMap<>();
 			for (Connection conn : ct.getConnections().values()) {
-				generateConnection(target, conn, tr);
+				if (conn.getTargetComponent() == ComponentInstance.self) {
+//					generateConnection(target, conn, tr);
+					generateConnectionToHigherLevel(target, conn, tr, outputPort2OutputPort);
+				}
+			}
+			// then process connections at this level or from higher level
+			for (Connection conn : ct.getConnections().values()) {
+				if (conn.getTargetComponent() != ComponentInstance.self) {
+//					generateConnection(target, conn, tr);
+					generateConnectionSameLevelOrFromHigherLevel(target, conn, tr, outputPort2OutputPort);
+				}
 			}
 
 			// add all other symbols
@@ -406,8 +396,78 @@ public class LustreGenerator {
 		return new LustreSymbol("__UNSUPPORTED__");
 	}
 
-	
+	private void generateConnectionToHigherLevel(LustreNode m, Connection conn, SimpleTypeReference tr, Map<String, String> map) {
+		// Need to take the output symbol
+		LustreSymbol out = m.getVariables().get(conn.getTargetPort().getName());
+		if (out == null) {
+//			LustreSymbol toadd = new LustreSymbol("");
+//			FolFormula def = Phi.eq(
+//					EcoreUtil.copy(
+//							(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
+//									.getDefinition().getLeft()).getTail()).getElements().get(0).getLeft()),
+//					EcoreUtil.copy(
+//							(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
+//									.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
+//			toadd.setName(m.getContainer().newSymbolName());
+//			toadd.setElementType(LustreElementType.LET);
+//			toadd.setDefinition(generatorServices.serialize(def, tr, "_"));
+//			m.addSymbol(toadd);
+				
+			LustreSymbol machine = m.getComponents().get(conn.getSourceComponent().getName());
+			if (machine != null) {
+				String sourcePortName = conn.getSourcePort().getName();
+				int index = machine.getType().getType().returnIndex(sourcePortName);
+				if (index != -1) {
+					String targetPortName = conn.getTargetPort().getName();
+					LustreVariable param = new LustreVariable(targetPortName);
+					machine.getType().setOutParam(index, param);
+					String key = conn.getSourceComponent().getName() + "_" + sourcePortName;
+					map.put(key, targetPortName);
+				}
+			}
+		}
+	}
 
+	private void generateConnectionSameLevelOrFromHigherLevel(LustreNode m, Connection conn, SimpleTypeReference tr, Map<String, String> map) {
+		LustreSymbol machine = m.getComponents().get(conn.getTargetComponent().getName());
+		if (machine != null) {
+			int index = machine.getType().getType().paramIndex(conn.getTargetPort().getName());
+			if (index != -1) {
+				String portName = "";
+				if (conn.getSourceComponent() != ComponentInstance.self) {
+					portName += conn.getSourceComponent().getName() + "_";
+				}
+				portName += conn.getSourcePort().getName();
+				LustreVariable param;				
+				if (map.containsKey(portName)) {
+					param = new LustreVariable(map.get(portName));
+				} else {
+					param = new LustreVariable(portName);					
+				}
+				machine.getType().setParam(index, param);
+			}
+		}
+			
+		if (conn.getSourceComponent() != ComponentInstance.self) {
+			machine = m.getComponents().get(conn.getSourceComponent().getName());
+			if (machine != null) {
+				int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
+				if (index != -1) {
+					String portName = conn.getSourceComponent().getName() + "_";
+					portName += conn.getSourcePort().getName();
+					LustreVariable param;				
+					if (map.containsKey(portName)) {
+						param = new LustreVariable(map.get(portName));
+					} else {
+						param = new LustreVariable(portName);					
+					}
+					machine.getType().setOutParam(index, param);
+				}
+			}
+		}
+	}
+	
+	
 	private void generateConnection(LustreNode m, Connection conn, SimpleTypeReference tr) {
 		// If this is a connection to an output of the current machine
 		// simply add a define

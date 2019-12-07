@@ -127,6 +127,36 @@ class LustreTranslatorTests {
 		System.out.println(output);
 	}	
 	
+	@Test
+	def void testUTRC_ExternalOutAlsoUsedAsInternalIn() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/testExternalOutAlsoUsedAsInternalIn.iml"),true) ;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("top_level_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}	
+
+	@Test
+	def void testUTRC_DanglingInternalOut() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/testDanglingInternalOut.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("top_level_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}	
 
 	@Test
 	def void testSWAgreeImlDeliveryDrone() {
