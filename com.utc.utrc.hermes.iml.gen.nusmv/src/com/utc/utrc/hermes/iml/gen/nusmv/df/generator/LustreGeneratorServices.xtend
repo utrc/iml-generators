@@ -248,8 +248,8 @@ class LustreGeneratorServices {
 			«IF (isContract(m))»
 			(*@contract 
 			    «FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»)«ENDIF»«ENDFOR»
-			    «IF (hasAssumption(m))»assume assumption;«ENDIF»
-			    «IF (hasGuarantee(m))»guarantee guarantee;«ENDIF»
+«««			    «IF (hasAssumption(m))»assume assumption;«ENDIF»
+«««			    «IF (hasGuarantee(m))»guarantee guarantee;«ENDIF»
 			*) 
 			«ENDIF»
 			«FOR v : m.components.values» 
@@ -272,11 +272,10 @@ class LustreGeneratorServices {
 			«ENDIF»
 			«IF (m.components.size > 0) || m.lets.size > 0 || m.variables.size > 0»
 			let
-			«FOR v : m.variables.values»«IF (v.definition !== null)»«v.name» = «v.definition»; «ENDIF»
+			«FOR v : m.variables.values»«IF (v.definition !== null)»    «v.name» = «v.definition»; «ENDIF»
 			«ENDFOR»			
-			«FOR l : m.lets.values»«l.definition»;«'\n'»«ENDFOR»
-			«FOR v : m.components.values AFTER '--%MAIN \n'» 
-			(«FOR p : v.type.outParams SEPARATOR ', '»«IF (p.name.equals("__NOT__SET__"))»«v.name»_«(v.type.type.returns.get(v.type.outParams.indexOf(p))).name»«ELSE»«serializeLustreVariable(p)»«ENDIF»«ENDFOR»«FOR p : v.type.type.returns»«IF (v.type.type.returns.indexOf(p) >= v.type.outParams.size)», «v.name»_«p.name»«ENDIF»«ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR»);«'\n '» 
+			«FOR l : m.lets.values»    «l.definition»;«'\n'»«ENDFOR»
+			«FOR v : m.components.values AFTER '    --%MAIN; \n'»    («FOR p : v.type.outParams SEPARATOR ', '»«IF (p.name.equals("__NOT__SET__"))»«v.name»_«(v.type.type.returns.get(v.type.outParams.indexOf(p))).name»«ELSE»«serializeLustreVariable(p)»«ENDIF»«ENDFOR»«FOR p : v.type.type.returns»«IF (v.type.type.returns.indexOf(p) >= v.type.outParams.size)», «v.name»_«p.name»«ENDIF»«ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR»);«'\n '» 
 			«ENDFOR»
 			tel
 			«ENDIF»
@@ -605,7 +604,7 @@ class LustreGeneratorServices {
 						node «containerAgreeAnnexNodeName(sd)»(«FOR v : scopes SEPARATOR '; '»«v»«ENDFOR»)
 						returns («FOR v : returns SEPARATOR '; '»«v»«ENDFOR»)
 						let
-						«letContent»;
+						    «letContent»;
 						tel
 					'''					
 				} else {				

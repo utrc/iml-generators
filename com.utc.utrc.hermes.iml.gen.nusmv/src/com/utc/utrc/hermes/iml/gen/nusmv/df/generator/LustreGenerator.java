@@ -378,8 +378,12 @@ public class LustreGenerator {
 			} else {
 				name = target.getContainer().newSymbolName();
 			}
+			
+			String def = "";
+			String originalDef = generatorServices.serialize(sd.getDefinition(), ctx, ".");
+			
 			return addSymbol(target, name, target.getContainer().getType("iml.lang.Bool"), LustreElementType.ASSERTION,
-					generatorServices.serialize(sd.getDefinition(), ctx, "."));
+					def);
 		} else {
 			name = sd.getName();
 			bound = typing.bind(sd.getType());
