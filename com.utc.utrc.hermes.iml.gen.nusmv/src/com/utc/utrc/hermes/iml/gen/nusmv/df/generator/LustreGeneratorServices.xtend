@@ -928,6 +928,14 @@ class LustreGeneratorServices {
 		return lustreName;
 	}
 
+	def String toLustreName(String name) {
+		var String lustreName = name.replaceAll("\\.","_dot_");
+		if (!lustre2Iml.containsKey(lustreName)) {
+			lustre2Iml.put(lustreName, name);
+		}
+		return lustreName;		
+	}
+
 
 	def String toLustreName(String name, String literal) {
 		var String imlName = name + "." + literal

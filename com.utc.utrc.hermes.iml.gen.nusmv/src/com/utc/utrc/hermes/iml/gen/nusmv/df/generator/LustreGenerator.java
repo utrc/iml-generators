@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
+import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.xbase.lib.Extension;
 
 import com.google.inject.Inject;
@@ -225,6 +226,73 @@ public class LustreGenerator {
 		return target;
 	}
 
+	private String SerializeIfAssertionWithStructFieldAsLValue(SymbolDeclaration sd, SimpleTypeReference ctx) {
+		String retStr = "";
+		FolFormula def = sd.getDefinition();
+		def = stripParenthesis(def);
+		if (def instanceof SequenceTerm) {
+			FolFormula ret = ((SequenceTerm) def).getReturn();
+			ret = stripParenthesis(ret);
+			if (ret instanceof SignedAtomicFormula) {
+				FolFormula l = ((SignedAtomicFormula) ret).getLeft();
+				l = stripParenthesis(l);
+				if (l instanceof AtomicExpression) {
+					AtomicExpression ae = (AtomicExpression) l;
+					if (ae.getRel() != RelationKind.EQ) {
+						return retStr;
+					}
+					FolFormula ll = ae.getLeft();
+					ll = stripParenthesis(ll);
+					if (ll instanceof TermMemberSelection) {
+						TermExpression rcvr = ((TermMemberSelection) ll).getReceiver();
+						FolFormula rcvrl = stripParenthesis(rcvr);
+						if (rcvrl instanceof SymbolReferenceTerm) {
+							SymbolReferenceTerm srtl = (SymbolReferenceTerm) rcvrl;
+							if (srtl.getSymbol() instanceof SymbolDeclaration) {
+								SymbolDeclaration sdVar = (SymbolDeclaration) srtl.getSymbol();
+								if (sdVar.getType() instanceof SimpleTypeReference) {
+									SimpleTypeReference str = (SimpleTypeReference) sdVar.getType();
+									if (str.getType() instanceof NamedType) {
+										NamedType nt = (NamedType) str.getType();
+										TermExpression tel = ((TermMemberSelection) ll).getMember();
+										FolFormula ml = stripParenthesis(tel);
+										if (ml instanceof SymbolReferenceTerm ) {
+											SymbolReferenceTerm srtlm = (SymbolReferenceTerm) ml;
+											TypingEnvironment tEnv = new TypingEnvironment(ctx);
+											String cnstrctName = generatorServices.toLustreName(tEnv.bind(str));
+											retStr += sdVar.getName() + " = " + cnstrctName +
+													"{" + srtlm.getSymbol().getName() + " = " + 
+													generatorServices.serialize(ae.getRight(), ctx, ".");
+											
+											
+											String restFields = generateRestFields(sdVar, ctx);
+											
+											
+											retStr += (restFields + "}"); 
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return retStr;
+	}
+	
+	/*
+	 * SerializeIfAssertionWithStructFieldAsLValue: handle the result of the fields
+	 * Assume Only single field is assigned, the rest can be any of their values. 
+	 */
+	private String generateRestFields (SymbolDeclaration sd, SimpleTypeReference ctx) {
+		
+		String res = "";
+		// TOFINISH
+		
+		return res;
+	}
+	
 	private boolean isConnectionAssertion(SymbolDeclaration sd) {
 		FolFormula def = sd.getDefinition();
 		def = stripParenthesis(def);
@@ -379,10 +447,13 @@ public class LustreGenerator {
 			} else {
 				name = target.getContainer().newSymbolName();
 			}
-			
+
 			String def = "";
-			String originalDef = generatorServices.serialize(sd.getDefinition(), ctx, ".");
-			
+			FolFormula aDef = stripParenthesis(sd.getDefinition());
+			def = SerializeIfAssertionWithStructFieldAsLValue(sd, ctx);
+			if (def.equals("")) {
+				def = generatorServices.serialize(aDef, ctx, ".");
+			}			
 			return addSymbol(target, name, target.getContainer().getType("iml.lang.Bool"), LustreElementType.ASSERTION,
 					def);
 		} else {
@@ -599,7 +670,6 @@ public class LustreGenerator {
 		}
 
 	}
-
 	
 
 	public boolean isDelay(SymbolDeclaration s) {
@@ -607,11 +677,9 @@ public class LustreGenerator {
 	}
 
 	public boolean isInput(SymbolDeclaration sd) {
-
-			if ( ImlUtil.exhibits(sd.getType(), (Trait) stdLibs.getNamedType("iml.systems", "In")   ) ) {
-				return true ;
-			}
-		
+		if ( ImlUtil.exhibits(sd.getType(), (Trait) stdLibs.getNamedType("iml.systems", "In")   ) ) {
+			return true ;
+		}
 		return false ;
 	}
 	
