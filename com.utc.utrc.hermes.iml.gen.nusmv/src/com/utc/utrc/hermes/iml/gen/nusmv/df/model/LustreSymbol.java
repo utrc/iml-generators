@@ -11,6 +11,8 @@ public class LustreSymbol {
 	private LustreTypeInstance type ;
 	private String definition;
 	private List<LustreVariable> parameters ;
+	private boolean isAssume;
+	private boolean isGuarantee;
 	
 	
 	private static int id = 0;
@@ -22,6 +24,8 @@ public class LustreSymbol {
 		container = null ;
 		parameters = new ArrayList<LustreVariable>() ;
 		elementType = LustreElementType.VAR ;
+		isAssume = false;
+		isGuarantee = false;
 	}
 	
 	public LustreSymbol(LustreSymbol other) {
@@ -33,9 +37,38 @@ public class LustreSymbol {
 		for(LustreVariable v : parameters) {
 			parameters.add(new LustreVariable(v));
 		}
-		
+		isAssume = other.isAssume;
+		isGuarantee = other.isGuarantee;
 	}
 	
+	/**
+	 * @return the isAssume
+	 */
+	public boolean isAssume() {
+		return isAssume;
+	}
+
+	/**
+	 * @param isAssume the isAssume to set
+	 */
+	public void setAssume(boolean isAssume) {
+		this.isAssume = isAssume;
+	}
+
+	/**
+	 * @return the isGuarantee
+	 */
+	public boolean isGuarantee() {
+		return isGuarantee;
+	}
+
+	/**
+	 * @param isGuarantee the isGuarantee to set
+	 */
+	public void setGuarantee(boolean isGuarantee) {
+		this.isGuarantee = isGuarantee;
+	}
+
 	public LustreElementType getElementType() {
 		return elementType;
 	}

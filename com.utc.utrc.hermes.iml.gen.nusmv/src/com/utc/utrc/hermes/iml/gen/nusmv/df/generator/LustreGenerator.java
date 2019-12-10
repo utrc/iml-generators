@@ -22,6 +22,7 @@ import com.utc.utrc.hermes.iml.gen.nusmv.systems.ComponentType;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Connection;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Direction;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Port;
+import com.utc.utrc.hermes.iml.iml.Annotation;
 import com.utc.utrc.hermes.iml.iml.Assertion;
 import com.utc.utrc.hermes.iml.iml.AtomicExpression;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
@@ -393,7 +394,13 @@ public class LustreGenerator {
 				if (sd.eContainer() == ctx.getType()) {
 					toadd = addSymbol(target, name, nbound, LustreElementType.VAR); 
 				} else {
-					toadd = addSymbol(target, name, nbound, LustreElementType.FIELD); 					
+					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Assume"))) {
+						toadd = addSymbol(target, name, nbound, LustreElementType.FIELD, 1); 											
+					} else if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Guarantee"))) {
+						toadd = addSymbol(target, name, nbound, LustreElementType.FIELD, 2); 						
+					} else {
+						toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
+					}
 				}
 				if (sd.getDefinition() != null) {
 					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".") );
@@ -636,6 +643,21 @@ public class LustreGenerator {
 		LustreTypeInstance ti = new LustreTypeInstance(type);
 		target.setType(ti);
 		target.setElementType(et);
+		container.addSymbol(target);
+		return target;
+	}
+
+	public LustreSymbol addSymbol(LustreNode container, String name, LustreNode type, LustreElementType et, int ag) {
+		LustreSymbol target = new LustreSymbol(name);
+		LustreTypeInstance ti = new LustreTypeInstance(type);
+		target.setType(ti);
+		target.setElementType(et);
+		if (ag == 1) {
+			target.setAssume(true);
+		}
+		if (ag == 2) {
+			target.setGuarantee(true);
+		}
 		container.addSymbol(target);
 		return target;
 	}
