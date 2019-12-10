@@ -1,0 +1,96 @@
+package agree.InputD;
+import iml.systems.*;
+import agree.InputE.*;
+import agree.InputF.*;
+import iml.software.*;
+import iml.synchdf.ontological.*;
+import iml.contracts.*;
+ 
+type Timer_dot_Impl   exhibits(TimerTrait, Implements<Timer>){
+	Timer:Int := init<Int>(0,if (pre<Bool>(Running.data)) {pre<Int>(Timer) - 1}  else {if (Granted.data) {4}  else {0} 	} 	);
+	
+	assert{Running.data = (Timer > 0);};
+	
+			
+			
+};
+
+type Lock_dot_Impl   exhibits(LockTrait, Implements<Lock>){
+	keypad : Keypad_dot_Impl;
+	control : Control_dot_Impl;
+	timer : Timer_dot_Impl;
+	c1 : Connector<InDataPort<Int>, InDataPort<Int>> := connect<InDataPort<Int>, InDataPort<Int>>(Digit, keypad.Digit);
+	assert{Digit.data = keypad.Digit.data};
+	
+	c2 : Connector<InDataPort<Bool>, InDataPort<Bool>> := connect<InDataPort<Bool>, InDataPort<Bool>>(Press, keypad.Press);
+	assert{Press.data = keypad.Press.data};
+	
+	c3 : Connector<InDataPort<Bool>, InDataPort<Bool>> := connect<InDataPort<Bool>, InDataPort<Bool>>(MasterKey, control.MasterKey);
+	assert{MasterKey.data = control.MasterKey.data};
+	
+	c4 : Connector<OutDataPort<Bool>, InDataPort<Bool>> := connect<OutDataPort<Bool>, InDataPort<Bool>>(keypad.Request, control.Request);
+	assert{keypad.Request.data = control.Request.data};
+	
+	c5 : Connector<OutDataPort<Int>, InDataPort<Int>> := connect<OutDataPort<Int>, InDataPort<Int>>(keypad.Code, control.Code);
+	assert{keypad.Code.data = control.Code.data};
+	
+	c6 : Connector<OutDataPort<Bool>, InDataPort<Bool>> := connect<OutDataPort<Bool>, InDataPort<Bool>>(control.Granted, timer.Granted);
+	assert{control.Granted.data = timer.Granted.data};
+	
+	c7 : Connector<OutDataPort<Bool>, OutDataPort<Bool>> := connect<OutDataPort<Bool>, OutDataPort<Bool>>(timer.Running, Unlocking);
+	assert{timer.Running.data = Unlocking.data};
+	
+	c8 : Connector<OutDataPort<Int>, OutDataPort<Int>> := connect<OutDataPort<Int>, OutDataPort<Int>>(control.CurrentCode, CurrentCode);
+	assert{control.CurrentCode.data = CurrentCode.data};
+	
+};
+
+trait LockTrait  refines(Synchronous, Component, Contract, System) {
+	Digit: InDataPort<Int>;
+	Press: InDataPort<Bool>;
+	MasterKey: InDataPort<Bool>;
+	Unlocking: OutDataPort<Bool>;
+	CurrentCode: OutDataPort<Int>;
+	C:Int := if (Unlocking.data) {(init<Int>(1,pre<Int>(C) + 1))}  else {0} 	;
+	
+	Locks:Bool := init<Bool>(false,pre<Bool>(Unlocking.data) && !Unlocking.data);
+	
+	[Assume{comment="A1: Digit is always non-negative"}] REQ1 : Bool := 0 <= Digit.data;
+	
+	[Assume{comment="A2: Digit is always smaller than nine"}] REQ2 : Bool := Digit.data <= 9;
+	
+	[Guarantee{comment="R1: The door will never be held open for more than 4 clock cycles at a time"}] REQ3 : Bool := (C <= 4);
+	
+	[Guarantee{comment="R2: Door locks remains locked as long as no one uses the keypad"}] REQ4 : Bool := Since.node.f(Locks, !Press.data) => !Unlocking.data;
+	
+	[Guarantee{comment="R3: Squared CurrentCode upper bound"}] REQ5 : Bool := Unlocking.data => (CurrentCode.data * CurrentCode.data) < 1000000;
+	
+			
+	assumption: Bool := REQ1 && REQ2;
+	
+	guarantee: Bool := REQ3 && REQ4 && REQ5;
+	
+			
+};
+
+type Lock  exhibits(LockTrait);
+trait TimerTrait  refines(Synchronous, Component, System) {
+	Granted: InDataPort<Bool>;
+	Running: OutDataPort<Bool>;
+};
+
+type Timer  exhibits(TimerTrait);
+type Since exhibits (Synchronous) enum {node}
+{
+	f: (Bool, Bool) -> (Bool);
+	assert {
+		forall (X:Bool, Y:Bool){
+			var SinceXY:(Bool) :=f(X, Y);
+			SinceXY = (X || Y && init<Bool>(false,pre<Bool>(SinceXY)))					
+		}
+	};
+} 
+
+
+		
+		

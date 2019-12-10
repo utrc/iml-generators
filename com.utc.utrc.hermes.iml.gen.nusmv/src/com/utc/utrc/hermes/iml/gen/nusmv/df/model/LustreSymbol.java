@@ -7,7 +7,7 @@ import com.utc.utrc.hermes.iml.iml.FolFormula;
 
 public class LustreSymbol {
 	private LustreElementType elementType ;
-	private String name ;
+	private String name = null;
 	private LustreTypeInstance type ;
 	private String definition;
 	private List<LustreVariable> parameters ;

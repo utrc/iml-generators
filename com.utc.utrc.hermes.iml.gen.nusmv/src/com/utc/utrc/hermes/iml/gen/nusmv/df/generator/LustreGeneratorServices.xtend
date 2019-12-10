@@ -180,17 +180,16 @@ class LustreGeneratorServices {
 			return 
 			'''
 			type «toLustreName(m)» = enum {
-				«FOR l : m.literals SEPARATOR ',\n'» «serializeEnum(m, l)» «ENDFOR»
-			} ;
-			
+			    «FOR l : m.literals SEPARATOR ',\n'»«serializeEnum(m, l)»«ENDFOR»
+			};
 			''';
 		}
 		if(m.isStruct()) {
 			return 
 			'''
 			type «toLustreName(m)» = struct { 
-				«FOR f : m.fields.values SEPARATOR ';\n'» «serializeLustreSymbol(f)» : «toLustreName(f.type.type)» «ENDFOR»
-			} ;
+			    «FOR f : m.variables.values SEPARATOR ';\n'»«serializeLustreSymbol(f)» : «toLustreName(f.type.type)»«ENDFOR»
+			};
 			
 			'''
 		} 
@@ -243,41 +242,43 @@ class LustreGeneratorServices {
 		if(m.isEnum() || m.isStruct()) return "";
 		var nodes = 
 		'''
-			node «needImported(m)»«toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(p)» : «p.type.type.toLustreName» «ENDFOR»
-			returns «FOR v : m.returns BEFORE '(' SEPARATOR ';' AFTER ')'» «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «ENDFOR»
+			node «needImported(m)»«toLustreName(m)» «FOR p : m.parameters BEFORE '(' SEPARATOR '; ' AFTER ')'»«serializeLustreSymbol(p)» : «p.type.type.toLustreName»«ENDFOR»
+			returns «FOR v : m.returns BEFORE '(' SEPARATOR '; ' AFTER ')'»«serializeLustreSymbol(v)» : «v.type.type.toLustreName»«ENDFOR»
 			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
 			«IF (isContract(m))»
 			(*@contract 
-				«FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName» «IF v.definition !== null» = ( «v.definition» )«ENDIF» «ENDFOR» 
-				«IF (hasAssumption(m))» assume assumption ; «ENDIF»
-				«IF (hasGuarantee(m))» guarantee guarantee ; «ENDIF»
+			    «FOR v : m.fields.values SEPARATOR '; \n' AFTER '; \n'»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»)«ENDIF»«ENDFOR»
+			    «IF (hasAssumption(m))»assume assumption;«ENDIF»
+			    «IF (hasGuarantee(m))»guarantee guarantee;«ENDIF»
 			*) 
-			
 			«ENDIF»
 			«FOR v : m.components.values» 
 			«FOR p : v.type.type.returns» 
 				«IF (v.type.outParams.size > v.type.type.returns.indexOf(p))»
 					«IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name == (v.name + "_" + p.name))» 
-						var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» ; 
+						var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName»; 
 					«ENDIF»
 					«IF (v.type.outParams.get(v.type.type.returns.indexOf(p)).name.equals("__NOT__SET__"))» 
-						var «v.name»_«p.name» : «p.type.type.toLustreName» ; 
+						var «v.name»_«p.name» : «p.type.type.toLustreName»; 
 					«ENDIF»					
 				«ELSE»
-					var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName» ;
+					var «serializeLustreSymbol(v, p)» : «p.type.type.toLustreName»;
 				«ENDIF»				
 			«ENDFOR»
 			«ENDFOR»
-			«ENDIF»
-			«IF (m.components.size > 0)»
-			let
-			«FOR v : m.components.values » 
-			( «FOR p : v.type.outParams SEPARATOR ', '»«IF (p.name.equals("__NOT__SET__"))»«v.name»_«(v.type.type.returns.get(v.type.outParams.indexOf(p))).name»«ELSE»«serializeLustreVariable(p)»«ENDIF»«ENDFOR»«FOR p : v.type.type.returns»«IF (v.type.type.returns.indexOf(p) >= v.type.outParams.size)», «v.name»_«p.name»«ENDIF»«ENDFOR» ) = «v.type.type.toLustreName» ( «FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR» ) ; «'\n '» 
+			«FOR v : m.variables.values»
+			var «v.name» : «v.type.type.toLustreName»;
 			«ENDFOR»
-			«FOR l : m.lets.values» --%PROPERTY «l.definition» ; «'\n'»«ENDFOR»
-			 --%MAIN;
+			«ENDIF»
+			«IF (m.components.size > 0) || m.lets.size > 0 || m.variables.size > 0»
+			let
+			«FOR v : m.variables.values»«IF (v.definition !== null)»«v.name» = «v.definition»; «ENDIF»
+			«ENDFOR»			
+			«FOR l : m.lets.values»«l.definition»;«'\n'»«ENDFOR»
+			«FOR v : m.components.values AFTER '--%MAIN \n'» 
+			(«FOR p : v.type.outParams SEPARATOR ', '»«IF (p.name.equals("__NOT__SET__"))»«v.name»_«(v.type.type.returns.get(v.type.outParams.indexOf(p))).name»«ELSE»«serializeLustreVariable(p)»«ENDIF»«ENDFOR»«FOR p : v.type.type.returns»«IF (v.type.type.returns.indexOf(p) >= v.type.outParams.size)», «v.name»_«p.name»«ENDIF»«ENDFOR») = «v.type.type.toLustreName» («FOR param : v.type.params SEPARATOR ','» «serializeLustreVariable(param)»«ENDFOR»);«'\n '» 
+			«ENDFOR»
 			tel
-			
 			«ENDIF»
 		'''
 //		var closed = new ArrayList<String>() ;
@@ -339,22 +340,22 @@ class LustreGeneratorServices {
 		var String retval = "";
 		if (e.getOp() !== null &&
 			(e.getOp().equals("=>") || e.getOp().equals("<=>") || e.getOp().equals("&&") || e.getOp().equals("||"))) {
-			retval = '''«serialize(e.left, ctx, map, sp)»  «convertOp(e.op)»  «serialize(e.right, ctx, map, sp)» ''';
+			retval = '''«serialize(e.left, ctx, map, sp)» «convertOp(e.op)» «serialize(e.right, ctx, map, sp)»''';
 		} else if (e instanceof AtomicExpression) {
 			if (e.rel === RelationKind.EQ) {
 				var suff = getSuffix(e.left, ctx);
 				if (suff.empty) {
 					retval = '''«serialize(e.left, ctx, map, sp)» «e.rel.toString» «serialize(e.right, ctx, map, sp)»'''
 				} else {
-					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left, ctx, map, sp)»«suffix» «e.rel.toString» «serialize(e.right, ctx, map, sp)»«suffix» «ENDFOR»'''
+					retval = '''«FOR suffix : suff SEPARATOR " & "» «serialize(e.left, ctx, map, sp)»«suffix» «e.rel.toString» «serialize(e.right, ctx, map, sp)»«suffix»«ENDFOR»'''
 				}
 			} else {
-				retval = ''' «serialize(e.left, ctx, map, sp)» «IF e.rel.toString.equals("!=")» <> «ELSE» «e.rel.toString» «ENDIF»  «serialize(e.right, ctx, map, sp)» ''';
+				retval = '''«serialize(e.left, ctx, map, sp)» «IF e.rel.toString.equals("!=")» <> «ELSE» «e.rel.toString» «ENDIF»«serialize(e.right, ctx, map, sp)»''';
 			}
 		} else if (e instanceof Addition) {
-			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
+			retval = '''«serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
 		} else if (e instanceof Multiplication) {
-			retval = ''' «serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
+			retval = '''«serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
 		} else if (e instanceof TermMemberSelection) {
 			if (e.receiver instanceof SymbolReferenceTerm &&
 				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
@@ -411,7 +412,7 @@ class LustreGeneratorServices {
 								}						
 					}
 					if (isInit(e.left as SymbolReferenceTerm)) {			
-						del = " ->";
+						del = " -> ";
 						prefix = "";
 					}
 					if (isPre(e.left as SymbolReferenceTerm)) {			
@@ -432,20 +433,20 @@ class LustreGeneratorServices {
 						prefix = agreeAnnexNodeName(e.left as TermMemberSelection);
 					}
 				}
-				tails = '''«startSymbol» «FOR tailelem : taile.elements SEPARATOR del» «serialize(tailelem, ctx, map, sp)» «ENDFOR» )'''
+				tails = '''«startSymbol»«FOR tailelem : taile.elements SEPARATOR del»«serialize(tailelem, ctx, map, sp)»«ENDFOR»)'''
 				// add to queue of nodes to be generated
 			}
 			retval = prefix + tails;
 		} else if (e instanceof ParenthesizedTerm) {
-			retval = '''( «serialize(e.sub, ctx, map, sp)» )'''
+			retval = '''(«serialize(e.sub, ctx, map, sp)»)'''
 		} else if (e instanceof IteTermExpression) {
 
 			if (e.right === null) {
 //				retval = '''( «serialize(e.condition, ctx, map, sp)» -> «serialize(e.left, ctx, map, sp)» )'''
-				retval = '''( «serialize(e.condition, ctx, map, sp)» => «serialize(e.left, ctx, map, sp)» )'''
+				retval = '''(«serialize(e.condition, ctx, map, sp)» => «serialize(e.left, ctx, map, sp)»)'''
 			} else {
 //				retval = '''( «serialize(e.condition, ctx, map, sp)» ? «serialize(e.left, ctx, map, sp)» : «serialize(e.right, ctx, map, sp)»'''
-				retval = ''' if «serialize(e.condition, ctx, map, sp)» then «serialize(e.left, ctx, map, sp)» else «serialize(e.right, ctx, map, sp)»'''
+				retval = '''if «serialize(e.condition, ctx, map, sp)» then «serialize(e.left, ctx, map, sp)» else «serialize(e.right, ctx, map, sp)»'''
 			}
 		} else if (e instanceof CaseTermExpression) {
 
@@ -455,7 +456,7 @@ class LustreGeneratorServices {
 				esac
 			'''
 		} else if (e instanceof SequenceTerm) {
-			retval = '''( «serialize(e.^return, ctx, map, sp)» )'''
+			retval = '''(«serialize(e.^return, ctx, map, sp)»)'''
 		} else if (e instanceof SignedAtomicFormula) {
 			if (e.neg) {
 				retval = retval + "not (";
@@ -468,12 +469,12 @@ class LustreGeneratorServices {
 			if (e.isNeg) {
 				retval += "-";
 			}
-			retval = e.value.toString;
+			retval += e.value.toString;
 		} else if (e instanceof FloatNumberLiteral) {
 			if (e.isNeg) {
 				retval += "-";
 			}
-			retval = e.value.toString;
+			retval += e.value.toString;
 		} else if (e instanceof TruthValue) {
 			if(e.TRUE) retval = "true" else retval = "false";
 		}
@@ -488,15 +489,15 @@ class LustreGeneratorServices {
 				var expr = lambda.definition as SequenceTerm
 				return 
 				'''
-					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-					returns (_return : «toLustreName((type as FunctionType).range)» )
+					node «sd.name»(«FOR v : lambda.parameters SEPARATOR '; '»«v.name» : «toLustreName(v.type)»«ENDFOR»)
+					returns (_return : «toLustreName((type as FunctionType).range)»)
 					«IF expr.defs.size >0»
 						var
-						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
+						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'»«s.name» : «toLustreName(s.type)»«ENDFOR»
 					«ENDIF»
 					let
-					    _return = «serialize(expr.^return, null, ".")» ;
-					tel					
+					    _return = «serialize(expr.^return, null, ".")»;
+					tel
 				'''
 			} else {
 				if (isContainerAgreeAnnexNode(sd)) {
@@ -516,10 +517,9 @@ class LustreGeneratorServices {
 					}
 					return 
 					'''
-						node «containerAgreeAnnexNodeName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-						returns (_return : «toLustreName(range)» )
+						node «containerAgreeAnnexNodeName(sd)»(«FOR v : parameters SEPARATOR '; '»«v.name» : «toLustreName(v.type)»«ENDFOR»)
+						returns (_return : «toLustreName(range)»)
 						let
-						blah
 						tel
 					'''					
 				} else {
@@ -539,8 +539,8 @@ class LustreGeneratorServices {
 					}
 					return 
 					'''
-						node «toLustreName(sd)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-						returns (_return : «toLustreName(range)» )
+						node «toLustreName(sd)»(«FOR v : parameters SEPARATOR '; '» «v.name» : «toLustreName(v.type)»«ENDFOR»)
+						returns (_return : «toLustreName(range)»)
 						let
 						tel
 					'''					
@@ -573,17 +573,16 @@ class LustreGeneratorServices {
 				var expr = lambda.definition as SequenceTerm
 				return 
 				'''
-					node «toLustreName(sd)» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
+					node «toLustreName(sd)»(«FOR v : lambda.parameters SEPARATOR '; '»«v.name» : «toLustreName(v.type)»«ENDFOR»)
 «««					node «sd.name» ( «FOR v : lambda.parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-					returns (_return : «toLustreName((type as FunctionType).range)» )
+					returns (_return : «toLustreName((type as FunctionType).range)»)
 					«IF expr.defs.size >0»
 						var
-						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'» «s.name» : «toLustreName(s.type)» «ENDFOR»
+						«FOR s : expr.defs SEPARATOR '; \n' AFTER ';'»«s.name» : «toLustreName(s.type)»«ENDFOR»
 					«ENDIF»
 					let
-					    _return = «serialize(expr.^return, null, ".")» ;
+					    _return = «serialize(expr.^return, null, ".")»;
 					tel
-					
 				'''
 			} else {
 				if (isContainerAgreeAnnexNode(sd)) {
@@ -603,8 +602,8 @@ class LustreGeneratorServices {
 					var letContent = containerAgreeAnnexNodeAssertionLet(a);					
 					return 
 					'''
-						node «containerAgreeAnnexNodeName(sd)» ( «FOR v : scopes SEPARATOR ';'» «v»«ENDFOR» )
-						returns («FOR v : returns SEPARATOR ';'» «v»«ENDFOR» )
+						node «containerAgreeAnnexNodeName(sd)»(«FOR v : scopes SEPARATOR '; '»«v»«ENDFOR»)
+						returns («FOR v : returns SEPARATOR '; '»«v»«ENDFOR»)
 						let
 						«letContent»;
 						tel
@@ -638,8 +637,8 @@ class LustreGeneratorServices {
 					}
 					return 
 					'''
-						node «toLustreName(sr)» ( «FOR v : parameters SEPARATOR ';'» «v.name» : «toLustreName(v.type)»«ENDFOR» )
-						returns (_return : «toLustreName(range)» )
+						node «toLustreName(sr)»(«FOR v : parameters SEPARATOR '; '»«v.name» : «toLustreName(v.type)»«ENDFOR»)
+						returns (_return : «toLustreName(range)»)
 						let
 						tel
 					'''					
@@ -823,12 +822,8 @@ class LustreGeneratorServices {
 	
 	
 	def needImported(LustreNode m) {
-		if (m.components.size > 0) {
-			for (v : m.components.values) {
-				if (v.type.type.returns.toList.size > 0) {
-					return ""
-				}				
-			}
+		if (m.components.size > 0 || m.lets.size > 0 || m.variables.size > 0) {
+			return ""
 		}
 		return "imported "
 	}

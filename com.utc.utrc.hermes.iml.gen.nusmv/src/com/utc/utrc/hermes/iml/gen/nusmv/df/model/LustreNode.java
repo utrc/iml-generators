@@ -71,6 +71,7 @@ public class LustreNode extends LustreType {
 	
 	public void addSymbol(LustreSymbol s) {
 		switch (s.getElementType()) {
+			case ASSERTION : // put assertions in lets
 			case LET : lets.put(s.getName(), s); s.setContainer(this); break;			
 			case PARAMETER : parameters.add(s); s.setContainer(this);break;
 			case RETURN : returns.add(s); s.setContainer(this);break;

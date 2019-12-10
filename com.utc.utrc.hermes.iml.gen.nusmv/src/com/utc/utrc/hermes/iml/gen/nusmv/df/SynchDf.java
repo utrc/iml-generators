@@ -1,46 +1,28 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.df;
 
-import static org.junit.Assert.assertNotNull;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
-import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.xbase.lib.Extension;
-import org.eclipse.xtext.xbase.lib.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
-import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvModule;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Systems;
 import com.utc.utrc.hermes.iml.iml.Annotation;
-import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.NamedType;
-import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
-import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
-import com.utc.utrc.hermes.iml.iml.TailedExpression;
-import com.utc.utrc.hermes.iml.iml.TermExpression;
-import com.utc.utrc.hermes.iml.iml.TermMemberSelection;
 import com.utc.utrc.hermes.iml.iml.Trait;
-import com.utc.utrc.hermes.iml.iml.TraitExhibition;
-import com.utc.utrc.hermes.iml.iml.TupleConstructor;
-import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
-import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
-import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 
 public class SynchDf {
@@ -120,10 +102,6 @@ public class SynchDf {
 
 		return retval;
 	}
-	
-	
-	
-
 	
 	
 	public Node getNode(ImlType t) {

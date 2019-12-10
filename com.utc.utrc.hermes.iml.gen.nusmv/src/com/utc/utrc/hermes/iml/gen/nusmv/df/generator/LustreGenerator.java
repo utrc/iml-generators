@@ -23,15 +23,23 @@ import com.utc.utrc.hermes.iml.gen.nusmv.systems.Connection;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Direction;
 import com.utc.utrc.hermes.iml.gen.nusmv.systems.Port;
 import com.utc.utrc.hermes.iml.iml.Assertion;
+import com.utc.utrc.hermes.iml.iml.AtomicExpression;
+import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
 import com.utc.utrc.hermes.iml.iml.NamedType;
+import com.utc.utrc.hermes.iml.iml.ParenthesizedTerm;
 import com.utc.utrc.hermes.iml.iml.Refinement;
 import com.utc.utrc.hermes.iml.iml.Relation;
+import com.utc.utrc.hermes.iml.iml.RelationKind;
+import com.utc.utrc.hermes.iml.iml.SequenceTerm;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
+import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
+import com.utc.utrc.hermes.iml.iml.TermExpression;
+import com.utc.utrc.hermes.iml.iml.TermMemberSelection;
 import com.utc.utrc.hermes.iml.iml.Trait;
 import com.utc.utrc.hermes.iml.iml.TraitExhibition;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
@@ -122,12 +130,12 @@ public class LustreGenerator {
 		return null ;
 	}
 
-	public LustreNode generateLustreNode(LustreModel m, ImlType t) {
-		if (t instanceof SimpleTypeReference) {
-			return generateLustreNodeR(m, sdf.getNode(t));
-		}
-		return (new LustreNode("__EMPTY__"));
-	}
+//	public LustreNode generateLustreNode(LustreModel m, ImlType t) {
+//		if (t instanceof SimpleTypeReference) {
+//			return generateLustreNodeR(m, sdf.getNode(t));
+//		}
+//		return (new LustreNode("__EMPTY__"));
+//	}
 
 	public LustreNode generateLustreNode(LustreModel m, Node node) {		
 		generatorServices.setAuxiliaryDS(lustre2Iml, nodeCallOrder);
@@ -186,10 +194,13 @@ public class LustreGenerator {
 			// add all other symbols
 			TypingEnvironment typing = new TypingEnvironment(tr);
 			for (SymbolDeclaration sd : ct.getOtherSymbols()) {
-				if (! sdf.isLet(sd)) {
+				if (! sdf.isLet(sd)) {	// never false
 					if (sd.getType() instanceof SimpleTypeReference) {
 						generateType(m, (SimpleTypeReference) typing.bind(sd.getType()));
 						addSymbol(m, target, sd, tr);
+					}
+					if ((sd instanceof Assertion) && !isConnectionAssertion(sd)) {
+						addSymbol(m, target, sd, tr);						
 					}
 				}
 			}
@@ -213,6 +224,47 @@ public class LustreGenerator {
 		return target;
 	}
 
+	private boolean isConnectionAssertion(SymbolDeclaration sd) {
+		FolFormula def = sd.getDefinition();
+		def = stripParenthesis(def);
+		if (def instanceof SequenceTerm) {
+			FolFormula ret = ((SequenceTerm) def).getReturn();
+			ret = stripParenthesis(ret);
+			if (ret instanceof SignedAtomicFormula) {
+				FolFormula l = ((SignedAtomicFormula) ret).getLeft();
+				l = stripParenthesis(l);
+				if (l instanceof AtomicExpression) {
+					AtomicExpression ae = (AtomicExpression) l;					
+					FolFormula ll = ae.getLeft();
+					ll = stripParenthesis(ll);
+					FolFormula lr = ae.getRight();
+					lr = stripParenthesis(lr);
+					if ((ll instanceof TermMemberSelection) && (lr instanceof TermMemberSelection) && (ae.getRel() == RelationKind.EQ)) {
+						TermExpression tel = ((TermMemberSelection) ll).getMember();
+						FolFormula ml = stripParenthesis(tel);
+						TermExpression ter = ((TermMemberSelection) lr).getMember();
+						FolFormula mr = stripParenthesis(ter);
+						if (ml instanceof SymbolReferenceTerm && mr instanceof SymbolReferenceTerm) {
+							SymbolReferenceTerm srtl = (SymbolReferenceTerm) ml;
+							SymbolReferenceTerm srtr = (SymbolReferenceTerm) mr;
+							if (srtl.getSymbol().getName().equals("data") && srtr.getSymbol().getName().equals("data")) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	private FolFormula stripParenthesis(FolFormula f) {
+		while (f instanceof ParenthesizedTerm) {
+			f = ((ParenthesizedTerm) f).getSub();
+		}
+		return f;
+	}
+	
 	public LustreNode generateType(LustreModel m, SimpleTypeReference tr) {
 		// start from the definition
 		String type_name = ImlUtil.getTypeName(tr, qnp);
@@ -333,7 +385,12 @@ public class LustreGenerator {
 			bound = typing.bind(sd.getType());
 			if (bound instanceof SimpleTypeReference) {
 				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
-				LustreSymbol toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
+				LustreSymbol toadd; 
+				if (sd.eContainer() == ctx.getType()) {
+					toadd = addSymbol(target, name, nbound, LustreElementType.VAR); 
+				} else {
+					toadd = addSymbol(target, name, nbound, LustreElementType.FIELD); 					
+				}
 				if (sd.getDefinition() != null) {
 					toadd.setDefinition(generatorServices.serialize(sd.getDefinition(), ctx, ".") );
 				}

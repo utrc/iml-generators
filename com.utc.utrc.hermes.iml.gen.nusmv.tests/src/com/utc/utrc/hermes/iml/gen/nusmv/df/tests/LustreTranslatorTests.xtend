@@ -159,6 +159,124 @@ class LustreTranslatorTests {
 	}	
 
 	@Test
+	def void testIOWA_InputA() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA1.iml"),true) ;
+//		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA2.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Lock_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}
+
+	@Test
+	def void testIOWA_InputB() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputB.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Lock_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}
+
+	@Test
+	def void testIOWA_InputC() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputC.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Lock_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}
+
+
+	@Test
+	def void testIOWA_InputDEF() {
+		
+		var mList = newArrayList();
+		
+		var rs = parseDir("models/DEF",true) ;
+		var Model m = rs.resources.map[it.contents.get(0) as Model].findFirst[it.name == "agree.InputD"]
+		m.assertNoErrors;
+		mList.add(m);
+		
+		for (Import i : m.imports) {
+			val String nm = i.importedNamespace.replace(".*", "");
+			val mi = rs.resources.map[it.contents.get(0) as Model].findFirst[it.name == nm]
+			mi.assertNoErrors;
+			mList.add(mi);
+		}
+		
+		for (Model mi : mList) {
+			sys.process(mi) ;			
+		}
+
+		sdf.systems = sys;
+		
+		for (Model mi : mList) {
+			sdf.process(mi);			
+		}		
+
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Lock_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}	
+
+	@Test
+	def void testIOWA_InputE() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/DEF/InputE.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Control_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}
+
+
+	@Test
+	def void testIOWA_InputF() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/DEF/InputF.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("Keypad_dot_Impl") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+		System.out.println(output);
+	}
+
+	@Test
 	def void testSWAgreeImlDeliveryDrone() {
 		
 		var mList = newArrayList();
