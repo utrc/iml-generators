@@ -246,8 +246,16 @@ class LustreGeneratorServices {
 			returns «FOR v : m.returns BEFORE '(' SEPARATOR '; ' AFTER ')'»«serializeLustreSymbol(v)» : «v.type.type.toLustreName»«ENDFOR»
 			«IF (m.variables.size > 0 || m.fields.size > 0 || m.components.size > 0)»
 			«IF (isContract(m))»
-			(*@contract 
-			    «FOR v : m.fields.values»«IF (!(serializeLustreSymbol(v).equals("assumption")) && !(serializeLustreSymbol(v).equals("guarantee")))»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»)«ENDIF»«';\n'»«ENDIF»«IF v.isAssume»assume «serializeLustreSymbol(v)»«';\n'»«ENDIF»«IF v.isGuarantee»guarantee «serializeLustreSymbol(v)»«';\n'»«ENDIF»«ENDFOR»
+			(*@contract
+«««			    «FOR v : m.fields.values»«IF (!(serializeLustreSymbol(v).equals("assumption")) && !(serializeLustreSymbol(v).equals("guarantee")))»var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»)«ENDIF»«';\n'»«ENDIF»«IF v.isAssume»assume «serializeLustreSymbol(v)»«';\n'»«ENDIF»«IF v.isGuarantee»guarantee «serializeLustreSymbol(v)»«';\n'»«ENDIF»«ENDFOR»
+				«FOR v : m.fields.values»
+		    		«IF (!(serializeLustreSymbol(v).equals("assumption")) && !(serializeLustreSymbol(v).equals("guarantee")))»
+			    		«IF (v.assume || v.guarantee)»
+						«IF (v.assume)»    assume«ELSE»    guarantee«ENDIF» "«serializeLustreSymbol(v)»" «v.definition»«
+						»«ELSE»    var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»)«ENDIF»«ENDIF»«';\n'»
+			    	«ENDIF»
+				«ENDFOR»
+
 «««			    «IF (hasAssumption(m))»assume assumption;«ENDIF»
 «««			    «IF (hasGuarantee(m))»guarantee guarantee;«ENDIF»
 			*) 
