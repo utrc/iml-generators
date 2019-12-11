@@ -26,6 +26,7 @@ import com.utc.utrc.hermes.iml.gen.nusmv.systems.Port;
 import com.utc.utrc.hermes.iml.iml.Annotation;
 import com.utc.utrc.hermes.iml.iml.Assertion;
 import com.utc.utrc.hermes.iml.iml.AtomicExpression;
+import com.utc.utrc.hermes.iml.iml.EnumRestriction;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
@@ -253,20 +254,20 @@ public class LustreGenerator {
 								if (sdVar.getType() instanceof SimpleTypeReference) {
 									SimpleTypeReference str = (SimpleTypeReference) sdVar.getType();
 									if (str.getType() instanceof NamedType) {
-										NamedType nt = (NamedType) str.getType();
+										TypingEnvironment tEnv = new TypingEnvironment(ctx);
+										SimpleTypeReference leftType = (SimpleTypeReference) tEnv.bind(str);
 										TermExpression tel = ((TermMemberSelection) ll).getMember();
 										FolFormula ml = stripParenthesis(tel);
 										if (ml instanceof SymbolReferenceTerm ) {
 											SymbolReferenceTerm srtlm = (SymbolReferenceTerm) ml;
-											TypingEnvironment tEnv = new TypingEnvironment(ctx);
-											String cnstrctName = generatorServices.toLustreName(tEnv.bind(str));
+											String cnstrctName = generatorServices.toLustreName(leftType);
 											retStr += sdVar.getName() + " = " + cnstrctName +
 													"{" + srtlm.getSymbol().getName() + " = " + 
 													generatorServices.serialize(ae.getRight(), ctx, ".");
 											
+											tEnv.addContext(leftType);
 											
-											String restFields = generateRestFields(sdVar, ctx);
-											
+											String restFields = generateRestFields(leftType.getType(), srtlm.getSymbol(), tEnv);
 											
 											retStr += (restFields + "}"); 
 										}
@@ -281,6 +282,42 @@ public class LustreGenerator {
 		return retStr;
 	}
 	
+	private String generateRestFields(NamedType type, Symbol ignoreSymbol, TypingEnvironment tEnv) {
+		String result = "";
+		for (Symbol symbol: type.getSymbols()) {
+			if (symbol == ignoreSymbol) continue;
+			if (symbol instanceof SymbolDeclaration && !(symbol instanceof Assertion)) {
+				result += "; " + symbol.getName() + " = " + getValueForType(tEnv.bind(((SymbolDeclaration) symbol).getType())); 
+			}
+		}
+		for (SimpleTypeReference relatedType : ImlUtil.getRelatedTypes(type)) {
+			result += generateRestFields(relatedType.getType(), ignoreSymbol, tEnv.clone().addContext(relatedType));
+		}
+		
+		return result;
+	}
+
+	private String getValueForType(ImlType type) {
+		if (type instanceof SimpleTypeReference) {
+			SimpleTypeReference str = (SimpleTypeReference) type;
+			if (stdLibs.isBool(str)) {
+				return "true";
+			}
+			if (stdLibs.isInt(str)) {
+				return "0";
+			}
+			if (stdLibs.isReal(str)) {
+				return "0.0";
+			}
+			if (ImlUtil.isEnum(str.getType())) {
+				SymbolDeclaration enumLiteral = ((EnumRestriction) str.getType().getRestriction()).getLiterals().get(0);
+				String imlName = ImlUtil.getTypeName(str, qnp) + "." + enumLiteral.getName();
+				return generatorServices.toLustreName(imlName);
+			}
+		}
+		return "";
+	}
+
 	/*
 	 * SerializeIfAssertionWithStructFieldAsLValue: handle the result of the fields
 	 * Assume Only single field is assigned, the rest can be any of their values. 

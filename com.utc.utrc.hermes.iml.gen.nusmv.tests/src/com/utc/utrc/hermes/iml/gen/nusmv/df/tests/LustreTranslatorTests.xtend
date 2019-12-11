@@ -161,8 +161,8 @@ class LustreTranslatorTests {
 	@Test
 	def void testIOWA_InputA() {
 		
-		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA1.iml"),true) ;
-//		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA2.iml"),true) ;
+//		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA1.iml"),true) ;
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA2.iml"),true) ;
 		m.assertNoErrors;
 		sys.process(m) ;
 		sdf.systems = sys;
