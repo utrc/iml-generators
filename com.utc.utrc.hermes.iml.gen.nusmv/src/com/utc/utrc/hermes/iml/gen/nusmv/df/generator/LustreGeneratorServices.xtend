@@ -359,10 +359,13 @@ class LustreGeneratorServices {
 			} else {
 				retval = '''«serialize(e.left, ctx, map, sp)» «IF e.rel.toString.equals("!=")» <> «ELSE» «e.rel.toString» «ENDIF»«serialize(e.right, ctx, map, sp)»''';
 			}
+//			retval = "(" + retval + ")"
 		} else if (e instanceof Addition) {
 			retval = '''«serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
+//			retval = "(" + retval + ")"
 		} else if (e instanceof Multiplication) {
 			retval = '''«serialize(e.left, ctx, map, sp)» «e.sign» «serialize(e.right, ctx, map, sp)»'''
+//			retval = "(" + retval + ")"
 		} else if (e instanceof TermMemberSelection) {
 			if (e.receiver instanceof SymbolReferenceTerm &&
 				(e.receiver as SymbolReferenceTerm).symbol instanceof NamedType) {
@@ -453,7 +456,7 @@ class LustreGeneratorServices {
 				retval = '''(«serialize(e.condition, ctx, map, sp)» => «serialize(e.left, ctx, map, sp)»)'''
 			} else {
 //				retval = '''( «serialize(e.condition, ctx, map, sp)» ? «serialize(e.left, ctx, map, sp)» : «serialize(e.right, ctx, map, sp)»'''
-				retval = '''if «serialize(e.condition, ctx, map, sp)» then «serialize(e.left, ctx, map, sp)» else «serialize(e.right, ctx, map, sp)»'''
+				retval = '''(if «serialize(e.condition, ctx, map, sp)» then «serialize(e.left, ctx, map, sp)» else «serialize(e.right, ctx, map, sp)»)'''
 			}
 		} else if (e instanceof CaseTermExpression) {
 
