@@ -172,6 +172,8 @@ class LustreTranslatorTests {
 		var LustreModel lus = new LustreModel() ;
 		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
 		var output = gen.serialize(lus);
+		gen.displayMapLustre2Iml();
+		System.out.println();
 		System.out.println(output);
 	}
 

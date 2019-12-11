@@ -151,25 +151,31 @@ class LustreGeneratorServices {
 
 	def String serializeLustreSymbol(LustreSymbol f) {
 		var String res = f.name;
-		if (!lustre2Iml.containsKey(res)) {
-			lustre2Iml.put(res, res);
+		
+		var String imlRes = f.container.name + "." + f.name;
+		var String lustreName = typeNameWithReplacement(imlRes);
+		lustreName = lustreName.replaceAll("\\.","_dot_");
+		
+		if (!lustre2Iml.containsKey(lustreName)) {
+			lustre2Iml.put(lustreName, imlRes);
 		}
 		return res;
 	}
 
 	def String serializeLustreVariable(LustreVariable f) {
 		var String res = f.name;
-		if (!lustre2Iml.containsKey(res)) {
-			lustre2Iml.put(res, res);
-		}
+//		if (!lustre2Iml.containsKey(res)) {
+//			lustre2Iml.put(res, res);
+//		}
 		return res;
 	}
 
 	def String serializeLustreSymbol(LustreSymbol fType, LustreSymbol fReturn) {
-		var String imlName = fType.name + "." + fReturn.name;
+		var String imlName = fType.container.name + "." + fType.name + "." + fReturn.name;
+		var String lustreName = imlName.replaceAll("\\.","_dot_")
 		var String res = fType.name + "_" + fReturn.name;
-		if (!lustre2Iml.containsKey(res)) {
-			lustre2Iml.put(res, imlName);
+		if (!lustre2Iml.containsKey(lustreName)) {
+			lustre2Iml.put(lustreName, imlName);
 		}
 		return res;
 	}
@@ -374,21 +380,30 @@ class LustreGeneratorServices {
 				var literalname = serialize(e.member, ctx, map, sp);
 				retval = '''«toLustreName(typename, literalname)»'''
 			} else {
+				if (e.receiver instanceof SymbolReferenceTerm &&
+				(e.receiver as SymbolReferenceTerm).symbol instanceof SymbolDeclaration) {
+					var sdname = qnp.getFullyQualifiedName((e.receiver as SymbolReferenceTerm).symbol as SymbolDeclaration).toString();				
+					var literalname = serialize(e.member, ctx, map, sp);
+					toLustreName(sdname, literalname);
+				}				
 				retval = '''«serialize(e.receiver, ctx, map, sp)»«sp»«serialize(e.member, ctx, map, sp)»'''
+//				if (!lustre2Iml.containsKey(retval)) {
+//					lustre2Iml.put(retval, retval)
+//				}			
 			}
-			if (!lustre2Iml.containsKey(retval)) {
-				lustre2Iml.put(retval, retval)
-			}			
+//			if (!lustre2Iml.containsKey(retval)) {
+//				lustre2Iml.put(retval, retval)
+//			}			
 		} else if (e instanceof SymbolReferenceTerm) {
 			if (map.containsKey(e.symbol)) {
 				retval = map.get(e.symbol);
 			} else {	
 				retval = e.symbol.name;
-//				var String imlRetval = qnp.getFullyQualifiedName(e.symbol).toString()
-//				retval = retval.replaceAll("\\.","_dot_");
-				if (!lustre2Iml.containsKey(retval)) {
+				var String imlRetval = qnp.getFullyQualifiedName(e.symbol).toString()
+				var lustreRetval = imlRetval.replaceAll("\\.","_dot_");
+				if (!lustre2Iml.containsKey(lustreRetval)) {
 //					lustre2Iml.put(retval, imlRetval);
-					lustre2Iml.put(retval, retval);
+					lustre2Iml.put(lustreRetval, imlRetval);
 				}
 				map.put(e.symbol, retval);				
 				if (e.symbol.eContainer instanceof Model) {	// Global
