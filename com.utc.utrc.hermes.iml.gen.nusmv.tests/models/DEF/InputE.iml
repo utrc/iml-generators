@@ -1,0 +1,56 @@
+package agree.InputE;
+import iml.systems.*;
+import iml.software.*;
+import iml.synchdf.ontological.*;
+import iml.contracts.*;
+ 
+trait ControlTrait  refines(Synchronous, Component, Contract, System) {
+	Request: InDataPort<Bool>;
+	Code: InDataPort<Int>;
+	MasterKey: InDataPort<Bool>;
+	CurrentCode: OutDataPort<Int>;
+	Granted: OutDataPort<Bool>;
+	[Assume{comment="A1: Code is always non-negative"}] REQ1 : Bool := 0 <= Code.data;
+	
+	[Guarantee{comment="R1: Until the access code is first set, the door cannot be unlocked"}] REQ2 : Bool := !HasHappened.node.f(Request.data && MasterKey.data) => !Granted.data;
+	
+	[Guarantee{comment="R2: unlock request is granted whenever the provided code equals the current one"}] REQ3 : Bool := (Request.data && (Code.data = CurrentCode.data) && !MasterKey.data) => Granted.data;
+	
+	[Guarantee{comment="R3: An unlock request is granted only if the provided code equals the current access code"}] REQ4 : Bool := Granted.data => Code.data = CurrentCode.data;
+	
+	[Guarantee{comment="R4: Once it has been set, the current code can change only when the master key is inserted"}] REQ5 : Bool := init<Bool>(true,(HasHappened.node.f(MasterKey.data && Request.data) && CurrentCode.data != pre<Int>(CurrentCode.data) => MasterKey.data));
+	
+	[Guarantee{comment="R5: Unlocking granted only if there is a request and the master key is not inserted"}] REQ6 : Bool := Granted.data => Request.data && !MasterKey.data;
+	
+			
+	assumption: Bool := REQ1;
+	
+	guarantee: Bool := REQ2 && REQ3 && REQ4 && REQ5 && REQ6;
+	
+			
+};
+
+type Control  exhibits(ControlTrait);
+type Control_dot_Impl   exhibits(ControlTrait, Implements<Control>){
+	assert{CurrentCode.data = (init<Int>(-1,if (MasterKey.data && Request.data) {Code.data}  else {pre<Int>(CurrentCode.data)} 	));};
+	
+	assert{Granted.data = (Request.data && (Code.data = CurrentCode.data) && !MasterKey.data);};
+	
+			
+			
+};
+
+type HasHappened exhibits (Synchronous) enum {node}
+{
+	f: (Bool) -> (Bool);
+	assert {
+		forall (X:Bool){
+			var Y:(Bool) :=f(X);
+			Y = (X || init<Bool>(false,pre<Bool>(Y)))					
+		}
+	};
+} 
+
+
+		
+		
