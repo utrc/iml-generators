@@ -443,7 +443,7 @@ public class LustreGenerator {
 
 	
 	private void gatherFromRelation(LustreModel m, SimpleTypeReference str, LustreNode target) {
-		String type_name = ImlUtil.getTypeName(str, qnp);
+//		String type_name = ImlUtil.getTypeName(str, qnp);
 		for (Symbol s : str.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
