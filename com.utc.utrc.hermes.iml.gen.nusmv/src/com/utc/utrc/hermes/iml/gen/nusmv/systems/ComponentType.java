@@ -2,12 +2,16 @@ package com.utc.utrc.hermes.iml.gen.nusmv.systems;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.xtext.xbase.lib.Pair;
 
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.Inclusion;
+import com.utc.utrc.hermes.iml.iml.NamedType;
+import com.utc.utrc.hermes.iml.iml.Refinement;
 import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
@@ -145,6 +149,7 @@ public class ComponentType {
 		this.container = container;
 	}
 
+
 	public List<SymbolDeclaration> getOtherSymbols() {
 		List<SymbolDeclaration> sd = new ArrayList<>();
 		if (type instanceof SimpleTypeReference) {
@@ -174,6 +179,66 @@ public class ComponentType {
 		}
 		return sd ;
 	}
+	
+	
+	public List<SymbolDeclaration> getOtherSymbols2() {
+		List<SymbolDeclaration> sd = new ArrayList<>();
+		List<NamedType> l = new ArrayList<>();
+		if (type instanceof SimpleTypeReference) {
+			l.add(((SimpleTypeReference)type).getType());
+		}
+		for (int i = 0; i < l.size(); i++) {
+			NamedType t = l.get(i);
+			for(Symbol s : t.getSymbols()) {
+				if ( (s instanceof SymbolDeclaration) && ! ( ports.containsKey(s.getName()) || subs.containsKey(s.getName()) || connections.containsKey(s.getName())) ) {
+					sd.add((SymbolDeclaration)s);
+				}
+			}			
+			// also need to gather from exhibited traits
+			// not dealing with shadowing
+			for (Relation rl : t.getRelations()) {
+				if (rl instanceof TraitExhibition) {
+					TraitExhibition tr = (TraitExhibition) rl;
+					for (TypeWithProperties twp : tr.getExhibitions()) {
+						if (twp.getType() instanceof SimpleTypeReference) {
+							SimpleTypeReference str = (SimpleTypeReference)(twp.getType()); 
+							if (!l.contains(str.getType())) {
+								l.add(l.size(), str.getType());	// added to process its "super"
+							}
+						}
+					}
+				}
+					
+				// Refinement
+				if (rl instanceof Refinement) {
+					Refinement rft = (Refinement) rl;
+					for (TypeWithProperties twp : rft.getRefinements()) {
+						if (twp.getType() instanceof SimpleTypeReference) {
+							SimpleTypeReference str = (SimpleTypeReference)(twp.getType());
+							if (!l.contains(str.getType())) {
+								l.add(l.size(), str.getType());	// added to process its "super"
+							}
+						}
+					}
+				}
+				// Inclusion
+				if (rl instanceof Inclusion) {
+					Inclusion icln = (Inclusion) rl;
+					for (TypeWithProperties twp : icln.getInclusions()) {
+						if (twp.getType() instanceof SimpleTypeReference) {
+							SimpleTypeReference str = (SimpleTypeReference)(twp.getType());
+							if (!l.contains(str.getType())) {								
+								l.add(l.size(), str.getType());	// added to process its "super"
+							}
+						}
+					}
+				}
+			}
+			
+		}
+		return sd ;
+	}
+
 	
 	@Override
 	public String toString() {

@@ -20,8 +20,10 @@ import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
+import com.utc.utrc.hermes.iml.iml.Inclusion;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.NamedType;
+import com.utc.utrc.hermes.iml.iml.Refinement;
 import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
@@ -132,6 +134,23 @@ public class Systems {
 					}
 				}
 			}
+//			// other relations
+//			if (rl instanceof Refinement) {
+//				Refinement rft = (Refinement) rl;
+//				for (TypeWithProperties twp : rft.getRefinements()) {
+//					if (twp.getType() instanceof SimpleTypeReference) {
+//						gatherFromExhibit((SimpleTypeReference) twp.getType(), c, connectors);
+//					}
+//				}				
+//			}
+//			if (rl instanceof Inclusion) {
+//				Inclusion icln = (Inclusion) rl;
+//				for (TypeWithProperties twp : icln.getInclusions()) {
+//					if (twp.getType() instanceof SimpleTypeReference) {
+//						gatherFromExhibit((SimpleTypeReference) twp.getType(), c, connectors);
+//					}
+//				}				
+//			}
 		}
 		
 		// process connectors
@@ -172,6 +191,23 @@ public class Systems {
 					}
 				}
 			}
+//			// other relations
+//			if (rl instanceof Refinement) {
+//				Refinement rft = (Refinement) rl;
+//				for (TypeWithProperties twp : rft.getRefinements()) {
+//					if (twp.getType() instanceof SimpleTypeReference) {
+//						gatherFromExhibit((SimpleTypeReference) twp.getType(), c, connectors);
+//					}
+//				}				
+//			}
+//			if (rl instanceof Inclusion) {
+//				Inclusion icln = (Inclusion) rl;
+//				for (TypeWithProperties twp : icln.getInclusions()) {
+//					if (twp.getType() instanceof SimpleTypeReference) {
+//						gatherFromExhibit((SimpleTypeReference) twp.getType(), c, connectors);
+//					}
+//				}				
+//			}
 		}
 	}
 

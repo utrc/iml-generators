@@ -644,7 +644,8 @@ class LustreGeneratorServices {
 	def  isContract(LustreNode m) {
 		if ( m.fields.size > 0) {
 			for (v : m.fields.values) {
-				if ((v.name.equals("assumption") || v.name.equals("guarantee")) && v.definition !== null) {
+				if (((v.name.equals("assumption") || v.name.equals("guarantee")) && v.definition !== null) ||
+					v.assume || v.guarantee) {
 					return true
 				}
 			}
@@ -868,11 +869,7 @@ class LustreGeneratorServices {
 
 	def String toLustreName(SymbolDeclaration sd) {
 		var String imlName = qnp.getFullyQualifiedName(sd).toString()
-		var String name = '''«imlName.replaceAll("\\.","_dot_")»''';
-		if (!lustre2Iml.containsKey(name)) {
-			lustre2Iml.put(name, imlName);
-		}
-		return name;
+		return toLustreName(imlName)
 	}
 
 	def String toLustreNameGlobal(SymbolDeclaration sd) {
