@@ -248,12 +248,17 @@ class LustreGeneratorServices {
 			(*@contract
 				«FOR v : m.fields.values»
 		    		«IF (!(serializeLustreSymbol(v).equals("assumption")) && !(serializeLustreSymbol(v).equals("guarantee")))»
-			    		«IF (v.assume || v.guarantee)»
-						«IF (v.assume)»    assume«ELSE»    guarantee«ENDIF» "«serializeLustreSymbol(v)»" «v.definition»«
-						»«ELSE»    var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»)«ENDIF»«ENDIF»«';\n'»
+			    		«IF (!(v.assume || v.guarantee))»    var «serializeLustreSymbol(v)» : «v.type.type.toLustreName»«IF v.definition !== null» = («v.definition»);«ENDIF»
+			    		«ENDIF»
 			    	«ENDIF»
 				«ENDFOR»
-
+				«FOR v : m.fields.values»
+		    		«IF (!(serializeLustreSymbol(v).equals("assumption")) && !(serializeLustreSymbol(v).equals("guarantee")))»
+			    		«IF (v.assume || v.guarantee)»
+							«IF (v.assume)»    assume«ELSE»    guarantee«ENDIF» "«serializeLustreSymbol(v)»" «v.definition»;
+						«ENDIF»
+			    	«ENDIF»
+				«ENDFOR»
 			*) 
 			«ENDIF»
 			«FOR v : m.components.values» 
@@ -644,7 +649,7 @@ class LustreGeneratorServices {
 	def  isContract(LustreNode m) {
 		if ( m.fields.size > 0) {
 			for (v : m.fields.values) {
-				if ((v.name.equals("assumption") || v.name.equals("guarantee")) && v.definition !== null) {
+				if (v.assume || v.guarantee ||(v.name.equals("assumption") || v.name.equals("guarantee")) && v.definition !== null) {
 					return true
 				}
 			}
