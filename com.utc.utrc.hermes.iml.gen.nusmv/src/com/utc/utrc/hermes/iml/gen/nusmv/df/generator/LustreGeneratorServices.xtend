@@ -465,14 +465,8 @@ class LustreGeneratorServices {
 				retval = retval + ")"
 			}
 		} else if (e instanceof NumberLiteral) {
-			if (e.isNeg) {
-				retval += "-";
-			}
 			retval += e.value.toString;
 		} else if (e instanceof FloatNumberLiteral) {
-			if (e.isNeg) {
-				retval += "-";
-			}
 			retval += e.value.toString;
 		} else if (e instanceof TruthValue) {
 			if(e.TRUE) retval = "true" else retval = "false";

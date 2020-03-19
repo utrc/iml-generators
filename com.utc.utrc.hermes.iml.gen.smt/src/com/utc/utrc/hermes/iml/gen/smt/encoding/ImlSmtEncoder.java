@@ -627,14 +627,14 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 				return encodeFormula(member, env.clone().addContext((SimpleTypeReference) receiverType), receiverFormula, scope);
 			}
 		} else if (formula instanceof NumberLiteral) {
-			if (((NumberLiteral) formula).isNeg()) {
+			if (((NumberLiteral) formula).getValue().signum() == -1) { // Negative value
 				FormulaT valueFormula = smtModelProvider.createFormula(((NumberLiteral) formula).getValue());
 				return smtModelProvider.createFormula(OperatorType.NEGATIVE, Arrays.asList(valueFormula));
 			} else {
 				return smtModelProvider.createFormula(((NumberLiteral) formula).getValue());
 			}
 		} else if (formula instanceof FloatNumberLiteral) {
-			if (((FloatNumberLiteral) formula).isNeg()) {
+			if (((FloatNumberLiteral) formula).getValue().signum() == -1) { // Negative value
 				FormulaT valueFormula = smtModelProvider.createFormula(((FloatNumberLiteral) formula).getValue());
 				return smtModelProvider.createFormula(OperatorType.NEGATIVE, Arrays.asList(valueFormula));
 			} else {

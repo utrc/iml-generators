@@ -246,9 +246,6 @@ class NuSmvGeneratorServices {
 			}
 			retval = retval + serialize(e.left, ctx, map);
 		} else if (e instanceof NumberLiteral) {
-			if (e.isNeg) {
-				retval += "-";
-			}
 			retval = e.value.toString;
 		} else if (e instanceof TruthValue) {
 			if(e.TRUE) retval = "TRUE" else retval = "FALSE";
