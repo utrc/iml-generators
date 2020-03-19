@@ -161,8 +161,8 @@ class LustreTranslatorTests {
 	@Test
 	def void testIOWA_InputA() {
 		
-//		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA1.iml"),true) ;
-		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA2.iml"),true) ;
+		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA1.iml"),true) ;
+//		var Model m = parse(FileUtil.readFileContent("models/synchdf/InputA2.iml"),true) ;
 		m.assertNoErrors;
 		sys.process(m) ;
 		sdf.systems = sys;
@@ -172,6 +172,8 @@ class LustreTranslatorTests {
 		var LustreModel lus = new LustreModel() ;
 		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
 		var output = gen.serialize(lus);
+//		gen.displayMapLustre2Iml();
+		System.out.println();
 		System.out.println(output);
 	}
 
@@ -311,6 +313,26 @@ class LustreTranslatorTests {
 		var LustreModel lus = new LustreModel() ;
 		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
 		var output = gen.serialize(lus);
+		System.out.println(output);
+		
+//		gen.displayMapLustre2Iml();
+		
+	}
+	
+		@Test
+	def void test_SysMLgenExamples() {
+		
+		var Model m = parse(FileUtil.readFileContent("models/genExample.iml"),true) ;
+		m.assertNoErrors;
+		sys.process(m) ;
+		sdf.systems = sys;
+		sdf.process(m);
+		gen.sdf = sdf;
+		var NamedType nodetype = m.findSymbol("C") as NamedType;
+		var LustreModel lus = new LustreModel() ;
+		gen.generateLustreNode(lus,sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype))) ;
+		var output = gen.serialize(lus);
+//		gen.displayMapLustre2Iml();
 		System.out.println(output);
 	}	
 
