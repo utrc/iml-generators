@@ -71,14 +71,10 @@ public class LustreGenerator {
 	
 	private Map<String, String> lustre2Iml;
 	private ArrayList<String> nodeCallOrder;
-//	private Map<Integer, String> callGVetex2String;
-//	private Graph callGraph;
 
 	public LustreGenerator() {
 		lustre2Iml = new HashMap<>();
 		nodeCallOrder = new ArrayList<>();
-//		callGraph = new Graph(true);
-//		callGVetex2String = new HashMap<>();
 	}
 
 	public LustreGenerator(Configuration conf, SynchDf sdf) {
@@ -86,65 +82,18 @@ public class LustreGenerator {
 		this.sdf = sdf;
 		lustre2Iml = new HashMap<>();
 		nodeCallOrder = new ArrayList<>();
-//		callGraph = new Graph(true);
-//		callGVetex2String = new HashMap<>();
 	}
 
 	public void setSdf(SynchDf sdf) {
 		this.sdf = sdf;
 	}
 
-	public LustreNode getMainNode(LustreModel m, SimpleTypeReference spec, SimpleTypeReference impl) {
-		/*
-		NuSmvModule main = new NuSmvModule("main");
-		NuSmvModule insttype = null ;
-		NuSmvModule spectype = null ;
-		if ( m.hasType(ImlUtil.getTypeName(impl, qnp)) ) {
-			insttype = m.getType(ImlUtil.getTypeName(impl, qnp)) ;
-		} else {
-			insttype = generateStateMachine(m, impl) ;
-		}
-		if ( m.hasType(ImlUtil.getTypeName(spec, qnp)) ) {
-			spectype = m.getType(ImlUtil.getTypeName(spec, qnp)) ;
-		} else {
-			spectype = generateStateMachine(m, spec) ;
-		}
-		
-		NuSmvSymbol inst = new NuSmvSymbol("inst");
-		NuSmvTypeInstance instti = new NuSmvTypeInstance(insttype);
-		inst.setType(instti);
-		inst.setElementType(NuSmvElementType.VAR);
-		main.addSymbol(inst);
-		
-		
-		for (NuSmvSymbol in : spectype.getParameters() ) {
-			NuSmvSymbol target = new NuSmvSymbol( in.getName() );
-			NuSmvTypeInstance ti = new NuSmvTypeInstance(in.getType().getType()) ;
-			target.setType(ti);
-			target.setElementType(NuSmvElementType.VAR);
-			main.addSymbol(target);
-			instti.setParam(insttype.paramIndex(in.getName()), new NuSmvVariable(in.getName()));
-		}
-		
-		m.addModule(main);
-		return main;
-		*/
-		return null ;
-	}
-
-//	public LustreNode generateLustreNode(LustreModel m, ImlType t) {
-//		if (t instanceof SimpleTypeReference) {
-//			return generateLustreNodeR(m, sdf.getNode(t));
-//		}
-//		return (new LustreNode("__EMPTY__"));
-//	}
-
 	public LustreNode generateLustreNode(LustreModel m, Node node) {		
 		generatorServices.setAuxiliaryDS(lustre2Iml, nodeCallOrder);
 		return generateLustreNodeR(m, node);
 	}	
+
 	public LustreNode generateLustreNodeR(LustreModel m, Node node) {		
-//		generatorServices.setAuxiliaryDS(lustre2Iml, nodeCallOrder);
 
 		String type_name = ImlUtil.getTypeName(node.getNodeType(), qnp);
 		
@@ -181,14 +130,12 @@ public class LustreGenerator {
 			Map<String, String> outputPort2OutputPort = new HashMap<>();
 			for (Connection conn : ct.getConnections().values()) {
 				if (conn.getTargetComponent() == ComponentInstance.self) {
-//					generateConnection(target, conn, tr);
 					generateConnectionToHigherLevel(target, conn, tr, outputPort2OutputPort);
 				}
 			}
 			// then process connections at this level or from higher level
 			for (Connection conn : ct.getConnections().values()) {
 				if (conn.getTargetComponent() != ComponentInstance.self) {
-//					generateConnection(target, conn, tr);
 					generateConnectionSameLevelOrFromHigherLevel(target, conn, tr, outputPort2OutputPort);
 				}
 			}
@@ -197,6 +144,16 @@ public class LustreGenerator {
 			TypingEnvironment typing = new TypingEnvironment(tr);
 			for (SymbolDeclaration sd : ct.getOtherSymbols()) {
 				if (! sdf.isLet(sd)) {	// never false
+					
+					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Assume"))) {
+						processAG(target, tr, typing, sd, 1);
+						continue;
+					}
+					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Guarantee"))) {
+						processAG(target, tr, typing, sd, 2);
+						continue;
+					} 
+					
 					if (sd.getType() instanceof SimpleTypeReference) {
 						generateType(m, (SimpleTypeReference) typing.bind(sd.getType()));
 						addSymbol(m, target, sd, tr);
@@ -205,6 +162,8 @@ public class LustreGenerator {
 						addSymbol(m, target, sd, tr);						
 					}
 				}
+				
+				// Here to get more symbols from relations ????
 			}
 		} else {
 			for (Symbol sd : node.getNodeType().getType().getSymbols()) {
@@ -217,6 +176,8 @@ public class LustreGenerator {
 					}
 				}
 			}
+			
+			// Here to get more symbols from relations ????
 		}
 		
 		for(String s : node.getLets().keySet()) {
@@ -224,6 +185,23 @@ public class LustreGenerator {
 			symbol.setDefinition(generatorServices.serialize(node.getLets().get(s), tr, "."));
 		}
 		return target;
+	}
+
+	/**
+	 * @param target
+	 * @param tr
+	 * @param typing
+	 * @param sd
+	 */
+	private void processAG(LustreNode target, SimpleTypeReference tr, TypingEnvironment typing, SymbolDeclaration sd, int ag) {
+		ImlType bound = typing.bind(sd.getType());
+		if (bound instanceof SimpleTypeReference) {
+			LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
+			LustreSymbol ls = addSymbol(target, sd.getName(), nbound, LustreElementType.FIELD, ag);
+			if (sd.getDefinition() != null) {
+				ls.setDefinition(generatorServices.serialize(sd.getDefinition(), tr, ".") );
+			}
+		}
 	}
 
 	private String SerializeIfAssertionWithStructFieldAsLValue(SymbolDeclaration sd, SimpleTypeReference ctx) {
@@ -317,17 +295,6 @@ public class LustreGenerator {
 		return "";
 	}
 
-	/*
-	 * SerializeIfAssertionWithStructFieldAsLValue: handle the result of the fields
-	 * Assume Only single field is assigned, the rest can be any of their values. 
-	 */
-	private String generateRestFields (SymbolDeclaration sd, SimpleTypeReference ctx) {
-		
-		String res = "";
-		// TOFINISH
-		
-		return res;
-	}
 	
 	private boolean isConnectionAssertion(SymbolDeclaration sd) {
 		FolFormula def = sd.getDefinition();
@@ -402,45 +369,6 @@ public class LustreGenerator {
 		}
 	}
 
-//	public LustreNode generateType(LustreModel m, FunctionType ft) {
-//		// start from the definition
-//		String type_name = ImlUtil.getTypeName(ft, qnp);
-//		if (m.hasType(type_name)) {
-//			return m.getType(type_name);
-//		}
-//		
-//		ImlType dt = ft.getDomain();
-//		ImlType rt = ft.getRange();
-//		
-//		
-//		if (ImlUtil.isEnum(ft.getDomain())) {
-//			return generateEnumType(m, tr.getType());
-//		} else {
-//			for (ImlType b : tr.getTypeBinding()) {
-//				if (b instanceof SimpleTypeReference) {
-//					generateType(m, (SimpleTypeReference) b);
-//				}
-//			}
-//			LustreNode target = new LustreNode(type_name);
-//			m.addNode(target);
-//			target.setStruct(true);
-//			
-//			for (Symbol s : tr.getType().getSymbols()) {
-//				if (s instanceof SymbolDeclaration) {
-//					SymbolDeclaration sd = (SymbolDeclaration) s;
-//					addSymbol(m, target, sd, tr);
-//				}
-//			}
-//			
-//			// process relations
-//			gatherFromRelation(m, tr, target);
-//
-//			return target;
-//		}
-//		return null;
-//	}
-
-
 	
 	private void gatherFromRelation(LustreModel m, SimpleTypeReference str, LustreNode target) {
 //		String type_name = ImlUtil.getTypeName(str, qnp);
@@ -498,7 +426,12 @@ public class LustreGenerator {
 			if (bound instanceof SimpleTypeReference) {
 				LustreNode nbound = generateType(target.getContainer(), (SimpleTypeReference) bound);
 				LustreSymbol toadd; 
+				// relax the test to be in relation list
+				
+				
 				if (sd.eContainer() == ctx.getType()) {
+//				if ((sd.eContainer() instanceof Trait && ImlUtil.exhibitsOrRefines(ctx.getType(), (Trait)sd.eContainer())) || 
+//				(sd.eContainer() == ctx.getType())) {
 					toadd = addSymbol(target, name, nbound, LustreElementType.VAR); 
 				} else {
 					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Assume"))) {
@@ -641,72 +574,7 @@ public class LustreGenerator {
 			}
 		}
 	}
-	
-	
-	private void generateConnection(LustreNode m, Connection conn, SimpleTypeReference tr) {
-		// If this is a connection to an output of the current machine
-		// simply add a define
-		if (conn.getTargetComponent() == ComponentInstance.self) {
-			// Need to take the output symbol
-			LustreSymbol out = m.getVariables().get(conn.getTargetPort().getName());
-			if (out == null) {
-//				LustreSymbol toadd = new LustreSymbol("");
-//				FolFormula def = Phi.eq(
-//						EcoreUtil.copy(
-//								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
-//										.getDefinition().getLeft()).getTail()).getElements().get(0).getLeft()),
-//						EcoreUtil.copy(
-//								(TermExpression) ((TupleConstructor) ((TailedExpression) conn.getSymbolDeclaration()
-//										.getDefinition().getLeft()).getTail()).getElements().get(1).getLeft()));
-//				toadd.setName(m.getContainer().newSymbolName());
-//				toadd.setElementType(LustreElementType.LET);
-//				toadd.setDefinition(generatorServices.serialize(def, tr, "_"));
-//				m.addSymbol(toadd);
-				
-				LustreSymbol machine = m.getComponents().get(conn.getSourceComponent().getName());
-				if (machine != null) {
-					int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
-					if (index != -1) {
-						String portname = conn.getTargetPort().getName();
-						LustreVariable param = new LustreVariable(portname);
-						machine.getType().setOutParam(index, param);
-					}
-				}
-			}
-		} else {
-			// otherwise
-			LustreSymbol machine = m.getComponents().get(conn.getTargetComponent().getName());
-			if (machine != null) {
-				int index = machine.getType().getType().paramIndex(conn.getTargetPort().getName());
-				if (index != -1) {
-
-					String portname = "";
-					if (conn.getSourceComponent() != ComponentInstance.self) {
-						portname += conn.getSourceComponent().getName() + "_";
-					}
-					portname += conn.getSourcePort().getName();
-
-					LustreVariable param = new LustreVariable(portname);
-					machine.getType().setParam(index, param);
-				}
-			}
-			
-			if (conn.getSourceComponent() != ComponentInstance.self) {
-				machine = m.getComponents().get(conn.getSourceComponent().getName());
-				if (machine != null) {
-					int index = machine.getType().getType().returnIndex(conn.getSourcePort().getName());
-					if (index != -1) {
-						String portname = conn.getSourceComponent().getName() + "_";
-						portname += conn.getSourcePort().getName();
-						LustreVariable param = new LustreVariable(portname);
-						machine.getType().setOutParam(index, param);
-					}
-				}
-			}
-		}
-
-	}
-	
+		
 
 	public boolean isDelay(SymbolDeclaration s) {
 		return ImlUtil.hasType(s.getType(), stdLibs.getNamedType("iml.sms", "delay"));

@@ -873,11 +873,7 @@ class LustreGeneratorServices {
 
 	def String toLustreName(SymbolDeclaration sd) {
 		var String imlName = qnp.getFullyQualifiedName(sd).toString()
-		var String name = '''«imlName.replaceAll("\\.","_dot_")»''';
-		if (!lustre2Iml.containsKey(name)) {
-			lustre2Iml.put(name, imlName);
-		}
-		return name;
+		return toLustreName(imlName)
 	}
 
 	def String toLustreNameGlobal(SymbolDeclaration sd) {

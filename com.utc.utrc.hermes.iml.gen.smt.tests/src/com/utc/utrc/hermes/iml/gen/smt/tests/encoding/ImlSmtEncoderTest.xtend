@@ -909,4 +909,18 @@ class ImlSmtEncoderTest {
 		println(encoder.toString)
 	}
 	
+	@Test
+	def void testNotEqualSymoblEncoding() {
+		val model = encode('''
+			package p;
+			
+			type T1 {
+				a : Bool;
+				b : Bool := a != true;
+			}
+		''', "T1")
+		println(encoder.toString)
+		
+	}
+	
 }

@@ -601,7 +601,13 @@ public class ImlSmtEncoder<SortT extends AbstractSort, FuncDeclT, FormulaT> impl
 		} else if (formula instanceof AtomicExpression) {
 			OperatorType op = OperatorType.parseOp(((AtomicExpression) formula).getRel().getLiteral());
 			// TODO why AtmoicExpression has * instead of ?
-			return smtModelProvider.createFormula(op, Arrays.asList(leftFormula, rightFormula));
+			// Special case for !=
+			if (op == OperatorType.NEQ) {
+				return smtModelProvider.createFormula(OperatorType.NOT, 
+						Arrays.asList(smtModelProvider.createFormula(OperatorType.EQ, Arrays.asList(leftFormula, rightFormula))));
+			} else {
+				return smtModelProvider.createFormula(op, Arrays.asList(leftFormula, rightFormula));
+			}
 		} else if (formula instanceof Addition) {
 			return smtModelProvider.createFormula(OperatorType.parseOp(((Addition) formula).getSign()), Arrays.asList(leftFormula, rightFormula));
 		} else if (formula instanceof Multiplication) {
