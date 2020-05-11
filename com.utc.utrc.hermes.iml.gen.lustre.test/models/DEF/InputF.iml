@@ -1,0 +1,53 @@
+package agree.InputF;
+import iml.systems.*;
+import iml.software.*;
+import iml.synchdf.ontological.*;
+import iml.contracts.*;
+ 
+trait KeypadTrait  refines(Synchronous, Component, Contract, System) {
+	Digit: InDataPort<Int>;
+	Press: InDataPort<Bool>;
+	Request: OutDataPort<Bool>;
+	Code: OutDataPort<Int>;
+	PreRequest:Bool := init<Bool>(false,pre<Bool>(Request.data));
+	
+	[Assume{comment="A1: Digit is always non-negative"}] REQ1 : Bool := 0 <= Digit.data;
+	
+	[Assume{comment="A2: Digit is always smaller than nine"}] REQ2 : Bool := Digit.data <= 9;
+	
+	[Guarantee{comment="R1: The component will not send an unlock requests before its third cycle"}] REQ3 : Bool := init<Bool>(!Request.data,init<Bool>(!PreRequest,true));
+	
+	[Guarantee{comment="R2: Any two distinct unlock requests are separated by at least 2 clock cycles"}] REQ4 : Bool := init<Bool>(true,Request.data => !PreRequest && !pre<Bool>(PreRequest));
+	
+	[Guarantee{comment="R3: Code is always non-negative"}] REQ5 : Bool := Code.data >= 0;
+	
+	[Guarantee{comment="R4: Whenever there is a request a digit is pressed"}] REQ6 : Bool := Request.data => Press.data;
+	
+	[Guarantee{comment="R5: Squared Code upper bound"}] REQ7 : Bool := (Code.data * Code.data) < 1000000;
+	
+			
+	assumption: Bool := REQ1 && REQ2;
+	
+	guarantee: Bool := REQ3 && REQ4 && REQ5 && REQ6 && REQ7;
+	
+			
+};
+
+type Keypad  exhibits(KeypadTrait);
+type Keypad_dot_Impl   exhibits(KeypadTrait, Implements<Keypad>){
+	ExpirationTime:Int := 9;
+	
+	IncompleteCode:Bool := init<Bool>(false,(0 < pre<Int>(PressedDigits) && pre<Int>(PressedDigits) < 3));
+	
+	ElapsedTime:Int := init<Int>(0,if (Press.data) {0}  else {if (pre<Int>(ElapsedTime) < ExpirationTime && IncompleteCode) {pre<Int>(ElapsedTime) + 1}  else {0} 	} 	);
+	
+	PressedDigits:Int := init<Int>(if (Press.data) {1}  else {0} 	,if (ElapsedTime = ExpirationTime) {0}  else {if (!Press.data) {pre<Int>(PressedDigits)}  else {if (pre<Int>(PressedDigits) = 3) {1}  else {pre<Int>(PressedDigits) + 1} 	} 	} 	);
+	
+	assert{Request.data = (init<Bool>(false,Press.data && PressedDigits = 3));};
+	
+	assert{Code.data = (if (Press.data) {(init<Int>(Digit.data,if (PressedDigits = 1) {Digit.data}  else {10 * pre<Int>(Code.data) + Digit.data} 	))}  else {init<Int>(0,pre<Int>(Code.data))} 	);};
+	
+			
+			
+};
+

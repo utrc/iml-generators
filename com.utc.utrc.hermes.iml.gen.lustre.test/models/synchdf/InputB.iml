@@ -1,0 +1,181 @@
+package agree.InputB;
+import iml.systems.*;
+import iml.software.*;
+import iml.synchdf.ontological.*;
+import iml.contracts.*;
+ 
+trait ControlTrait  refines(Synchronous, Component, Contract, System) {
+	Request: InDataPort<Bool>;
+	Code: InDataPort<Int>;
+	MasterKey: InDataPort<Bool>;
+	CurrentCode: OutDataPort<Int>;
+	Granted: OutDataPort<Bool>;
+	[Assume{comment="A1: Code is always non-negative"}] REQ1 : Bool := 0 <= Code.data;
+	
+	[Guarantee{comment="R1: Until the access code is first set, the door cannot be unlocked"}] REQ2 : Bool := !HasHappened.node.f(Request.data && MasterKey.data) => !Granted.data;
+	
+	[Guarantee{comment="R2: unlock request is granted whenever the provided code equals the current one"}] REQ3 : Bool := (Request.data && (Code.data = CurrentCode.data) && !MasterKey.data) => Granted.data;
+	
+	[Guarantee{comment="R3: An unlock request is granted only if the provided code equals the current access code"}] REQ4 : Bool := Granted.data => Code.data = CurrentCode.data;
+	
+	[Guarantee{comment="R4: Once it has been set, the current code can change only when the master key is inserted"}] REQ5 : Bool := init<Bool>(true,(HasHappened.node.f(MasterKey.data && Request.data) && CurrentCode.data != pre<Int>(CurrentCode.data) => MasterKey.data));
+	
+	[Guarantee{comment="R5: Unlocking granted only if there is a request and the master key is not inserted"}] REQ6 : Bool := Granted.data => Request.data && !MasterKey.data;
+	
+			
+	assumption: Bool := REQ1;
+	
+	guarantee: Bool := REQ2 && REQ3 && REQ4 && REQ5 && REQ6;
+	
+			
+};
+
+type Control  exhibits(ControlTrait);
+trait LockTrait  refines(Synchronous, Component, Contract, System) {
+	Digit: InDataPort<Int>;
+	Press: InDataPort<Bool>;
+	MasterKey: InDataPort<Bool>;
+	Unlocking: OutDataPort<Bool>;
+	CurrentCode: OutDataPort<Int>;
+	C:Int := if (Unlocking.data) {(init<Int>(1,pre<Int>(C) + 1))}  else {0} 	;
+	
+	Locks:Bool := init<Bool>(false,pre<Bool>(Unlocking.data) && !Unlocking.data);
+	
+	[Assume{comment="A1: Digit is always non-negative"}] REQ1 : Bool := 0 <= Digit.data;
+	
+	[Guarantee{comment="R1: The door will never be held open for more than 3 clock cycles at a time"}] REQ2 : Bool := (C <= 3);
+	
+	[Guarantee{comment="R2: Door locks remains locked as long as no one uses the keypad"}] REQ3 : Bool := Since.node.f(Locks, !Press.data) => !Unlocking.data;
+	
+			
+	assumption: Bool := REQ1;
+	
+	guarantee: Bool := REQ2 && REQ3;
+	
+			
+};
+
+type Lock  exhibits(LockTrait);
+type Keypad_dot_Impl   exhibits(KeypadTrait, Implements<Keypad>){
+	ExpirationTime:Int := 9;
+	
+	IncompleteCode:Bool := init<Bool>(false,(0 < pre<Int>(PressedDigits) && pre<Int>(PressedDigits) < 3));
+	
+	ElapsedTime:Int := init<Int>(0,if (Press.data) {0}  else {if (pre<Int>(ElapsedTime) < ExpirationTime && IncompleteCode) {pre<Int>(ElapsedTime) + 1}  else {0} 	} 	);
+	
+	PressedDigits:Int := init<Int>(if (Press.data) {1}  else {0} 	,if (ElapsedTime = ExpirationTime) {0}  else {if (!Press.data) {pre<Int>(PressedDigits)}  else {if (pre<Int>(PressedDigits) = 3) {1}  else {pre<Int>(PressedDigits) + 1} 	} 	} 	);
+	
+	assert{Request.data = (init<Bool>(false,Press.data && PressedDigits = 3));};
+	
+	assert{Code.data = (if (Press.data) {(init<Int>(Digit.data,if (PressedDigits = 1) {Digit.data}  else {10 * pre<Int>(Code.data) + Digit.data} 	))}  else {init<Int>(0,pre<Int>(Code.data))} 	);};
+	
+			
+			
+};
+
+trait TimerTrait  refines(Synchronous, Component, System) {
+	Granted: InDataPort<Bool>;
+	Running: OutDataPort<Bool>;
+};
+
+type Timer  exhibits(TimerTrait);
+trait KeypadTrait  refines(Synchronous, Component, Contract, System) {
+	Digit: InDataPort<Int>;
+	Press: InDataPort<Bool>;
+	Request: OutDataPort<Bool>;
+	Code: OutDataPort<Int>;
+	PreRequest:Bool := init<Bool>(false,pre<Bool>(Request.data));
+	
+	[Assume{comment="A1: Digit is always non-negative"}] REQ1 : Bool := 0 <= Digit.data;
+	
+	[Guarantee{comment="R1: The component will not send an unlock requests before its third cycle"}] REQ2 : Bool := init<Bool>(!Request.data,init<Bool>(!PreRequest,true));
+	
+	[Guarantee{comment="R2: Any two distinct unlock requests are separated by at least 2 clock cycles"}] REQ3 : Bool := init<Bool>(true,Request.data => !PreRequest && !pre<Bool>(PreRequest));
+	
+	[Guarantee{comment="R3: Code is always non-negative"}] REQ4 : Bool := Code.data >= 0;
+	
+	[Guarantee{comment="R4: Whenever there is a request a digit is pressed"}] REQ5 : Bool := Request.data => Press.data;
+	
+			
+	assumption: Bool := REQ1;
+	
+	guarantee: Bool := REQ2 && REQ3 && REQ4 && REQ5;
+	
+			
+};
+
+type Keypad  exhibits(KeypadTrait);
+type Control_dot_Impl   exhibits(ControlTrait, Implements<Control>){
+	assert{CurrentCode.data = (init<Int>(-1,if (MasterKey.data && Request.data) {Code.data}  else {pre<Int>(CurrentCode.data)} 	));};
+	
+	assert{Granted.data = (Request.data && (Code.data = CurrentCode.data) && !MasterKey.data);};
+	
+			
+			
+};
+
+type Timer_dot_Impl   exhibits(TimerTrait, Implements<Timer>){
+	Timer:Int := init<Int>(0,if (pre<Bool>(Running.data)) {pre<Int>(Timer) - 1}  else {if (Granted.data) {4}  else {0} 	} 	);
+	
+	assert{Running.data = (Timer > 0);};
+	
+			
+			
+};
+
+type Lock_dot_Impl   exhibits(LockTrait, Implements<Lock>){
+	keypad : Keypad_dot_Impl;
+	control : Control_dot_Impl;
+	timer : Timer_dot_Impl;
+	c1 : Connector<InDataPort<Int>, InDataPort<Int>> := connect<InDataPort<Int>, InDataPort<Int>>(Digit, keypad.Digit);
+	assert{Digit.data = keypad.Digit.data};
+	
+	c2 : Connector<InDataPort<Bool>, InDataPort<Bool>> := connect<InDataPort<Bool>, InDataPort<Bool>>(Press, keypad.Press);
+	assert{Press.data = keypad.Press.data};
+	
+	c3 : Connector<InDataPort<Bool>, InDataPort<Bool>> := connect<InDataPort<Bool>, InDataPort<Bool>>(MasterKey, control.MasterKey);
+	assert{MasterKey.data = control.MasterKey.data};
+	
+	c4 : Connector<OutDataPort<Bool>, InDataPort<Bool>> := connect<OutDataPort<Bool>, InDataPort<Bool>>(keypad.Request, control.Request);
+	assert{keypad.Request.data = control.Request.data};
+	
+	c5 : Connector<OutDataPort<Int>, InDataPort<Int>> := connect<OutDataPort<Int>, InDataPort<Int>>(keypad.Code, control.Code);
+	assert{keypad.Code.data = control.Code.data};
+	
+	c6 : Connector<OutDataPort<Bool>, InDataPort<Bool>> := connect<OutDataPort<Bool>, InDataPort<Bool>>(control.Granted, timer.Granted);
+	assert{control.Granted.data = timer.Granted.data};
+	
+	c7 : Connector<OutDataPort<Bool>, OutDataPort<Bool>> := connect<OutDataPort<Bool>, OutDataPort<Bool>>(timer.Running, Unlocking);
+	assert{timer.Running.data = Unlocking.data};
+	
+	c8 : Connector<OutDataPort<Int>, OutDataPort<Int>> := connect<OutDataPort<Int>, OutDataPort<Int>>(control.CurrentCode, CurrentCode);
+	assert{control.CurrentCode.data = CurrentCode.data};
+	
+};
+
+type HasHappened exhibits (Synchronous) enum {node}
+{
+	f: (Bool) -> (Bool);
+	assert {
+		forall (X:Bool){
+			var Y:(Bool) :=f(X);
+			Y = (X || init<Bool>(false,pre<Bool>(Y)))					
+		}
+	};
+} 
+
+
+type Since exhibits (Synchronous) enum {node}
+{
+	f: (Bool, Bool) -> (Bool);
+	assert {
+		forall (X:Bool, Y:Bool){
+			var SinceXY:(Bool) :=f(X, Y);
+			SinceXY = (X || Y && init<Bool>(false,pre<Bool>(SinceXY)))					
+		}
+	};
+} 
+
+
+		
+		
