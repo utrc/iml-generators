@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
-import com.utc.utrc.hermes.iml.gen.systems.Systems;
+import com.utc.utrc.hermes.iml.gen.common.systems.Systems;
 import com.utc.utrc.hermes.iml.iml.Annotation;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Model;

@@ -1,4 +1,4 @@
-package com.utc.utrc.hermes.iml.gen.systems;
+package com.utc.utrc.hermes.iml.gen.common.systems;
 
 import java.util.ArrayList;
 import java.util.HashMap;

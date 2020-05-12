@@ -3,7 +3,7 @@ package com.utc.utrc.hermes.iml.gen.lustre.df;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.utc.utrc.hermes.iml.gen.systems.ComponentType;
+import com.utc.utrc.hermes.iml.gen.common.systems.ComponentType;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 

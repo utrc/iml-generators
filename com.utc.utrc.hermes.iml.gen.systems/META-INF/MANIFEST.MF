@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Systems
-Bundle-SymbolicName: com.utc.utrc.hermes.iml.gen.systems
+Bundle-SymbolicName: com.utc.utrc.hermes.iml.gen.common
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: UTC
 Automatic-Module-Name: com.utc.utrc.hermes.iml.gen.systems
@@ -14,4 +14,4 @@ Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
  org.eclipse.emf.ecore;bundle-version="2.21.0",
  org.slf4j.api;bundle-version="1.7.30",
  com.google.inject;bundle-version="3.0.0"
-Export-Package: com.utc.utrc.hermes.iml.gen.systems
+Export-Package: com.utc.utrc.hermes.iml.gen.common.systems
