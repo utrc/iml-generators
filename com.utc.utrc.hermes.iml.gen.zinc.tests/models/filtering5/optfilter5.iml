@@ -1,0 +1,127 @@
+package optimization.filtering5 ;
+import iml.queries.* ;
+import optimization.filtering5.filterlib.*;
+
+//Error propagation model of a filtering channel
+type FilteringChannel exhibits (FilterCostModel,FilterTimingModel){
+	input : EventPort ;
+	output : EventPort ;
+	assert "Filtering channel propagation rule" { 
+		if (filter_type = FilterType.Bypass) {
+			output.data = input.data
+		} else {
+			output.data = false
+		}
+	} ;
+	assert "I/O delay rule" { 
+		output.timestamp = input.timestamp + exec_time ;
+	} ;
+	
+}
+
+//Error propagation model of component type C1
+type C1 exhibits (TimeConsuming){
+	input : EventPort ;
+	output1 : EventPort ;
+	output2 : EventPort ;
+	assert "C1 propagation rule" {
+		output1.data = input.data && 
+		output2.data = input.data &&
+		exec_time = 200 
+	} ;
+	assert "I/O delay rule" { 
+		output1.timestamp = input.timestamp + exec_time &&
+		output2.timestamp = output1.timestamp;
+	} ;
+}
+
+//Error propagation model of component type C2
+type C2 exhibits (TimeConsuming){
+	input : EventPort ;
+	output : EventPort ;
+	assert "C2 propagation rule" {
+		output.data = input.data &&
+		exec_time = 100 
+	} ;
+	assert "I/O delay rule" { 
+		output.timestamp = input.timestamp + exec_time 
+	} ;
+}
+
+//Error propagation model of component type C3
+type C3 exhibits (TimeConsuming) {
+	input1 : EventPort ;
+	input2 : EventPort ;
+	output : EventPort ;
+	assert "C3 propagation rule" {
+		output.data = (input1.data && input2.data) &&
+		exec_time = 200 
+	} ;
+	assert "I/O delay rule" {
+		if (input1.timestamp > input2.timestamp) {
+			output.timestamp = input1.timestamp + exec_time 	
+		} else {
+			output.timestamp = input2.timestamp + exec_time 
+		}
+	} ;
+	
+}
+
+//The system to be optimized
+type System exhibits (TimeConsuming){
+	input : EventPort ;
+	output : EventPort ;
+	c1 : C1 ;
+	c2 : C2 ;
+	c3 : C3 ;
+	f1 : FilteringChannel ;
+	f2 : FilteringChannel ;
+	f3 : FilteringChannel ;
+	f4 : FilteringChannel ;
+	
+	
+	assert "System connections" {
+		input = f1.input &&
+		f1.output = c1.input &&
+		c1.output1 = f2.input &&
+		c1.output2 = f3.input &&
+		f2.output = c2.input &&
+		f3.output = c3.input1 &&
+		c2.output = f4.input &&
+		f4.output = c3.input1 &&
+		c3.output = output
+	} ;
+	
+	//property
+	//even if the input is compromised, the output should not be
+	//f1 is not an internal filter
+	//execution time must be within budget
+	
+	assert "Even if the input is compromised, the output is not" {
+		input.data && ! output.data 	
+	} ;
+	assert "The input filter cannot be internal" {
+		(f1.filter_type != FilterType.Internal)
+	};
+	assert "Total delay less than 2000" {
+		input.timestamp > 0 &&
+		output.timestamp - input.timestamp < 2000
+	};
+
+}
+
+//Cost function
+cost : System -> Real := 
+	fun(x:System) {
+		x.f1.cost + x.f2.cost + x.f3.cost + x.f4.cost
+	} ;
+
+//Minimization query
+optimal_system : System := min<System>(cost);
+
+exec_time_bound : Property<System> := 
+	fun(x : System) {
+		true
+	} ;
+
+system1 : System := sat<System>(exec_time_bound); 

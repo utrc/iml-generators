@@ -1,0 +1,54 @@
+package optimization.happiness2 ;
+import iml.queries.*;
+
+/*Example taken from https://www.cs.cmu.edu/~avrim/451f11/lectures/lect1101.pdf */
+
+type WeekHours {
+	// Study
+	s : Int ;
+	// Party 
+	p : Int ;
+	// Everything else
+	e : Int ;
+	
+	//Total number of hours in a week
+	assert {s + p + e = 168} ;
+	//Survival constraint
+	assert { e >= 56} ;
+	//Sanity constraint
+	assert {p + e >= 70} ;
+	//Passing classes
+	assert {s >= 60} ;
+	//Study inefficiently if not sleeping enough or partying too much
+	assert {2*s + e - 3*p >= 150} ;
+	//Number of hours partying is positive
+	assert { p >= 0};
+} ;
+
+type DoubleWeek {
+	week1 : WeekHours ;
+	week2 : WeekHours ;
+};
+
+//happiness function
+
+happiness : WeekHours -> Real := 
+	fun(x:WeekHours) {
+		2*x.p + x.e
+	} ;
+
+happiness21 : DoubleWeek -> Real := 
+	fun(x:DoubleWeek) {
+		2*x.week1.p + x.week1.e + 2*x.week2.p + x.week2.e 
+	};
+
+happiness22 : DoubleWeek -> Real := 
+	fun(x:DoubleWeek) {
+		happiness(x.week1) + happiness(x.week2) 
+	};
+
+
+optimalDoubleWeek1 : DoubleWeek := max<DoubleWeek>(happiness21);
+
+optimalDoubleWeek2 : DoubleWeek := max<DoubleWeek>(happiness22);
+

@@ -1,0 +1,107 @@
+package optimization.filtering2 ;
+import iml.queries.* ;
+
+type FilterType enum {External, Internal};
+
+//Filter properties and cost model
+trait Filter {
+	filter : Bool ;
+	filter_type : FilterType ;
+	filter_cost : Int ;
+	assert { 
+		if (filter) {
+			if (filter_type = FilterType.External) {
+				filter_cost = 10
+			} else {
+				filter_cost = 1
+			}
+		} else {
+			filter_cost = 0;
+		} 
+	} ;
+}
+
+//Error propagation model of a filtering channel
+type FilteringChannel exhibits (Filter){
+	input_e : Bool ;
+	output_e : Bool ;
+	assert { 
+		if (filter) {
+			output_e = false
+		} else {
+			output_e = input_e
+		}
+	} ;
+}
+
+//Error propagation model of component type C1
+type C1 {
+	input_e : Bool ;
+	output1_e : Bool ;
+	output2_e : Bool ;
+	assert {
+		output1_e = input_e && 
+		output2_e = input_e
+	} ;
+}
+
+//Error propagation model of component type C2
+type C2 {
+	input_e : Bool ;
+	output1_e : Bool ;
+	assert {
+		output1_e = input_e 
+	} ;
+}
+
+//Error propagation model of component type C3
+type C3 {
+	input1_e : Bool ;
+	input2_e : Bool ;
+	output1_e : Bool ;
+	assert {
+		output1_e = (input1_e && input2_e) 
+	} ;
+}
+
+//The system to be optimized
+type System {
+	input_e : Bool ;
+	output_e : Bool ;
+	c1 : C1 ;
+	c2 : C2 ;
+	c3 : C3 ;
+	f1 : FilteringChannel ;
+	f2 : FilteringChannel ;
+	f3 : FilteringChannel ;
+	f4 : FilteringChannel ;
+	
+	//connections
+	assert {
+		input_e = f1.input_e &&
+		f1.output_e = c1.input_e &&
+		c1.output1_e = f2.input_e &&
+		c1.output2_e = f3.input_e &&
+		f2.output_e = c2.input_e &&
+		f3.output_e = c3.input1_e &&
+		c2.output1_e = f4.input_e &&
+		f4.output_e = c3.input1_e &&
+		c3.output1_e = output_e
+	} ;
+	
+	//property
+	//even if the input is compromised, the output should not be
+	assert {
+		input_e && ! output_e
+	} ;
+	
+}
+
+//Cost function
+cost : System -> Real := 
+	fun(x:System) {
+		x.f1.filter_cost + x.f2.filter_cost + x.f3.filter_cost + x.f4.filter_cost
+	} ;
+
+//Minimization query
+optimal_system : System := min<System>(cost);
