@@ -1,7 +1,6 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.systems;
 
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
-import com.utc.utrc.hermes.iml.util.ImlUtil;
 
 public class ComponentInstance {
 	

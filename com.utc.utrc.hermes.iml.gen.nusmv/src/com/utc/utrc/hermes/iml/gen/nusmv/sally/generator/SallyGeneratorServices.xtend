@@ -252,10 +252,11 @@ class SallyGeneratorServices {
 			}
 			return serialize(e.left, ctx, map);
 		} else if (e instanceof NumberLiteral) {
-			if (e.isNeg) {
-				retval.add(MINUS,new Token<Integer>(e.value));
-			}
-			return new Token<Integer>(e.value)
+			throw new Exception("Problem with the implementation, please fix the code!");
+//			if (e.isNeg) {
+//				retval.add(MINUS,new Token<Integer>(e.value));
+//			}
+//			return new Token<Integer>(e.value)
 		} else if (e instanceof TruthValue) {
 			if(e.TRUE) return TRUE else return FALSE;
 		}
