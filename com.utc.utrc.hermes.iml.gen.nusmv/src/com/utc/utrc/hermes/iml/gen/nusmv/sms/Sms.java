@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -14,12 +15,12 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.xbase.lib.Extension;
 import org.eclipse.xtext.xbase.lib.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
 import com.utc.utrc.hermes.iml.gen.nusmv.model.NuSmvModule;
+import com.utc.utrc.hermes.iml.gen.common.systems.ComponentType;
 import com.utc.utrc.hermes.iml.gen.common.systems.Systems;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
@@ -51,7 +52,7 @@ public class Sms {
 	@Extension
 	private IQualifiedNameProvider qnp;
 
-	final Logger logger = LoggerFactory.getLogger(Sms.class);
+	private static final Logger logger = Logger.getLogger(Sms.class);
 
 	// TODO need to handle polymorphic states
 	private Map<String, State> states;
@@ -60,7 +61,7 @@ public class Sms {
 	private Map<String, ImlType> otherTypes ;
 	
 
-	private Systems sys ;
+	private Systems sys ;  
 	
 	public void setSystems(Systems sys) {
 		this.sys = sys ;
@@ -71,11 +72,19 @@ public class Sms {
 		states = new HashMap<>();
 		sms = new HashMap<>();
 	}
+	
+	public void clear() {
+		this.sys = null ;
+		states.clear(); 
+		sms.clear();
+		otherTypes.clear();
+	}
 
 	public void process(ResourceSet rs) {
 		for (Resource r : rs.getResources()) {
 			process(r);
 		}
+		
 	}
 
 	public void process(Resource r) {
@@ -90,14 +99,29 @@ public class Sms {
 		for (Symbol s : m.getSymbols()) {
 			if (s instanceof NamedType && ! ImlUtil.isPolymorphic(s)) {
 				NamedType nt = (NamedType) s;
-				if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.sms", "StateMachine"))) {
-					StateMachine sm = processStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(nt));
-					sms.put(ImlUtil.getTypeName(ImlCustomFactory.INST.createSimpleTypeReference(nt), qnp), sm);
-				}
+				process(nt) ;
+			}else {
+				logger.info("Skipping symbol " + qnp.getFullyQualifiedName(s) + " which is not a type or is polymorphic");
 			}
 		}
 	}
 
+	public void process(NamedType nt) {
+		if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.sms", "StateMachine"))) {
+			logger.info("Processing type  " + qnp.getFullyQualifiedName(nt));
+			StateMachine sm = processStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(nt));
+			
+		} else {
+			logger.info("Skipping type " + qnp.getFullyQualifiedName(nt) + " which is not a state machine");
+		}
+	}
+	
+	public void process(ImlType t) {
+		if (t instanceof SimpleTypeReference && !ImlUtil.isPolymorphic(((SimpleTypeReference) t).getType())) {
+			process(((SimpleTypeReference) t).getType());
+		}
+	}
+	
 	public StateMachine processStateMachine(SimpleTypeReference tr) {
 		if (sms.containsKey(ImlUtil.getTypeName(tr,qnp))){
 			return sms.get(ImlUtil.getTypeName(tr,qnp)) ;
@@ -107,7 +131,10 @@ public class Sms {
 		ImlType stateType = getStateType(tr);
 		if (stateType instanceof SimpleTypeReference) {
 			State theState = processState((SimpleTypeReference) stateType);
+			logger.info("Adding state with type " + ImlUtil.getTypeNameManually(theState.getType(),qnp) );
 			retval.setStateType(theState);
+		} else {
+			logger.info("State with type " + ImlUtil.getTypeNameManually(stateType,qnp) + " was not added because it is not a simple type reference" );
 		}
 		retval.setSmType(tr);
 
@@ -116,30 +143,40 @@ public class Sms {
 		SymbolDeclaration init = ImlUtil.findSymbol(tr.getType(), "init");
 
 		if (invariant != null && invariant.getDefinition() != null) {
+			logger.info("Found invariant " + invariant.getName() );
 			retval.setInvariant(invariant.getDefinition());
 		}
 		if (transition != null && transition.getDefinition() != null) {
+			logger.info("Found transition function " + transition.getName() );
 			retval.setTransition(transition.getDefinition());
 		}
 		if (init != null && init.getDefinition() != null) {
+			logger.info("Found initial state definition " + init.getName() );
 			retval.setInit(init.getDefinition());
 		}
 		if (ImlUtil.exhibits(tr, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+			logger.info("The state machine is aso a component. Adding a reference to component model " + sys.getComponent(tr).getName() );
 			retval.setComponent(true);
-			retval.setComponentType(sys.getComponent(tr));
+			ComponentType c = sys.getComponent(tr);
+			retval.setComponentType(c);
+			for(String cname : c.getSubs().keySet()) {
+				process(c.getSubs().get(cname).getComponentType().getType()) ;
+			}
 		}
-
+		sms.put(ImlUtil.getTypeName(tr, qnp), retval);
 		return retval;
 	}
 	
 	public State processState(SimpleTypeReference type) {
 		
 		if (type.getType() == stdLibs.getNamedType("iml.sms","Stateless")) {
+			logger.info("The sate machine is stateless.");
 			return State.stateless;
 		}
 		
 		State retval = new State(type);
 		states.put(ImlUtil.getTypeName(type, qnp), retval);
+		logger.info("State with type " + ImlUtil.getTypeNameManually(retval.getType(),qnp) + " defined.");
 		return retval ;
 	}
 	

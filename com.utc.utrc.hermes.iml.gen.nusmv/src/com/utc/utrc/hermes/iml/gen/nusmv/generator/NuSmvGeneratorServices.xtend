@@ -39,6 +39,8 @@ import com.utc.utrc.hermes.iml.iml.Symbol
 import java.util.HashMap
 import com.utc.utrc.hermes.iml.lib.ImlStdLib
 import com.utc.utrc.hermes.iml.iml.Trait
+import com.utc.utrc.hermes.iml.iml.TypeWithProperties
+import com.utc.utrc.hermes.iml.iml.TraitExhibition
 
 class NuSmvGeneratorServices {
 
@@ -50,6 +52,7 @@ class NuSmvGeneratorServices {
 
 	@Inject
 	private ImlStdLib stdLibs;
+
 
 	def String getNameFor(SimpleTypeReference tr) {
 		return ImlUtil.getTypeName(tr, qnp);

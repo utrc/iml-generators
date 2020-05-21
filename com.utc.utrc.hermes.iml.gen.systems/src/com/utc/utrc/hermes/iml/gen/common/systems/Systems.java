@@ -5,14 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.xbase.lib.Extension;
 import org.eclipse.xtext.xbase.lib.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
@@ -48,9 +47,9 @@ public class Systems {
 	@Inject
 	@Extension
 	private IQualifiedNameProvider qnp;
-
-	final Logger logger = LoggerFactory.getLogger(Systems.class);
-
+	
+	private static final Logger logger = Logger.getLogger(Systems.class);
+	
 	private Map<String, ComponentType> components;
 
 	public Systems() {
@@ -74,17 +73,26 @@ public class Systems {
 	public void process(Model m) {
 		for (Symbol s : m.getSymbols()) {
 			if (s instanceof NamedType && !ImlUtil.isPolymorphic(s)) {
+				logger.info("Processing " + qnp.getFullyQualifiedName(s));
 				NamedType nt = (NamedType) s;
-				if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
-//				if (systemsServices.isComponent(nt)) {
-					SimpleTypeReference ref = ImlCustomFactory.INST.createSimpleTypeReference(nt);
-					ComponentType c = processComponent(ref);
-					components.put(ImlUtil.getTypeName(ref, qnp), c);
-				}
+				process(nt);
+			} else {
+				logger.info("Skipping " + qnp.getFullyQualifiedName(s));
 			}
 		}
 	}
-
+	
+	public void process(NamedType nt) {
+		if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+			logger.info("Processing Component " + qnp.getFullyQualifiedName(nt));
+//			if (systemsServices.isComponent(nt)) {
+				SimpleTypeReference ref = ImlCustomFactory.INST.createSimpleTypeReference(nt);
+				processComponent(ref);
+				
+			} else {
+				logger.info("Skipping " + qnp.getFullyQualifiedName(nt) + " becasue it is not a component" );
+			}
+	}
 	
 
 	public ComponentType processComponent(SimpleTypeReference t) {
@@ -109,8 +117,7 @@ public class Systems {
 				} else if (ImlUtil.hasType(s_type, stdLibs.getNamedType("iml.systems", "Connector"))) {
 					connectors.add(sd_s);
 				} else {
-					logger.info("Component {} also includes symbol { } which this class does not process.", c.getName(),
-							sd_s.getName());
+					logger.info("Component " + c.getName() + "also includes symbol " + sd_s.getName() + "  which this class does not process.");
 				}
 
 			}
@@ -152,7 +159,7 @@ public class Systems {
 		for (SymbolDeclaration s : connectors) {
 			processConnector(s, c);
 		}
-
+		components.put(ImlUtil.getTypeName(t, qnp), c);
 		return c;
 	}
 
@@ -172,8 +179,7 @@ public class Systems {
 				} else if (ImlUtil.hasType(s_type, stdLibs.getNamedType("iml.systems", "Connector"))) {
 					connectors.add(sd_s);
 				} else {
-					logger.info("Component {} also includes symbol { } which this class does not process.", c.getName(),
-							sd_s.getName());
+					logger.info("Component " + c.getName() + " also includes symbol " + sd_s.getName() + " which this class does not process.");
 				}
 			}
 		}
@@ -213,7 +219,7 @@ public class Systems {
 		if (container != null) {
 			container.addPort(p);
 		} else {
-			logger.error("Port {} should have a container ", sd.getName());
+			logger.error("Port " + sd.getName() + " should have a container ");
 		}
 
 		if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "In"))) {
@@ -279,19 +285,16 @@ public class Systems {
 					Port p = subc.getComponentType().getPort(portname);
 					return (new Pair<ComponentInstance,Port>(subc,p)) ;
 				} else {
-					logger.error("Port expression in component {} is not a symbol reference term)",
-							container.getName());
+					logger.error("Port expression in component " + container.getName() +"  is not a symbol reference term");
 					return (new Pair<ComponentInstance,Port>(subc,Port.nil)) ;
 				}
 			} else {
-				logger.error("Component expression in component {} is not a symbol reference term)",
-						container.getName());
+				logger.error("Component expression in component " +  container.getName() + " is not a symbol reference term)");
 			}
 
 		} else {
 			logger.error(
-					"Port cannot be found in component {} (term denoting a port is not a symbol reference or a term selection)",
-					container.getName());
+					"Port cannot be found in component " + container.getName() + " (term denoting a port is not a symbol reference or a term selection)");
 		}
 		return (new Pair<ComponentInstance,Port>(ComponentInstance.nil,Port.nil)) ;
 	}

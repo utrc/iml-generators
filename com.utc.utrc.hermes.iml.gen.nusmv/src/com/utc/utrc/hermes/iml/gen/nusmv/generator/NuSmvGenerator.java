@@ -1,15 +1,14 @@
 package com.utc.utrc.hermes.iml.gen.nusmv.generator;
 
-
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
 import org.eclipse.xtext.xbase.lib.Extension;
+
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
@@ -36,6 +35,7 @@ import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Inclusion;
 import com.utc.utrc.hermes.iml.iml.InstanceConstructor;
 import com.utc.utrc.hermes.iml.iml.LambdaExpression;
+import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.Relation;
 import com.utc.utrc.hermes.iml.iml.SignedAtomicFormula;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
@@ -49,6 +49,7 @@ import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeRestriction;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
 import com.utc.utrc.hermes.iml.lib.ImlStdLib;
+import com.utc.utrc.hermes.iml.lib.SmsServices;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
@@ -66,65 +67,99 @@ public class NuSmvGenerator {
 	private ImlStdLib stdLibs;
 
 	@Inject
+	private SmsServices sms_srv;
+
+	@Inject
+	Systems sys;
+
+	@Inject
+	Sms sms;
+
+	@Inject
 	@Extension
 	private IQualifiedNameProvider qnp;
 
+	private static final Logger logger = Logger.getLogger(NuSmvGenerator.class);
+	
 	private Configuration conf;
-
-	private Sms sms;
-
+	
 	public NuSmvGenerator() {
+	
 	}
 
-	public NuSmvGenerator(Configuration conf, Sms sms) {
-		this.conf = conf;
-		this.sms = sms;
+	public NuSmvModel generateNuSmvModel(Configuration conf, NamedType t)  {
+		sys.process(t);
+		sms.setSystems(sys);
+		//sms.process(iml_model);
+		sms.process(t);
+		NuSmvModel m = new NuSmvModel();
+		try {
+			generateStateMachine(m, ImlCustomFactory.INST.createSimpleTypeReference(t));
+		} catch (NuSmvGeneratorException e) {
+			logger.info(e.getMessage());
+		}
+		return m;
 	}
 
-	public void setSms(Sms sms) {
-		this.sms = sms;
+	public String serialize(NuSmvModel m) {
+		return generatorServices.serialize(m);
 	}
 
-	public NuSmvModule getMainModel(NuSmvModel m, SimpleTypeReference spec, SimpleTypeReference impl) {
+	public String generateNuSmvModelString(Configuration conf, NamedType t) throws NuSmvGeneratorException {
+		return serialize(generateNuSmvModel(conf, t));
+	}
+
+	public NuSmvModule getMainModel(NuSmvModel m, SimpleTypeReference spec, SimpleTypeReference impl)
+			throws NuSmvGeneratorException {
 		NuSmvModule main = new NuSmvModule("main");
-		NuSmvModule insttype = null ;
-		NuSmvModule spectype = null ;
-		if ( m.hasType(ImlUtil.getTypeName(impl, qnp)) ) {
-			insttype = m.getType(ImlUtil.getTypeName(impl, qnp)) ;
+		NuSmvModule insttype = null;
+		NuSmvModule spectype = null;
+		if (m.hasType(ImlUtil.getTypeName(impl, qnp))) {
+			insttype = m.getType(ImlUtil.getTypeName(impl, qnp));
 		} else {
-			insttype = generateStateMachine(m, impl) ;
+			insttype = generateStateMachine(m, impl);
 		}
-		if ( m.hasType(ImlUtil.getTypeName(spec, qnp)) ) {
-			spectype = m.getType(ImlUtil.getTypeName(spec, qnp)) ;
+		if (m.hasType(ImlUtil.getTypeName(spec, qnp))) {
+			spectype = m.getType(ImlUtil.getTypeName(spec, qnp));
 		} else {
-			spectype = generateStateMachine(m, spec) ;
+			spectype = generateStateMachine(m, spec);
 		}
-		
+
 		NuSmvSymbol inst = new NuSmvSymbol("inst");
 		NuSmvTypeInstance instti = new NuSmvTypeInstance(insttype);
 		inst.setType(instti);
 		inst.setElementType(NuSmvElementType.VAR);
 		main.addSymbol(inst);
-		
-		
-		for (NuSmvSymbol in : spectype.getParameters() ) {
-			NuSmvSymbol target = new NuSmvSymbol( in.getName() );
-			NuSmvTypeInstance ti = new NuSmvTypeInstance(in.getType().getType()) ;
+
+		for (NuSmvSymbol in : spectype.getParameters()) {
+			NuSmvSymbol target = new NuSmvSymbol(in.getName());
+			NuSmvTypeInstance ti = new NuSmvTypeInstance(in.getType().getType());
 			target.setType(ti);
 			target.setElementType(NuSmvElementType.VAR);
 			main.addSymbol(target);
 			instti.setParam(insttype.paramIndex(in.getName()), new NuSmvVariable(in.getName()));
 		}
-		
+
 		m.addModule(main);
 		return main;
 	}
 
-	public NuSmvModule generateStateMachine(NuSmvModel m, ImlType t) {
-		if (t instanceof SimpleTypeReference) {
+	/**
+	 * If the ImlType t is a has a state machine trait, this function generates a
+	 * corresponding SMV module in the context of the model m. The model m is needed
+	 * to search and store definitions that are needed in the process generation
+	 * such as user-defined types. If the type t is not a state machines, an
+	 * exception is thrown.
+	 * 
+	 * @throws NuSmvGeneratorException
+	 */
+
+	public NuSmvModule generateStateMachine(NuSmvModel m, ImlType t) throws NuSmvGeneratorException {
+		if (sms_srv.isStateMachine(t) && t instanceof SimpleTypeReference) {
 			return generateStateMachine(m, sms.getStateMachine(t));
 		}
-		return (new NuSmvModule("__EMPTY__"));
+		throw new NuSmvGeneratorException(t,
+				ImlUtil.getTypeNameManually(t, qnp) + " is not a state machine or not a SimpleTypeReference") ;
 	}
 
 	public NuSmvModule generateStateMachine(NuSmvModel m, StateMachine sm) {
@@ -132,7 +167,7 @@ public class NuSmvGenerator {
 		String type_name = ImlUtil.getTypeName(sm.getSmType(), qnp);
 		if (m.hasType(type_name))
 			return m.getType(type_name);
-
+		logger.info("Generating " + type_name);
 		NuSmvModule target = new NuSmvModule(type_name);
 		m.addModule(target);
 
@@ -172,7 +207,7 @@ public class NuSmvGenerator {
 				if (sd instanceof SymbolDeclaration) {
 					if (!(sd.getName().equals("init") || sd.getName().equals("invariant")
 							|| sd.getName().equals("transition"))) {
-						if ( ((SymbolDeclaration)sd).getType() instanceof SimpleTypeReference) {
+						if (((SymbolDeclaration) sd).getType() instanceof SimpleTypeReference) {
 							addSymbol(target, (SymbolDeclaration) sd, tr);
 						}
 					}
@@ -286,7 +321,7 @@ public class NuSmvGenerator {
 						SymbolDeclaration var = cons.getRef();
 						Map<Symbol, String> remap = new HashMap<>();
 						remap.put(var, p.getName());
-						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap) ;
+						String expr = generatorServices.serialize(cons.getDefinition(), ctx, remap);
 						target.setDefinition(expr.replace(p.getName() + "=", ""));
 					}
 				}
@@ -352,12 +387,13 @@ public class NuSmvGenerator {
 		if (state == State.stateless) {
 			return null;
 		}
-
+		
 		NuSmvSymbol target = new NuSmvSymbol("state");
 		NuSmvModule ti = generateType(m.getContainer(), (SimpleTypeReference) state.getType());
 		target.setType(new NuSmvTypeInstance(ti));
 		target.setElementType(NuSmvElementType.VAR);
 		m.addSymbol(target);
+		logger.info("Added state to " + m.getName() + " with type " + ti.getName() + " (derived from " + ImlUtil.getTypeNameManually((SimpleTypeReference) state.getType(),qnp));
 		return target;
 
 //		ImlType type = state.getType();
@@ -430,13 +466,13 @@ public class NuSmvGenerator {
 
 	public boolean isInput(SymbolDeclaration sd) {
 
-			if ( ImlUtil.exhibits(sd.getType(), (Trait) stdLibs.getNamedType("iml.systems", "In")   ) ) {
-				return true ;
-			}
-		
-		return false ;
+		if (ImlUtil.exhibits(sd.getType(), (Trait) stdLibs.getNamedType("iml.systems", "In"))) {
+			return true;
+		}
+
+		return false;
 	}
-	
+
 	public boolean isDelay(ImlType st) {
 		return (st == stdLibs.getNamedType("iml.sms", "delay"));
 	}
@@ -468,7 +504,6 @@ public class NuSmvGenerator {
 		container.addSymbol(target);
 		return target;
 	}
-
 	
 	
 }

@@ -1,5 +1,7 @@
 package com.utc.utrc.hermes.iml.gen.zinc.generator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -217,10 +219,11 @@ public class MiniZincGeneratorServices {
 			BooleanConstant c = new BooleanConstant(getBooleanConstant(s));
 			builder.add(c.toNamedConstant(getName(prefix, s)));
 		} else if (stdLibs.isInt(s.getType())) {
-			IntegerConstant c = new IntegerConstant(getIntConstant(s));
+			BigInteger val = getIntConstant(s) ;
+			IntegerConstant c = new IntegerConstant(val.intValue());
 			builder.add(c.toNamedConstant(getName(prefix, s)));
 		} else if (stdLibs.isReal(s.getType())) {
-			FloatConstant c = new FloatConstant(getRealConstant(s));
+			FloatConstant c = new FloatConstant(getRealConstant(s).floatValue());
 			builder.add(c.toNamedConstant(getName(prefix, s)));
 		}
 
@@ -399,20 +402,14 @@ public class MiniZincGeneratorServices {
 		return false;
 	}
 
-	public int getIntConstant(SymbolDeclaration s) {
+	public BigInteger getIntConstant(SymbolDeclaration s) {
 		NumberLiteral v = (NumberLiteral) s.getDefinition().getLeft();
-		if (((NumberLiteral) s.getDefinition().getLeft()).isNeg()) {
-			return (-v.getValue());
-		}
-		return (v.getValue());
+		return v.getValue()  ;
 	}
 
-	public float getRealConstant(SymbolDeclaration s) {
+	public BigDecimal getRealConstant(SymbolDeclaration s) {
 		FloatNumberLiteral v = (FloatNumberLiteral) s.getDefinition().getLeft();
-		if (((FloatNumberLiteral) s.getDefinition().getLeft()).isNeg()) {
-			return (-v.getValue());
-		}
-		return (v.getValue());
+		return  v.getValue();	
 	}
 
 	/*
@@ -550,11 +547,7 @@ public class MiniZincGeneratorServices {
 		} else if (e instanceof ParenthesizedTerm) {
 			return processIntegerExpression(prefix, builder, ctx, ((ParenthesizedTerm) e).getSub(), map);
 		} else if (e instanceof NumberLiteral) {
-			IntegerConstant c = new IntegerConstant(((NumberLiteral) e).getValue());
-			if (((NumberLiteral) e).isNeg()) {
-				return new IntegerConstant(-((NumberLiteral) e).getValue());
-			}
-			return new IntegerConstant(((NumberLiteral) e).getValue());
+			return new IntegerConstant(((NumberLiteral) e).getValue().intValue()) ;
 		} else if (e instanceof TailedExpression) {
 			FolFormula left = e.getLeft() ;
 			ExpressionTail tail = ((TailedExpression) e).getTail() ;

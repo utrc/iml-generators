@@ -20,10 +20,20 @@ import com.utc.utrc.hermes.iml.iml.NamedType
 import com.utc.utrc.hermes.iml.util.ImlUtil
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory
 import com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvGeneratorServices
+import eu.fbk.tools.editor.nusmv.smv.util.SmvSwitch
+import com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvModelInterface
+import org.eclipse.xtext.serializer.ISerializer
+import eu.fbk.tools.editor.nusmv.serializer.NuSMVSemanticSequencer
+import eu.fbk.tools.editor.nusmv.serializer.NuSMVSyntacticSequencer
+import com.google.inject.Injector
+import org.junit.Before
+import eu.fbk.tools.editor.nusmv.NuSMVStandaloneSetup
+import org.eclipse.xtext.serializer.impl.Serializer
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
 class NuSmvTranslatorTests {
+	
 	
 	@Inject extension ImlParseHelper
 	
@@ -31,41 +41,32 @@ class NuSmvTranslatorTests {
 	
 	@Inject extension TestHelper
 	
-	@Inject 
-	Systems sys ;
-	
-	@Inject 
-	Sms sms ;
-	
 	@Inject
 	NuSmvGenerator gen ;
 	
 	@Inject
 	NuSmvGeneratorServices generatorServices;
-	
 		
+	
 	@Test
 	def void testTranslation() {
 		
 		var Model m = parse(FileUtil.readFileContent("models/fromaadl/UxASRespondsEvents_pkg.iml"),true) ;
-		sys.process(m) ;
-		System.out.println(sys.toString)
-		sms.systems = sys;
-		sms.process(m);
-		gen.sms = sms;
 		var NamedType smtype = m.findSymbol("UxAS_responds_dot_i") as NamedType;
-		var NamedType spectype = m.findSymbol("UxAS_responds") as NamedType;
-		var NuSmvModel smv = new NuSmvModel() ;
-		gen.generateStateMachine(smv,sms.getStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(smtype))) ;
+		var NamedType spectype = m.findSymbol("UxAS_responds") as NamedType;		
+		var NuSmvModel smv = gen.generateNuSmvModel(null,smtype) ;
+		
 		
 		var output = generatorServices.serialize(smv);
 		System.out.println(output);
 		
-		var main = gen.getMainModel(smv,ImlCustomFactory.INST.createSimpleTypeReference(spectype),ImlCustomFactory.INST.createSimpleTypeReference(smtype))
+		//var main = gen.getMainModel(smv,ImlCustomFactory.INST.createSimpleTypeReference(spectype),ImlCustomFactory.INST.createSimpleTypeReference(smtype))
 		
-		System.out.println(generatorServices.serialize(main));
+		//System.out.println(generatorServices.serialize(main));
 		
 		
 	}
+	
+	
 }
 
