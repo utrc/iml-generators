@@ -2,6 +2,7 @@ package com.utc.utrc.hermes.iml.gen.lustre.df.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,19 +16,19 @@ public class LustreNode extends LustreType {
 	
 	public LustreNode(String name) {
 		super(name);
-		variables = new HashMap<String,LustreSymbol>();
-		components = new HashMap<String,LustreSymbol>();
+		variables = new LinkedHashMap<String,LustreSymbol>();
+		components = new LinkedHashMap<String,LustreSymbol>();
 		parameters = new ArrayList<LustreSymbol>();
 		returns = new ArrayList<LustreSymbol>();
-		lets = new HashMap<>() ;
+		lets = new LinkedHashMap<>() ;
 		this.container = null;
 	}
 	
 	public LustreNode(LustreModel m, String name) {	
 		super(name);
-		variables = new HashMap<String,LustreSymbol>();
+		variables = new LinkedHashMap<String,LustreSymbol>();
 		parameters = new ArrayList<LustreSymbol>();
-		lets = new HashMap<>() ;
+		lets = new LinkedHashMap<>() ;
 		this.container = m;
 	}
 
