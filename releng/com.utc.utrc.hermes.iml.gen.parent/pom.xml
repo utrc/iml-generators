@@ -382,5 +382,7 @@
 		<module> ../com.utc.utrc.hermes.iml.gen.report</module>
 		
 		<module>../../com.utc.utrc.hermes.sexpr</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.common</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.lustre</module>
 	</modules>
 </project>
