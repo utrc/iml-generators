@@ -9,12 +9,9 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.xtext.naming.IQualifiedNameProvider;
-import org.eclipse.xtext.xbase.lib.Extension;
-import org.eclipse.xtext.xbase.lib.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
@@ -29,40 +26,35 @@ import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
 import com.utc.utrc.hermes.iml.iml.TailedExpression;
 import com.utc.utrc.hermes.iml.iml.TermExpression;
 import com.utc.utrc.hermes.iml.iml.TermMemberSelection;
-import com.utc.utrc.hermes.iml.iml.Trait;
 import com.utc.utrc.hermes.iml.iml.TraitExhibition;
 import com.utc.utrc.hermes.iml.iml.TupleConstructor;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
-import com.utc.utrc.hermes.iml.lib.ImlStdLib;
+import com.utc.utrc.hermes.iml.lib.SystemsServices;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 
 public class Systems {
 
-	@Inject
-	private ImlStdLib stdLibs;
-	
-//	@Inject
-//	private SystemsServices systemsServices;
-
-	@Inject
-	@Extension
+	private SystemsServices systemServices;
 	private IQualifiedNameProvider qnp;
-
 	final Logger logger = LoggerFactory.getLogger(Systems.class);
-
 	private Map<String, ComponentType> components;
 
-	public Systems() {
+	
+	public Systems(SystemsServices systemServices, IQualifiedNameProvider qnp) {
+		this.systemServices = systemServices;
+		this.qnp = qnp;
 		components = new HashMap<String, ComponentType>();
 	}
 
+	
 	public void process(ResourceSet rs) {
 		for (Resource r : rs.getResources()) {
 			process(r);
 		}
 	}
 
+	
 	public void process(Resource r) {
 		for (EObject o : r.getContents()) {
 			if (o instanceof Model) {
@@ -71,12 +63,12 @@ public class Systems {
 		}
 	}
 
+	
 	public void process(Model m) {
 		for (Symbol s : m.getSymbols()) {
 			if (s instanceof NamedType && !ImlUtil.isPolymorphic(s)) {
 				NamedType nt = (NamedType) s;
-				if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
-//				if (systemsServices.isComponent(nt)) {
+				if (systemServices.isComponent(nt)) {
 					SimpleTypeReference ref = ImlCustomFactory.INST.createSimpleTypeReference(nt);
 					ComponentType c = processComponent(ref);
 					components.put(ImlUtil.getTypeName(ref, qnp), c);
@@ -84,11 +76,9 @@ public class Systems {
 			}
 		}
 	}
-
 	
 
 	public ComponentType processComponent(SimpleTypeReference t) {
-
 		if (hasComponent(t)) {
 			return getComponent(t);
 		}
@@ -98,21 +88,20 @@ public class Systems {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd_s = (SymbolDeclaration) s;
 				ImlType s_type = sd_s.getType();
-				if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+				if (systemServices.isComponent(s_type)) {
 					if (s_type instanceof SimpleTypeReference) {
 						ComponentType ct = processComponent((SimpleTypeReference) s_type);
 						ComponentInstance ci = new ComponentInstance(sd_s, ct);
 						c.addSub(ci);
 					}
-				} else if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Port"))) {
+				} else if (systemServices.isPort(s_type)) {
 					processPort(sd_s, s_type, c);
-				} else if (ImlUtil.hasType(s_type, stdLibs.getNamedType("iml.systems", "Connector"))) {
+				} else if (ImlUtil.hasType(s_type, systemServices.getType("Connector"))) {
 					connectors.add(sd_s);
 				} else {
 					logger.info("Component {} also includes symbol { } which this class does not process.", c.getName(),
 							sd_s.getName());
 				}
-
 			}
 		}
 
@@ -156,20 +145,21 @@ public class Systems {
 		return c;
 	}
 
+	
 	private void gatherFromExhibit(SimpleTypeReference str, ComponentType c, List<SymbolDeclaration> connectors) {
 		for (Symbol s : str.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd_s = (SymbolDeclaration) s;
 				ImlType s_type = sd_s.getType();
-				if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+				if (systemServices.isComponent(s_type)) {
 					if (s_type instanceof SimpleTypeReference) {
 						ComponentType ct = processComponent((SimpleTypeReference) s_type);
 						ComponentInstance ci = new ComponentInstance(sd_s, ct);
 						c.addSub(ci);
 					}
-				} else if (ImlUtil.exhibits(s_type, (Trait) stdLibs.getNamedType("iml.systems", "Port"))) {
+				} else if (systemServices.isPort(s_type)) {
 					processPort(sd_s, s_type, c);
-				} else if (ImlUtil.hasType(s_type, stdLibs.getNamedType("iml.systems", "Connector"))) {
+				} else if (ImlUtil.hasType(s_type, systemServices.getType("Connector"))) {
 					connectors.add(sd_s);
 				} else {
 					logger.info("Component {} also includes symbol { } which this class does not process.", c.getName(),
@@ -206,6 +196,7 @@ public class Systems {
 		}
 	}
 
+	
 	public void processPort(SymbolDeclaration sd, ImlType t, ComponentType container) {
 
 		Port p = new Port(sd);
@@ -216,22 +207,22 @@ public class Systems {
 			logger.error("Port {} should have a container ", sd.getName());
 		}
 
-		if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "In"))) {
+		if (systemServices.isIn(t)) {
 			p.setDirection(Direction.IN);
-		} else if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "Out"))) {
+		} else if (systemServices.isOut(t)) {
 			p.setDirection(Direction.OUT);
 		} else {
 			p.setDirection(Direction.INOUT);
 		}
 
-		if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "EventCarrier"))) {
+		if (systemServices.isEventCarrier(t)) {
 			p.setEvent(true);
 			p.setEventType(getCarrierType(t, "Event"));
 		} else {
 			p.setEvent(false);
 		}
 
-		if (ImlUtil.exhibits(t, (Trait) stdLibs.getNamedType("iml.systems", "DataCarrier"))) {
+		if (systemServices.isDataCarrier(t)) {
 			p.setData(true);
 			p.setDataType(getCarrierType(t, "Data"));
 		} else {
@@ -240,10 +231,8 @@ public class Systems {
 
 	}
 
-	public void processConnector(SymbolDeclaration sd, ComponentType container) {
 
-//		Port sourcep = Port.nil;
-//		Port destp = Port.nil;
+	public void processConnector(SymbolDeclaration sd, ComponentType container) {
 		FolFormula f = sd.getDefinition();
 		if (f instanceof SignedAtomicFormula) {
 			FolFormula f1 = f.getLeft();
@@ -255,19 +244,20 @@ public class Systems {
 					FolFormula destf = ((TupleConstructor) connect.getTail()).getElements().get(1).getLeft();
 					Pair<ComponentInstance, Port>  source = getComponentAndPort(sourcef, container);
 					Pair<ComponentInstance, Port>  dest = getComponentAndPort(destf, container);
-					Connection conn = new Connection(sd,source.getKey(), source.getValue(), dest.getKey(), dest.getValue());
+					Connection conn = new Connection(sd,source.first, source.second, dest.first, dest.second);
 					container.addConnection(sd.getName(), conn);
 				}
 			}
 		}
 	}
 
+	
 	public Pair<ComponentInstance, Port> getComponentAndPort(FolFormula f, ComponentType container) {
 		// We expect the formula to be <<component.port>>, or <<port>>
 		if (f instanceof SymbolReferenceTerm) {
-			//This is a port which we shuld be able to get from the component itself
+			//This is a port which we should be able to get from the component itself
 			String portname = ((SymbolReferenceTerm) f).getSymbol().getName();
-			return (new Pair<ComponentInstance,Port>(ComponentInstance.self,container.getPort(portname)));
+			return (Pair.of(ComponentInstance.self,container.getPort(portname)));
 		} else if (f instanceof TermMemberSelection) {
 			TermExpression porte = ((TermMemberSelection) f).getMember();
 			TermExpression componente = ((TermMemberSelection) f).getReceiver();
@@ -277,11 +267,11 @@ public class Systems {
 				if (porte instanceof SymbolReferenceTerm) {
 					String portname = ((SymbolReferenceTerm) porte).getSymbol().getName();
 					Port p = subc.getComponentType().getPort(portname);
-					return (new Pair<ComponentInstance,Port>(subc,p)) ;
+					return (Pair.of(subc,p)) ;
 				} else {
 					logger.error("Port expression in component {} is not a symbol reference term)",
 							container.getName());
-					return (new Pair<ComponentInstance,Port>(subc,Port.nil)) ;
+					return (Pair.of(subc,Port.nil)) ;
 				}
 			} else {
 				logger.error("Component expression in component {} is not a symbol reference term)",
@@ -293,9 +283,10 @@ public class Systems {
 					"Port cannot be found in component {} (term denoting a port is not a symbol reference or a term selection)",
 					container.getName());
 		}
-		return (new Pair<ComponentInstance,Port>(ComponentInstance.nil,Port.nil)) ;
+		return (Pair.of(ComponentInstance.nil,Port.nil)) ;
 	}
 
+	
 	@Override
 	public String toString() {
 		String retval = "";
@@ -306,6 +297,7 @@ public class Systems {
 		return retval;
 	}
 
+	
 	public ImlType getCarrierType(ImlType portType, String carrier) {
 		// Retrieve the type
 		if (portType instanceof SimpleTypeReference) {
@@ -314,7 +306,7 @@ public class Systems {
 			List<TypeWithProperties> traits = ImlUtil.getRelationTypes(tr.getType(), TraitExhibition.class);
 			for (TypeWithProperties twp : traits) {
 				if (twp.getType() instanceof SimpleTypeReference && ((SimpleTypeReference) twp.getType())
-						.getType() == stdLibs.getNamedType("iml.systems", carrier + "Carrier")) {
+						.getType() == systemServices.getType(carrier + "Carrier")) {
 					ImlType bound = env.bind(twp.getType());
 					if (bound instanceof SimpleTypeReference) {
 						return ((SimpleTypeReference) bound).getTypeBinding().get(0);
@@ -325,6 +317,7 @@ public class Systems {
 		return null;
 	}
 
+	
 	public ComponentType getComponent(ImlType t) {
 		if (hasComponent(t)) {
 			return components.get(ImlUtil.getTypeName(t, qnp));
@@ -332,10 +325,12 @@ public class Systems {
 		return null;
 	}
 
+	
 	public boolean hasComponent(ImlType t) {
 		return (components.containsKey(ImlUtil.getTypeName(t, qnp)));
 	}
 
+	
 	public void reset() {
 		components.clear();
 	}

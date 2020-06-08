@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.xtext.xbase.lib.Pair;
-
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Inclusion;
 import com.utc.utrc.hermes.iml.iml.NamedType;
@@ -125,19 +123,19 @@ public class ComponentType {
 	public Pair<ComponentInstance,Port> getDest(ComponentInstance s, Port sp) {
 		for(Connection c : connections.values()) {
 			if (c.getSourceComponent() == s && c.getSourcePort() == sp) {
-				return new Pair<ComponentInstance, Port>(c.getTargetComponent(),c.getTargetPort()) ;
+				return Pair.of(c.getTargetComponent(),c.getTargetPort()) ;
 			}
 		}
-		return new Pair<ComponentInstance, Port>(ComponentInstance.nil,Port.nil) ;
+		return Pair.of(ComponentInstance.nil,Port.nil) ;
 	}
 
 	public Pair<ComponentInstance,Port> getSource(ComponentInstance s, Port sp) {
 		for(Connection c : connections.values()) {
 			if (c.getTargetComponent() == s && c.getTargetPort() == sp) {
-				return new Pair<ComponentInstance, Port>(c.getSourceComponent(),c.getSourcePort()) ;
+				return Pair.of(c.getSourceComponent(),c.getSourcePort()) ;
 			}
 		}
-		return new Pair<ComponentInstance, Port>(ComponentInstance.nil,Port.nil) ;
+		return Pair.of(ComponentInstance.nil,Port.nil) ;
 	}
 
 	public ComponentType getContainer() {
