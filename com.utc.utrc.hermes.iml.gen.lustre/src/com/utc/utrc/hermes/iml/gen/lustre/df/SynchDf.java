@@ -14,21 +14,23 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.custom.ImlCustomFactory;
 import com.utc.utrc.hermes.iml.gen.common.systems.Systems;
-import com.utc.utrc.hermes.iml.iml.Annotation;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.Model;
 import com.utc.utrc.hermes.iml.iml.NamedType;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;
 import com.utc.utrc.hermes.iml.iml.Symbol;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
-import com.utc.utrc.hermes.iml.iml.Trait;
-import com.utc.utrc.hermes.iml.lib.ImlStdLib;
+import com.utc.utrc.hermes.iml.lib.OntologicalServices;
+import com.utc.utrc.hermes.iml.lib.SystemsServices;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
 
 public class SynchDf {
 
-	@Inject
-	private ImlStdLib stdLibs;
+	@Inject 
+	private OntologicalServices ontologicalServices;
+
+	@Inject 
+	private SystemsServices systemsServices;
 
 	@Inject
 	@Extension
@@ -71,7 +73,7 @@ public class SynchDf {
 		for (Symbol s : m.getSymbols()) {
 			if (s instanceof NamedType && ! ImlUtil.isPolymorphic(s)) {
 				NamedType nt = (NamedType) s;
-				if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.synchdf.ontological", "Synchronous"))) {
+				if (ontologicalServices.isSynchronous(nt)) {	
 					Node node = processNode(ImlCustomFactory.INST.createSimpleTypeReference(nt));
 					nodes.put(ImlUtil.getTypeName(ImlCustomFactory.INST.createSimpleTypeReference(nt), qnp), node);
 				}
@@ -95,7 +97,7 @@ public class SynchDf {
 			}
 		}
 
-		if (ImlUtil.exhibits(tr, (Trait) stdLibs.getNamedType("iml.systems", "Component"))) {
+		if (systemsServices.isComponent(tr.getType())) {
 			retval.setComponent(true);
 			retval.setComponentType(sys.getComponent(tr));
 		}
@@ -128,7 +130,7 @@ public class SynchDf {
 
 	
 	public boolean isLet(SymbolDeclaration s ) {
-		return (ImlUtil.hasAnnotation((SymbolDeclaration) s, (Annotation) stdLibs.getNamedType("iml.synchdf.ontological", "Let"))) ;
+		return (ImlUtil.hasAnnotation(s, ontologicalServices.getLetAnnotation())) ;
 	}
 
 	public void reset() {

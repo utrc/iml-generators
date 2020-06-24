@@ -42,10 +42,12 @@ import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
 import com.utc.utrc.hermes.iml.iml.SymbolReferenceTerm;
 import com.utc.utrc.hermes.iml.iml.TermExpression;
 import com.utc.utrc.hermes.iml.iml.TermMemberSelection;
-import com.utc.utrc.hermes.iml.iml.Trait;
 import com.utc.utrc.hermes.iml.iml.TraitExhibition;
 import com.utc.utrc.hermes.iml.iml.TypeWithProperties;
-import com.utc.utrc.hermes.iml.lib.ImlStdLib;
+import com.utc.utrc.hermes.iml.lib.ContractsServices;
+import com.utc.utrc.hermes.iml.lib.LangServices;
+import com.utc.utrc.hermes.iml.lib.SmsServices;
+import com.utc.utrc.hermes.iml.lib.SystemsServices;
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider;
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment;
 import com.utc.utrc.hermes.iml.util.ImlUtil;
@@ -59,8 +61,11 @@ public class LustreGenerator {
 	LustreGeneratorServices generatorServices;
 
 	@Inject
-	private ImlStdLib stdLibs;
-
+	private ContractsServices contractServices;
+	
+	@Inject 
+	private LangServices langServices;
+	
 	@Inject
 	@Extension
 	private IQualifiedNameProvider qnp;
@@ -145,11 +150,11 @@ public class LustreGenerator {
 			for (SymbolDeclaration sd : ct.getOtherSymbols()) {
 				if (! sdf.isLet(sd)) {	// never false
 					
-					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Assume"))) {
+					if(ImlUtil.hasAnnotation(sd, contractServices.getAssumeAnnotation())) {
 						processAG(target, tr, typing, sd, 1);
 						continue;
 					}
-					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Guarantee"))) {
+					if(ImlUtil.hasAnnotation(sd, (Annotation) contractServices.getGuaranteeAnnotation())) {
 						processAG(target, tr, typing, sd, 2);
 						continue;
 					} 
@@ -277,13 +282,13 @@ public class LustreGenerator {
 	private String getValueForType(ImlType type) {
 		if (type instanceof SimpleTypeReference) {
 			SimpleTypeReference str = (SimpleTypeReference) type;
-			if (stdLibs.isBool(str)) {
+			if (langServices.isBool(str.getType())) {
 				return "true";
 			}
-			if (stdLibs.isInt(str)) {
+			if (langServices.isInt(str.getType())) {
 				return "0";
 			}
-			if (stdLibs.isReal(str)) {
+			if (langServices.isReal(str.getType())) {
 				return "0.0";
 			}
 			if (ImlUtil.isEnum(str.getType())) {
@@ -371,7 +376,6 @@ public class LustreGenerator {
 
 	
 	private void gatherFromRelation(LustreModel m, SimpleTypeReference str, LustreNode target) {
-//		String type_name = ImlUtil.getTypeName(str, qnp);
 		for (Symbol s : str.getType().getSymbols()) {
 			if (s instanceof SymbolDeclaration) {
 				SymbolDeclaration sd = (SymbolDeclaration) s;
@@ -430,13 +434,11 @@ public class LustreGenerator {
 				
 				
 				if (sd.eContainer() == ctx.getType()) {
-//				if ((sd.eContainer() instanceof Trait && ImlUtil.exhibitsOrRefines(ctx.getType(), (Trait)sd.eContainer())) || 
-//				(sd.eContainer() == ctx.getType())) {
 					toadd = addSymbol(target, name, nbound, LustreElementType.VAR); 
 				} else {
-					if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Assume"))) {
+					if(ImlUtil.hasAnnotation(sd, (Annotation) contractServices.getAssumeAnnotation())) {
 						toadd = addSymbol(target, name, nbound, LustreElementType.FIELD, 1); 											
-					} else if(ImlUtil.hasAnnotation(sd, (Annotation) stdLibs.getNamedType("iml.contracts", "Guarantee"))) {
+					} else if(ImlUtil.hasAnnotation(sd, (Annotation) contractServices.getGuaranteeAnnotation())) {
 						toadd = addSymbol(target, name, nbound, LustreElementType.FIELD, 2); 						
 					} else {
 						toadd = addSymbol(target, name, nbound, LustreElementType.FIELD);
@@ -575,22 +577,6 @@ public class LustreGenerator {
 		}
 	}
 		
-
-	public boolean isDelay(SymbolDeclaration s) {
-		return ImlUtil.hasType(s.getType(), stdLibs.getNamedType("iml.sms", "delay"));
-	}
-
-	public boolean isInput(SymbolDeclaration sd) {
-		if ( ImlUtil.exhibits(sd.getType(), (Trait) stdLibs.getNamedType("iml.systems", "In")   ) ) {
-			return true ;
-		}
-		return false ;
-	}
-	
-	public boolean isDelay(ImlType st) {
-		return (st == stdLibs.getNamedType("iml.sms", "delay"));
-	}
-
 	public boolean isSimpleTypeReference(ImlType imlType) {
 		return (imlType instanceof SimpleTypeReference);
 	}
@@ -637,14 +623,6 @@ public class LustreGenerator {
 	public String serialize(LustreModel m) {
 		return generatorServices.serialize(m);
 	}
-
-//	public String serializeAndMap(LustreModel m) {
-//		return generatorServices.serialize(m, lustre2Iml);
-//	}	
-	
-//	public String serialize(LustreNode n) {
-//		return generatorServices.serialize(n);
-//	}
 
 	public Map<String, String> getMapLustre2Iml() {
 		return lustre2Iml;

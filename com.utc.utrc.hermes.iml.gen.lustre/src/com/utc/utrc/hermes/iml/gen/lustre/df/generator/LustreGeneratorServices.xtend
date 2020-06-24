@@ -38,7 +38,9 @@ import com.utc.utrc.hermes.iml.iml.Trait
 import com.utc.utrc.hermes.iml.iml.TruthValue
 import com.utc.utrc.hermes.iml.iml.TupleConstructor
 import com.utc.utrc.hermes.iml.iml.TupleType
-import com.utc.utrc.hermes.iml.lib.ImlStdLib
+import com.utc.utrc.hermes.iml.lib.LangServices
+import com.utc.utrc.hermes.iml.lib.OntologicalServices
+import com.utc.utrc.hermes.iml.lib.SystemsServices
 import com.utc.utrc.hermes.iml.typing.ImlTypeProvider
 import com.utc.utrc.hermes.iml.typing.TypingEnvironment
 import com.utc.utrc.hermes.iml.util.ImlUtil
@@ -58,10 +60,16 @@ class LustreGeneratorServices {
 	IQualifiedNameProvider qnp;
 
 	@Inject
-	ImlStdLib stdLibs;
+	OntologicalServices ontologicalServices;
 
-	Map<String, SymbolReferenceTerm> functional_nodes ;
-	Map<String, SymbolDeclaration> global_constants ;
+	@Inject
+	SystemsServices systemsServices;
+
+	@Inject
+	LangServices langServices;
+
+	Map<String, SymbolReferenceTerm> functional_nodes;
+	Map<String, SymbolDeclaration> global_constants;
 
 	Map<String, String> lustre2Iml;
 	List<String> nodeCallOrder;
@@ -632,7 +640,7 @@ class LustreGeneratorServices {
 		if (rcv instanceof SymbolReferenceTerm && 
 			(rcv as SymbolReferenceTerm).symbol instanceof NamedType) {
 			var NamedType nt = (rcv as SymbolReferenceTerm).symbol as NamedType;
-			var Trait t = (stdLibs.getNamedType("iml.synchdf.ontological", "Synchronous") as Trait)
+			var Trait t = ontologicalServices.getTrait("Synchronous");
 			var singleElementEnum = false;
 			if (nt.restriction instanceof EnumRestriction) {
 				var enumRestriction = (nt.restriction) as EnumRestriction;
@@ -657,7 +665,7 @@ class LustreGeneratorServices {
 		var retval = false;
 		if (sd.eContainer instanceof NamedType) {
 			var NamedType nt = sd.eContainer as NamedType;
-			var Trait t = (stdLibs.getNamedType("iml.synchdf.ontological", "Synchronous") as Trait)
+			var Trait t = ontologicalServices.getTrait("Synchronous")
 			var singleElementEnum = false;
 			if (nt.restriction instanceof EnumRestriction) {
 				var enumRestriction = (nt.restriction) as EnumRestriction;
@@ -777,7 +785,7 @@ class LustreGeneratorServices {
 		if (e instanceof SymbolReferenceTerm) {
 			if (e.symbol instanceof SymbolDeclaration) {
 				if (ImlUtil.exhibits((e.symbol as SymbolDeclaration).type,
-					( stdLibs.getNamedType("iml.systems", "Port") as Trait))) {
+					( systemsServices.portTrait))) {
 					return true;
 				}
 			}
@@ -786,7 +794,7 @@ class LustreGeneratorServices {
 	}
 
 	def isCarrierAccess(TermExpression e) {
-		var data = ImlUtil.findSymbol(stdLibs.getNamedType("iml.systems", "DataCarrier"), "data")
+		var data = systemsServices.dataCarrierDataVar
 		if (e instanceof SymbolReferenceTerm) {
 			if ((e as SymbolReferenceTerm).symbol instanceof SymbolDeclaration) {
 				if (((e as SymbolReferenceTerm).symbol as SymbolDeclaration) == data) {
@@ -886,9 +894,9 @@ class LustreGeneratorServices {
 	
 	def String toLustreName(ImlType t) {
 		if (t instanceof SimpleTypeReference) {
-			if (t.type === stdLibs.boolType) return "bool" ;
-			if (t.type === stdLibs.intType) return "int";
-			if (t.type === stdLibs.realType) return "real";
+			if (langServices.isBool(t.type)) return "bool" ;
+			if (langServices.isInt(t.type)) return "int";
+			if (langServices.isReal(t.type)) return "real";
 		}
 		var String imlName = ImlUtil.getTypeName(t,qnp);
 		var String name = typeNameWithReplacement(imlName);
@@ -935,10 +943,9 @@ class LustreGeneratorServices {
 			for (s : t.type.symbols) {
 				if (! (s instanceof Assertion)) {
 					var boundtype = ctx.bind(s.type);
-					if (qnp.getFullyQualifiedName((boundtype as SimpleTypeReference).type).toString().equals(
-						"iml.lang.Bool") ||
-						qnp.getFullyQualifiedName((boundtype as SimpleTypeReference).type).toString().equals(
-							"iml.lang.Int")) {
+					if (langServices.isBool((boundtype as SimpleTypeReference).type) ||
+						langServices.isInt((boundtype as SimpleTypeReference).type)
+					) {
 						retval.add(sofar + "." + s.name);
 					} else {
 						retval.addAll(getSuffix(sofar + "." + s.name, boundtype, tr));
