@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+
+<toc label="IML Generators"  link_to="../com.utc.utrc.hermes.docs/toc.xml#extensions">
+	<topic label="IML Generators Documentation" href="html/.main.md.html">
+	   <topic label="SMT Generator" href="html/.gen_smt.md.html">
+	   </topic>
+	   <topic label="Lustre Generator" href="html/.gen_lustre.md.html">
+	   </topic>
+	   <topic label="NuSMV Generator" href="html/.gen_nusmv.md.html">
+	   </topic>
+	</topic>
+</toc>
