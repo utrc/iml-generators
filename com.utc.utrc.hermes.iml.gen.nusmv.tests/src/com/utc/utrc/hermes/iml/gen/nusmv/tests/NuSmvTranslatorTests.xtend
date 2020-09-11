@@ -11,7 +11,7 @@ import com.utc.utrc.hermes.iml.tests.TestHelper
 import org.junit.Test
 import com.utc.utrc.hermes.iml.util.FileUtil
 import com.utc.utrc.hermes.iml.iml.Model
-import com.utc.utrc.hermes.iml.gen.nusmv.systems.Systems
+import com.utc.utrc.hermes.iml.gen.common.systems.Systems
 import com.utc.utrc.hermes.iml.gen.nusmv.generator.Configuration
 import com.utc.utrc.hermes.iml.gen.nusmv.generator.NuSmvGenerator
 import com.utc.utrc.hermes.iml.gen.nusmv.sms.Sms

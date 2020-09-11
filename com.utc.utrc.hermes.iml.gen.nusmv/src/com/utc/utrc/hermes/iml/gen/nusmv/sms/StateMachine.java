@@ -3,7 +3,7 @@ package com.utc.utrc.hermes.iml.gen.nusmv.sms;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.utc.utrc.hermes.iml.gen.nusmv.systems.ComponentType;
+import com.utc.utrc.hermes.iml.gen.common.systems.ComponentType;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.ImlType;
 import com.utc.utrc.hermes.iml.iml.SimpleTypeReference;

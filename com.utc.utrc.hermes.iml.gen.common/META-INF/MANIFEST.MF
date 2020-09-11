@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Systems
+Bundle-SymbolicName: com.utc.utrc.hermes.iml.gen.common
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: UTC
+Automatic-Module-Name: com.utc.utrc.hermes.iml.gen.common.systems
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: org.eclipse.xtext.naming
+Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
+ org.slf4j.api,
+ org.eclipse.emf.ecore
+Export-Package: com.utc.utrc.hermes.iml.gen.common.systems
