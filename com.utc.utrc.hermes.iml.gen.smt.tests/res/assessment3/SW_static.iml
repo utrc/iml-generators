@@ -134,7 +134,7 @@ trait WaypointManagerTrait refines (Component,Thread,Contract){
 type WaypointManager exhibits (WaypointManagerTrait) ;
 type WaypointManager_dot_Impl exhibits(WaypointManagerTrait);
 
-trait UARTDriverTrait refines (Component,Thread,Contract){
+trait UARTDriverTrait refines (Component,Thread,Contract) {
 	position_status_in : InEventDataPort < Bool,Coordinate_dot_Impl > ;
 	waypoint_out : OutEventDataPort < Bool,MissionWindow_dot_Impl > ;
 	position_status_out : OutEventDataPort < Bool,Coordinate_dot_Impl > ;
