@@ -6,5 +6,6 @@ public enum NuSmvElementType {
 	DEFINE,
 	TRANSITION,
 	INIT,
-	INVAR
+	INVAR,
+	LTLSPEC
 }

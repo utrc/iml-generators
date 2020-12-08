@@ -53,7 +53,10 @@ public class Sms {
 	private IQualifiedNameProvider qnp;
 
 	private static final Logger logger = Logger.getLogger(Sms.class);
-
+	
+	final static String STATE_MACHINE_TRAIT = "ValidTransition" ;
+	final static String EMPTY_STATE = "EmptyState" ;
+	
 	// TODO need to handle polymorphic states
 	private Map<String, State> states;
 	// TODO need to handle polymorphic state machines
@@ -107,7 +110,7 @@ public class Sms {
 	}
 
 	public void process(NamedType nt) {
-		if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.sms", "StateMachine"))) {
+		if (ImlUtil.exhibits(nt, (Trait) stdLibs.getNamedType("iml.sms", STATE_MACHINE_TRAIT))) {
 			logger.info("Processing type  " + qnp.getFullyQualifiedName(nt));
 			StateMachine sm = processStateMachine(ImlCustomFactory.INST.createSimpleTypeReference(nt));
 			
@@ -138,14 +141,9 @@ public class Sms {
 		}
 		retval.setSmType(tr);
 
-		SymbolDeclaration invariant = ImlUtil.findSymbol(tr.getType(), "invariant");
 		SymbolDeclaration transition = ImlUtil.findSymbol(tr.getType(), "transition");
 		SymbolDeclaration init = ImlUtil.findSymbol(tr.getType(), "init");
 
-		if (invariant != null && invariant.getDefinition() != null) {
-			logger.info("Found invariant " + invariant.getName() );
-			retval.setInvariant(invariant.getDefinition());
-		}
 		if (transition != null && transition.getDefinition() != null) {
 			logger.info("Found transition function " + transition.getName() );
 			retval.setTransition(transition.getDefinition());
@@ -163,13 +161,21 @@ public class Sms {
 				process(c.getSubs().get(cname).getComponentType().getType()) ;
 			}
 		}
+		//There could be symbols here that are state machines as well.
+		for(SymbolDeclaration d : tr.getType().getSymbols()) {
+			if ( ImlUtil.exhibits(d.getType(), (Trait) stdLibs.getNamedType("iml.sms", STATE_MACHINE_TRAIT))) {
+				process(d.getType());
+			}
+		}
+		
+		
 		sms.put(ImlUtil.getTypeName(tr, qnp), retval);
 		return retval;
 	}
 	
 	public State processState(SimpleTypeReference type) {
 		
-		if (type.getType() == stdLibs.getNamedType("iml.sms","Stateless")) {
+		if (type.getType() == stdLibs.getNamedType("iml.sms",EMPTY_STATE)) {
 			logger.info("The sate machine is stateless.");
 			return State.stateless;
 		}
@@ -189,7 +195,7 @@ public class Sms {
 			List<TypeWithProperties> traits = ImlUtil.getRelationTypes(tr.getType(), TraitExhibition.class);
 			for (TypeWithProperties twp : traits) {
 				if (twp.getType() instanceof SimpleTypeReference && ((SimpleTypeReference) twp.getType())
-						.getType() == stdLibs.getNamedType("iml.sms", "StateMachine")) {
+						.getType() == stdLibs.getNamedType("iml.sms", STATE_MACHINE_TRAIT)) {
 					ImlType bound = env.bind(twp.getType());
 					if (bound instanceof SimpleTypeReference) {
 						return ((SimpleTypeReference) bound).getTypeBinding().get(0);
