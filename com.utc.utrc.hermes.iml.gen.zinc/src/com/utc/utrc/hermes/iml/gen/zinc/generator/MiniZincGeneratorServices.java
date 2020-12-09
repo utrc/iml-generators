@@ -401,18 +401,18 @@ public class MiniZincGeneratorServices {
 
 	public int getIntConstant(SymbolDeclaration s) {
 		NumberLiteral v = (NumberLiteral) s.getDefinition().getLeft();
-		if (((NumberLiteral) s.getDefinition().getLeft()).isNeg()) {
-			return (-v.getValue());
+		if (((NumberLiteral) s.getDefinition().getLeft()).getValue().intValue() < 0) {
+			return (-v.getValue().intValue());
 		}
-		return (v.getValue());
+		return (v.getValue().intValue());
 	}
 
 	public float getRealConstant(SymbolDeclaration s) {
 		FloatNumberLiteral v = (FloatNumberLiteral) s.getDefinition().getLeft();
-		if (((FloatNumberLiteral) s.getDefinition().getLeft()).isNeg()) {
-			return (-v.getValue());
+		if (((FloatNumberLiteral) s.getDefinition().getLeft()).getValue().floatValue() < 0) {
+			return (-v.getValue().floatValue());
 		}
-		return (v.getValue());
+		return (v.getValue().floatValue());
 	}
 
 	/*
@@ -550,11 +550,11 @@ public class MiniZincGeneratorServices {
 		} else if (e instanceof ParenthesizedTerm) {
 			return processIntegerExpression(prefix, builder, ctx, ((ParenthesizedTerm) e).getSub(), map);
 		} else if (e instanceof NumberLiteral) {
-			IntegerConstant c = new IntegerConstant(((NumberLiteral) e).getValue());
-			if (((NumberLiteral) e).isNeg()) {
-				return new IntegerConstant(-((NumberLiteral) e).getValue());
+			IntegerConstant c = new IntegerConstant(((NumberLiteral) e).getValue().intValue());
+			if (((NumberLiteral) e).getValue().intValue() < 0) {
+				return new IntegerConstant(-((NumberLiteral) e).getValue().intValue());
 			}
-			return new IntegerConstant(((NumberLiteral) e).getValue());
+			return new IntegerConstant(((NumberLiteral) e).getValue().intValue());
 		} else if (e instanceof TailedExpression) {
 			FolFormula left = e.getLeft() ;
 			ExpressionTail tail = ((TailedExpression) e).getTail() ;
