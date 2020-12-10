@@ -1,0 +1,49 @@
+package optimization.filtering5.filterlib ;
+
+type FilterType enum {Bypass, Boundary, Internal};
+
+trait TimeConsuming {
+	exec_time : Int;
+}
+trait Expensive {
+	cost : Int;
+}
+
+trait BasicFilter {
+	filter_type : FilterType;
+}
+
+trait FilterTimingModel refines (BasicFilter,TimeConsuming) {
+	assert "Filter timing model"{ 
+		if (filter_type = FilterType.Bypass) {
+			exec_time = 0 
+		} else {
+			if (filter_type = FilterType.Boundary){
+				exec_time = 200
+			} else {
+				exec_time = 100					
+			}
+		} 
+	} ;
+}
+
+trait FilterCostModel refines (BasicFilter,Expensive){
+	assert "Filter cost model"{ 
+		if (filter_type = FilterType.Bypass) {
+			cost = 0
+		} else {
+			if (filter_type = FilterType.Boundary){
+				cost = 10
+			} else {
+				cost = 1
+			}
+		} 
+	} ;
+}
+
+type EventPort {
+	timestamp : Int ;
+	data : Bool ;	
+}
+
+

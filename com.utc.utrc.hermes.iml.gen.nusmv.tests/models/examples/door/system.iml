@@ -1,0 +1,69 @@
+package com.rtx.hermes.examples.sm;
+import iml.sms.* ;
+import iml.systems.*;
+import iml.queries.*;
+import iml.ltl.* ;
+
+/*State type definition*/
+type State enum {OPEN, CLOSED, LOCKED} ;
+
+/*Input data type*/
+type Input enum {OPEN,CLOSE, LOCK,UNLOCK};
+
+/*The controller state machine definition*/
+type DoorController exhibits(ValidTransition<State>){
+	/*The input*/
+	input_command : Input ;
+	/*The initial condition*/
+	init : State->Bool := fun(x:State) : Bool {x = State.OPEN};
+	/*The transition function*/
+	transition : (State,State) -> Bool := fun(x:State,xp:State) {
+		xp = case {
+			x = State.OPEN && input_command = Input.CLOSE : State.CLOSED ;
+			x = State.CLOSED && input_command = Input.LOCK : State.LOCKED;
+			x = State.CLOSED && input_command = Input.OPEN : State.OPEN;
+			x = State.LOCKED && input_command = Input.UNLOCK : State.CLOSED;
+			true : x ;
+		}
+	};
+	/*The definition of an output*/
+	out_signal : Bool := (state = State.OPEN) ;
+};
+
+type DoorGenerator exhibits(ValidTransition<State>) {
+	init : State->Bool := fun(x:State) : Bool {x = State.OPEN};
+	/*The transition function*/
+	transition : (State,State) -> Bool := fun(x:State,xp:State) {
+		xp = case {
+			x = State.OPEN : State.CLOSED ;
+			x = State.CLOSED : State.LOCKED;
+			x = State.LOCKED : State.OPEN;
+			true : x ;
+		}
+	};
+	/*The definition of an output*/
+	out_command : Input :=  case {
+		state = State.OPEN : Input.CLOSE ;
+		state = State.CLOSED : Input.LOCK ;
+		state = State.LOCKED : Input.UNLOCK;
+		true : Input.CLOSE ;
+	};
+}
+
+type ComposedState {
+	c_state : State ;
+	g_state : State ;
+}
+
+type DoorSystem exhibits(ValidTransition<ComposedState>){
+	controller : DoorController ;
+	generator : DoorGenerator ;
+	//need some connections here
+	assert {generator.out_command = controller.input_command} ;
+	assert {state.g_state = generator.state && state.c_state = controller.state};
+}
+
+property : Property<ComposedState> := fun(s:ComposedState) : Bool { s.c_state = State.LOCKED };
+query : Bool := smSat<ComposedState,DoorSystem>( ltlF<ComposedState>(ltlAtom<ComposedState>( property )) ) ;
+
+

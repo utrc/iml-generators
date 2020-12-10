@@ -16,6 +16,7 @@ public class NuSmvModule  {
 	private Map<String,NuSmvSymbol> inits;
 	private Map<String,NuSmvSymbol> trans ;
 	private Map<String,NuSmvSymbol> invar ;
+	private Map<String,NuSmvSymbol> ltlspecs ;
 	private NuSmvModel container ;
 
 	private boolean is_enum ;
@@ -29,6 +30,7 @@ public class NuSmvModule  {
 		inits = new HashMap<String,NuSmvSymbol>();
 		trans = new HashMap<String,NuSmvSymbol>();
 		invar = new HashMap<String,NuSmvSymbol>(); 
+		ltlspecs = new HashMap<String,NuSmvSymbol>(); 
 		this.container = null;
 		literals = new ArrayList<>();
 		this.name = name ;
@@ -41,6 +43,7 @@ public class NuSmvModule  {
 		inits = new HashMap<String,NuSmvSymbol>();
 		trans = new HashMap<String,NuSmvSymbol>();
 		invar = new HashMap<String,NuSmvSymbol>(); 
+		ltlspecs = new HashMap<String,NuSmvSymbol>(); 
 		this.container = m;
 		literals = new ArrayList<>();
 	}
@@ -68,6 +71,10 @@ public class NuSmvModule  {
 	public Map<String, NuSmvSymbol> getInvar() {
 		return invar;
 	}
+	
+	public Map<String, NuSmvSymbol> getSpecs() {
+		return ltlspecs;
+	}
 
 	
 
@@ -94,6 +101,7 @@ public class NuSmvModule  {
 			case TRANSITION : trans.put(s.getName(), s); s.setContainer(this);break;
 			case VAR : variables.put(s.getName(), s); s.setContainer(this);break;
 			case INVAR : invar.put(s.getName(), s) ; s.setContainer(this);break;
+			case LTLSPEC : ltlspecs.put(s.getName(), s) ; s.setContainer(this);break;
 			default : break;
 		} 
 	}

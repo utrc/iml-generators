@@ -6,9 +6,9 @@ import iml.lang.* ;
 import iml.ports.* ;
 import iml.sms.* ;
 
-type RespondsState enum { s0 , s1 , s2 } ;
+type RespondsState  enum { s0 , s1 , s2 } ;
 
-type responds_once exhibits(Component, StateMachine<RespondsState>) {
+type responds_once exhibits(Component, ValidTransition<RespondsState>) {
 	a : InDataPort<Bool> ;
 	b : InDataPort<Bool> ;
 	// Initialization of the state variable
@@ -21,12 +21,12 @@ type responds_once exhibits(Component, StateMachine<RespondsState>) {
 					x = RespondsState.s0 && a.data :  RespondsState.s2 ;
 					x = RespondsState.s1 && a.data : RespondsState.s0 ;
 					true : x ;
-				}	  
+				}	   
 	} ;
 	holds : OutDataPort<Bool> := some(x:OutDataPort<Bool>) { x.data = (state = RespondsState.s0 ||  state = RespondsState.s1) };
 }
 
-type one_request_at_a_time exhibits(Component,StateMachine<RespondsState>)  {
+type one_request_at_a_time exhibits(Component,ValidTransition<RespondsState>)  {
 	a : InDataPort<Bool> ;
 	b : InDataPort<Bool> ;
 	init : RespondsState -> Bool := fun(x:RespondsState) : Bool { x = RespondsState.s0 };
@@ -41,7 +41,7 @@ type one_request_at_a_time exhibits(Component,StateMachine<RespondsState>)  {
 	} ;
 	holds : OutDataPort<Bool> :=  some(x:OutDataPort<Bool>) { x.data = ( state = RespondsState.s0 ||  state = RespondsState.s1 )};
 }
-type GenericService exhibits(Component,Contract,Thread,StateMachine<Bool>) {
+type GenericService exhibits(Component,Contract,Thread,ValidTransition<EmptyState>) {
 	CmdRequest_in : InEventDataPort < Bool, Bool > ;
 	CmdResponse_out : OutEventDataPort < Bool, Bool > ;
 	SubRequest_out : OutEventDataPort < Bool, Bool > ;
@@ -62,11 +62,11 @@ type GenericService exhibits(Component,Contract,Thread,StateMachine<Bool>) {
 //	d2 : delay ;
 //	c7 : Connector < FlowPath > := connect<FlowPath>(processing_path1,d2.f);
 //	c8 : Connector < Int > := connect<Int>(1,d2.n);
-	holds : OutDataPort<Bool> :=  some(x:OutDataPort<Bool>) { x.data = (g1monitor.holds.data && g2monitor.holds.data)};
-	guarantee : Bool := holds.data ;
-// guarantee : Bool := g1monitor.holds.data && g2monitor.holds.data ;
+	//holds : OutDataPort<Bool> :=  some(x:OutDataPort<Bool>) { x.data = (g1monitor.holds.data && g2monitor.holds.data)};
+	assert { guarantee = (g1monitor.holds.data && g2monitor.holds.data) } ;
+	assert { assumption = true } ;
 }
-type  GenericLastService exhibits(Component,Contract,Thread,StateMachine<Bool>){
+type  GenericLastService exhibits(Component,Contract,Thread,ValidTransition<EmptyState>){
 	CmdRequest_in : InEventDataPort < Bool , Bool> ;
 	CmdResponse_out : OutEventDataPort < Bool , Bool> ;
 	// processing_path : FlowPath ;
@@ -77,11 +77,13 @@ type  GenericLastService exhibits(Component,Contract,Thread,StateMachine<Bool>){
 	// d1 : delay ;
 	// c5 : Connector < FlowPath > := connect<FlowPath>(processing_path,d1.f);
 	// c6 : Connector < Int > := connect<Int>(1,d1.n);
-	holds : OutDataPort<Bool> :=  some(x:OutDataPort<Bool>) { x.data = gmonitor.holds.data};
-	guarantee : Bool := holds.data ;
-// guarantee : Bool := g1monitor.holds.data && g2monitor.holds.data ;
+	//holds : OutDataPort<Bool> :=  some(x:OutDataPort<Bool>) { x.data = gmonitor.holds.data};
+	assert {guarantee = gmonitor.holds.data };
+	assert {assumption = true } ;
+	//guarantee : Bool := holds.data ;
+	// guarantee : Bool := g1monitor.holds.data && g2monitor.holds.data ;
 }
-type  UxAS_responds exhibits(Component,Contract,System,StateMachine<Bool>) {
+type  UxAS_responds exhibits(Component,Contract,System,ValidTransition<EmptyState>) {
 	AutomationRequest_in : InEventDataPort < Bool , Bool> ;
 	AutomationResponse_out : OutEventDataPort < Bool , Bool> ;
 	// processing_path : FlowPath ;
@@ -103,7 +105,7 @@ type  UxAS_responds exhibits(Component,Contract,System,StateMachine<Bool>) {
 	g : OutDataPort<Bool> :=  some(x:OutDataPort<Bool>) { x.data = gmonitor.holds.data};
 	guarantee : Bool := g.data ;
 }
-type UxAS_responds_dot_i exhibits(Component,Contract,System,StateMachine<Bool>) {
+type UxAS_responds_dot_i exhibits(Component,Contract,System,ValidTransition<EmptyState>) {
 	AutomationRequest_in : InEventDataPort < Bool , Bool> ;
 	AutomationResponse_out : OutEventDataPort < Bool , Bool> ;
 	AutomationRequestValidator : GenericService ;

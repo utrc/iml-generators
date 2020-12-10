@@ -1,0 +1,93 @@
+package com.rtx.hermes.examples.sm;
+import iml.sms.* ;
+import iml.systems.*;
+import iml.queries.*;
+import iml.ltl.* ;
+import iml.contracts.*;
+
+/*Input data type*/
+type Input enum {OPEN,CLOSE, LOCK,UNLOCK};
+
+type DoorController_G_State enum {OPEN, CLOSED, LOCKED, FAIL};
+
+type DoorControllerSpec_G exhibits(ValidTransition<DoorController_G_State>){
+	/*The input*/
+	input_command : Input ;
+	output_signal : Bool ;
+
+	/*The initial condition*/
+	init : DoorController_G_State->Bool := fun(x:DoorController_G_State) : Bool {x = DoorController_G_State.OPEN};
+	
+	/*The transition function*/
+	transition : (DoorController_G_State,DoorController_G_State) -> Bool := fun(x:DoorController_G_State,xp:DoorController_G_State) {
+		xp = case {
+			x = DoorController_G_State.OPEN && input_command = Input.CLOSE && output_signal = false : DoorController_G_State.CLOSED ;
+			x = DoorController_G_State.OPEN && input_command = Input.OPEN && output_signal = true : DoorController_G_State.OPEN ;
+			x = DoorController_G_State.CLOSED && input_command = Input.OPEN && output_signal = true : DoorController_G_State.OPEN ;
+			x = DoorController_G_State.CLOSED && input_command = Input.CLOSE && output_signal = false : DoorController_G_State.CLOSED ;
+			true : DoorController_G_State.FAIL ;
+		}
+	};
+	
+};
+
+/*The controller state machine definition*/
+type DoorControllerSpec exhibits(Component, Contract, ValidTransition<EmptyState>){
+	/*The input*/
+	input_command : InDataPort<Input> ;
+	output_signal : OutDataPort<Bool> ;
+	
+	assumption : Bool := input_command.data = Input.OPEN || input_command.data = Input.CLOSE;
+	
+	g : DoorControllerSpec_G ;
+	
+	assert { g.input_command = input_command.data } ;
+	assert { g.output_signal = output_signal.data} ;
+	
+	guarantee : Bool := g.state != DoorController_G_State.FAIL ;
+};
+
+
+type DoorController_G exhibits(ValidTransition<DoorController_G_State>){
+	/*The input*/
+	input_command : Input ;
+	output_signal : Bool ;
+
+	/*The initial condition*/
+	init : DoorController_G_State->Bool := fun(x:DoorController_G_State) : Bool {x = DoorController_G_State.OPEN};
+	
+	/*The transition function*/
+	transition : (DoorController_G_State,DoorController_G_State) -> Bool := fun(x:DoorController_G_State,xp:DoorController_G_State) {
+		xp = case {
+			x = DoorController_G_State.OPEN && input_command = Input.CLOSE && output_signal = false : DoorController_G_State.CLOSED ;
+			x = DoorController_G_State.OPEN && input_command = Input.OPEN && output_signal = true : DoorController_G_State.OPEN ;
+			x = DoorController_G_State.CLOSED && input_command = Input.OPEN && output_signal = true : DoorController_G_State.OPEN ;
+			x = DoorController_G_State.CLOSED && input_command = Input.LOCK && output_signal = true : DoorController_G_State.LOCKED ;
+			x = DoorController_G_State.CLOSED && input_command = Input.CLOSE && output_signal = false : DoorController_G_State.CLOSED ;
+			x = DoorController_G_State.LOCKED && input_command = Input.UNLOCK && output_signal = true : DoorController_G_State.CLOSED ;
+			x = DoorController_G_State.LOCKED && input_command = Input.LOCK && output_signal = true : DoorController_G_State.LOCKED ;
+			x = DoorController_G_State.LOCKED && input_command = Input.OPEN && output_signal = true : DoorController_G_State.LOCKED ;
+			true : DoorController_G_State.FAIL ;
+		}
+	};
+	
+};
+
+/*The controller state machine definition*/
+type DoorController exhibits(Component, Contract, ValidTransition<EmptyState>){
+	/*The input*/
+	input_command : InDataPort<Input> ;
+	output_signal : OutDataPort<Bool> ;
+	
+	assumption : Bool := true;
+	
+	g : DoorController_G ;
+	
+	assert { g.input_command = input_command.data } ;
+	assert { g.output_signal = output_signal.data} ;
+	
+	guarantee : Bool := g.state != DoorController_G_State.FAIL ;
+};
+
+query : Bool := isRefinement<DoorControllerSpec, DoorController> ;
+

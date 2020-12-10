@@ -1,0 +1,121 @@
+package optimization.filtering3 ;
+import iml.queries.* ;
+
+type FilterType enum {Bypass, External, Internal};
+
+trait TimeConsuming {
+	exec_time : Int;
+}
+
+//Filter properties and cost model
+trait Filter refines (TimeConsuming){
+	filter_type : FilterType ;
+	filter_cost : Int ;
+	assert { 
+		if (filter_type = FilterType.Bypass) {
+			filter_cost = 0 &&
+			exec_time = 0 
+		} else {
+			if (filter_type = FilterType.External){
+				filter_cost = 10 &&
+				exec_time = 200
+			} else {
+				filter_cost = 1 &&
+				exec_time = 100					
+			}
+		} 
+	} ;
+}
+
+//Error propagation model of a filtering channel
+type FilteringChannel exhibits (Filter){
+	input_e : Bool ;
+	output_e : Bool ;
+	assert { 
+		if (filter_type = FilterType.Bypass) {
+			output_e = input_e
+		} else {
+			output_e = false
+		}
+	} ;
+}
+
+//Error propagation model of component type C1
+type C1 exhibits (TimeConsuming){
+	input_e : Bool ;
+	output1_e : Bool ;
+	output2_e : Bool ;
+	assert {
+		output1_e = input_e && 
+		output2_e = input_e &&
+		exec_time = 200 
+	} ;
+}
+
+//Error propagation model of component type C2
+type C2 exhibits (TimeConsuming){
+	input_e : Bool ;
+	output1_e : Bool ;
+	assert {
+		output1_e = input_e &&
+		exec_time = 100 
+	} ;
+}
+
+//Error propagation model of component type C3
+type C3 exhibits (TimeConsuming) {
+	input1_e : Bool ;
+	input2_e : Bool ;
+	output1_e : Bool ;
+	assert {
+		output1_e = (input1_e && input2_e) &&
+		exec_time = 200 
+	} ;
+}
+
+//The system to be optimized
+type System {
+	input_e : Bool ;
+	output_e : Bool ;
+	c1 : C1 ;
+	c2 : C2 ;
+	c3 : C3 ;
+	f1 : FilteringChannel ;
+	f2 : FilteringChannel ;
+	f3 : FilteringChannel ;
+	f4 : FilteringChannel ;
+	
+	//connections
+	assert {
+		input_e = f1.input_e &&
+		f1.output_e = c1.input_e &&
+		c1.output1_e = f2.input_e &&
+		c1.output2_e = f3.input_e &&
+		f2.output_e = c2.input_e &&
+		f3.output_e = c3.input1_e &&
+		c2.output1_e = f4.input_e &&
+		f4.output_e = c3.input1_e &&
+		c3.output1_e = output_e
+	} ;
+	
+	//property
+	//even if the input is compromised, the output should not be
+	//f1 is not an internal filter
+	//execution time must be within budget
+	assert {
+		input_e && ! output_e &&
+		(f1.filter_type != FilterType.Internal) &&
+		(c1.exec_time + c2.exec_time + c3.exec_time + 
+	   		f1.exec_time + f2.exec_time + f3.exec_time + f4.exec_time < 2000)
+	} ;
+	
+}
+
+//Cost function
+cost : System -> Real := 
+	fun(x:System) {
+		x.f1.filter_cost + x.f2.filter_cost + x.f3.filter_cost + x.f4.filter_cost
+	} ;
+
+//Minimization query
+optimal_system : System := min<System>(cost);

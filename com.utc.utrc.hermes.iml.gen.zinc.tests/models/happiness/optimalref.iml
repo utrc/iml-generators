@@ -1,0 +1,65 @@
+package optimization.optimalref ;
+import iml.contracts.* ;
+import iml.queries.* ;
+
+type Spec exhibits(Contract) {
+	in1 : Int ;
+	in2 : Int ;
+	out1 : Int ;
+};
+type A exhibits(Contract) {
+	in1 : Int ;
+	in2 : Int ;
+	out1 : Int ;
+} ;
+type B exhibits(Contract) {
+	in1 : Int ;
+	out1 : Int ;	
+};
+
+type Impl exhibits(Contract){
+	in1 : Int ;
+	in2 : Int ;
+	out1 : Int ;
+	a : A ;
+	b : B ;
+	assert {in1 = a.in1} ;
+	assert {in2 = a.in2} ;
+	assert {a.out1 = b.in1} ;
+	assert {b.out1 = out1} ;
+}
+
+type Refinement {
+	s : Spec ;
+	i : Impl ;
+	
+	assert {
+		s.in1 = i.in1 &&
+		s.in2 = i.in2 &&
+		s.out1 = i.out1
+	} ;
+	
+	assert { s.assumption && 
+			 (i.a.assumption => i.a.guarantee) &&  
+			 (i.b.assumption => i.b.guarantee) =>
+			 s.guarantee
+		   } ;
+	assert { s.assumption && 
+			 (i.a.assumption => i.a.guarantee)  =>
+			 i.b.assumption
+		   } ;
+	assert { s.assumption && 
+			 (i.b.assumption => i.b.guarantee)  =>
+			 i.a.assumption
+		   } ;
+}
+
+implementation_cost : Impl -> Real ;
+refinement_cost : Refinement -> Real := 
+	fun(x:Refinement) {
+		//implementation_cost(x.i)
+		x.i.out1
+	} ;
+
+optimal_refinement : Refinement := min<Refinement>(refinement_cost);
+

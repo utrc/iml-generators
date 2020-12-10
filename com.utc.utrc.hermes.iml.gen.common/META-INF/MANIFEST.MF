@@ -8,6 +8,8 @@ Automatic-Module-Name: com.utc.utrc.hermes.iml.gen.common.systems
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.eclipse.xtext.naming
 Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
- org.slf4j.api,
- org.eclipse.emf.ecore
+ org.eclipse.emf,
+ org.apache.log4j,
+ org.eclipse.emf.ecore,
+ org.eclipse.xtext.xbase.lib
 Export-Package: com.utc.utrc.hermes.iml.gen.common.systems

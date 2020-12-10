@@ -1,0 +1,28 @@
+package com.rtx.hermes.examples.sm;
+import iml.sms.* ;
+
+/*State type definition*/
+type State enum {OPEN, CLOSED, LOCKED} ;
+
+/*Input data type*/
+type Input enum {OPEN,CLOSE, LOCK,UNLOCK};
+
+/*The controller state machine definition*/
+type DoorController exhibits(ValidTransition<State>){
+	/*The input*/
+	inpunt_command : Input ;
+	/*The initial condition*/
+	init : State->Bool := fun(x:State) : Bool {x = State.OPEN};
+	/*The transition function*/
+	transition : (State,State) -> Bool := fun(x:State,xp:State) {
+		xp = case {
+			x = State.OPEN && inpunt_command = Input.CLOSE : State.CLOSED ;
+			x = State.CLOSED && inpunt_command = Input.LOCK : State.LOCKED;
+			x = State.CLOSED && inpunt_command = Input.OPEN : State.OPEN;
+			x = State.LOCKED && inpunt_command = Input.UNLOCK : State.CLOSED;
+			true : x ;
+		}
+	};
+	/*The definition of an output*/
+	out_signal : Bool := (state = State.OPEN) ;
+};
