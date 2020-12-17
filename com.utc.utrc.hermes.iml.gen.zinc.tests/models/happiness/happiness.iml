@@ -27,7 +27,7 @@ type WeekHours {
 
 type Test {
 	X : WeekHours;
-	Y : WeekHours:=X ;
+	Y : (WeekHours, WeekHours) -> (Real, WeekHours):=fun(x:WeekHours,y:WeekHours){(x.e, y)};
 }
 
 //happiness function

@@ -105,8 +105,9 @@ public class MiniZincModel extends ModelBuilder {
     return inModelBuilder;
 	}
 	
-	public MiniZincModel clone(String oldCPModelName, String newCPModelName, MiniZincModel inModelBuilder){
+	public MiniZincModel clone(String newCPModelName, MiniZincModel inModelBuilder){
 		//MiniZincModel newModelBuilder = new MiniZincModel();
+		String oldCPModelName = this.name;
 		List<Element> allElements = this.elements().collect(Collectors.toList());
     
     // Copy constants
@@ -150,9 +151,9 @@ public class MiniZincModel extends ModelBuilder {
     return inModelBuilder;
 	}
 	
-	public MiniZincModel clone(String oldCPModelName, String newCPModelName){
+	public MiniZincModel clone(String newCPModelName){
 		MiniZincModel newModelBuilder = new MiniZincModel();
-		clone(oldCPModelName, newCPModelName, newModelBuilder);
+		clone(newCPModelName, newModelBuilder);
     return newModelBuilder;
 	}	
 	
