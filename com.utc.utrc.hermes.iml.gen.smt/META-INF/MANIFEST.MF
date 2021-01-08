@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Smt
-Bundle-SymbolicName: com.utc.utrc.hermes.iml.gen.smt
+Bundle-SymbolicName: com.utc.utrc.hermes.iml.gen.smt;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: UTC
 Automatic-Module-Name: com.utc.utrc.hermes.iml.gen.smt
@@ -9,7 +9,9 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
  org.eclipse.emf.common;bundle-version="2.13.0",
  org.eclipse.emf.ecore;bundle-version="2.13.0",
- org.eclipse.xtext
+ org.eclipse.xtext,
+ com.utc.utrc.hermes.iml.gen.common,
+ org.eclipse.core.runtime
 Import-Package: com.google.inject
 Export-Package: com.utc.utrc.hermes.iml.gen.smt,
  com.utc.utrc.hermes.iml.gen.smt.encoding,
