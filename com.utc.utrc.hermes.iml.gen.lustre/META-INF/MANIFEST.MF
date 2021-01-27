@@ -12,9 +12,9 @@ Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
  org.junit,
  org.eclipse.xtext.xbase,
  org.slf4j.api,
- com.google.inject;bundle-version="3.0.0",
  com.utc.utrc.hermes.iml.gen.common;bundle-version="1.0.0"
-Import-Package: org.eclipse.xtext.naming
+Import-Package: org.eclipse.xtext.naming,
+ com.google.inject
 Export-Package: com.utc.utrc.hermes.iml.gen.lustre.df,
  com.utc.utrc.hermes.iml.gen.lustre.df.generator,
  com.utc.utrc.hermes.iml.gen.lustre.df.model

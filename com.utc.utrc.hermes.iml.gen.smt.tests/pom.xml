@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>com.utc.utrc.hermes.iml.gen.smt.tests</artifactId>
-	<packaging>eclipse-plugin</packaging>
+	<packaging>eclipse-test-plugin</packaging>
 	<parent>
 		<groupId>com.utc.utrc.hermes.iml.gen</groupId>
 		<artifactId>com.utc.utrc.hermes.iml.gen.parent</artifactId>

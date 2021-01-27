@@ -2,7 +2,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.utc.utrc.hermes.iml.gen.lustre.test</groupId>
   <artifactId>com.utc.utrc.hermes.iml.gen.lustre.test</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <parent>
+		<groupId>com.utc.utrc.hermes.iml.gen</groupId>
+		<artifactId>com.utc.utrc.hermes.iml.gen.parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../releng/com.utc.utrc.hermes.iml.gen.parent</relativePath>
+	</parent>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
@@ -30,4 +35,5 @@
       </plugin>
     </plugins>
   </build>
+  <packaging>eclipse-test-plugin</packaging>
 </project>

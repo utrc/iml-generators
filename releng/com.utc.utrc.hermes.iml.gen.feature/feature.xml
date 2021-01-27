@@ -17,9 +17,9 @@
       [Enter License Description here.]
    </license>
 
-   <includes
-         id="com.utc.utrc.hermes.iml.feature"
-         version="0.0.0"/>
+   <requires>
+      <import feature="com.utc.utrc.hermes.iml.feature" version="1.0.0.qualifier"/>
+   </requires>
 
    <plugin
          id="com.utc.utrc.hermes.iml.gen.smt"

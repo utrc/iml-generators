@@ -375,15 +375,22 @@
 	</dependencies>
 
 	<modules>
-		
-		<module>../../com.utc.utrc.hermes.iml.gen.smt</module>
-		<module>../../com.utc.utrc.hermes.iml.gen.smt.tests</module>
-		<module>../com.utc.utrc.hermes.iml.gen.target</module>
-		<module> ../com.utc.utrc.hermes.iml.gen.report</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.common</module>
 		
 		<module>../../com.utc.utrc.hermes.sexpr</module>
-		<module>../../com.utc.utrc.hermes.iml.gen.common</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.smt</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.smt.tests</module>
+		
 		<module>../../com.utc.utrc.hermes.iml.gen.lustre</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.lustre.test</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.nusmv</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.nusmv.tests</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.zinc</module>
+		<module>../../com.utc.utrc.hermes.iml.gen.zinc.tests</module>
+		
+		<module>../../com.utc.utrc.hermes.iml.gen.docs</module>
 		<module>../com.utc.utrc.hermes.iml.gen.feature</module>
+		<module>../com.utc.utrc.hermes.iml.gen.target</module>
+		<module> ../com.utc.utrc.hermes.iml.gen.report</module>
 	</modules>
 </project>
