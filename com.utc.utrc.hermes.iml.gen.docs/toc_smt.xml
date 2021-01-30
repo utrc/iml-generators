@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+
+<toc label="SMT Generators"  link_to="toc.xml#smtG">
+
+	<topic label="Introduction" href="html/.gen_smt_intro.md.html"> 
+	</topic>
+	
+	<topic label="Input" href="html/.gen_smt_input.md.html"> 
+	</topic>
+	
+	<topic label="Output" href="html/.gen_smt_output.md.html"> 
+	</topic>
+	
+	<topic label="API" href="html/.gen_smt_api.md.html"> 
+	</topic>
+	
+</toc>

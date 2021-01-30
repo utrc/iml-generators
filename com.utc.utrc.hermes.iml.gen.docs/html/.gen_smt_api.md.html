@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.main.md.html</title>
+<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_smt_api.md.html</title>
 
 
 <style type="text/css">
@@ -639,6 +639,57 @@ function setDocumentScrollTop(ypos)
 
 </head>
 <body class="markdown-body">
-<h1> <a id="iml-generators" class="anchor" href="#iml-generators" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML Generators</h1>
+<h1> <a id="iml-to-smt-generator-api" class="anchor" href="#iml-to-smt-generator-api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to SMT Generator: API</h1> 
+<p><code>package com.utc.utrc.hermes.iml.gen.smt.encoding;</code></p> 
+<p>Class <code>ImlSmtEncoder</code> implements the five APIs specified by interface <code>ImlEncoder</code>:</p> 
+<ul> 
+ <li><code>public void encode(Model model)</code></li> 
+ <li><code>public void encode(Symbol symbol)</code></li> 
+ <li><code>public void encode(SymbolDeclaration symbol)</code></li> 
+ <li><code>public void encode(NamedType type)</code></li> 
+ <li><code>public void encode(ImlType imlType)</code></li> 
+</ul> 
+<p>Given a system consisting of potentially multiple IML files, the contents can be read into memory via the API <code>readAllFilesUnderDir(String path)</code> defined in class <code>FileUtil</code> in package <code>com.utc.utrc.hermes.iml.util</code>. For example, <code>List&lt;String&gt; files = FileUtil.readAllFilesUnderDir(&quot;pathString&quot;)</code> reads in content of files in directory pathString. Then an in-memory image of the system can be created by parsing the files and adding the their contents to a resource set. For example, the following code segment will generate the resource set for <code>files</code>.</p> 
+<pre><code>org.eclipse.emf.ecore.resource.ResourceSet rs = null;
+for (final String file : files) {
+  if (rs != null) {
+    rs = imlParseHelper.parse(file, rs).eResource().getResourceSet();
+  } else {
+    rs = imlParseHelper.parse(file).eResource().getResourceSet();
+  }
+}
+</code></pre> 
+<p><code>imlParseHelper</code> is an instance of class <code>ImlParseHelper</code> defined in package <code>com.utc.utrc.hermes.iml</code>.</p> 
+<p>Use the example shown in Section <a href="./.gen_smt_input.md.html">IML to SMT Generator: Input</a> as an example, the following code segment prepares <code>swModel</code> of type <code>Model</code> for <code>smt.example</code>.</p> 
+<pre><code>Model swModel = null;
+EList&lt;Resource&gt; _resources = rs.getResources();
+for (final Resource resource : _resources) {
+  if (((resource.getContents() != null) &amp;&amp; (resource.getContents().size() &gt; 0))) {
+    final EObject model = resource.getContents().get(0);
+    if ((model instanceof Model)) {
+      boolean _equals = ((Model) model).getName().equals(&quot;smt.example&quot;);
+      if (_equals) {
+        swModel = ((Model)model);
+      }
+    }
+  }
+}
+</code></pre> 
+<p>Then the following code segment will encode the <code>Model</code> for named type <code>top_level_dot_Impl</code>.</p> 
+<pre><code>ImlSmtEncoder&lt;SimpleSort, SimpleFunDeclaration, SimpleSmtFormula&gt; encoder;
+encoder.encode(findSymbol(swModel, &quot;top_level_dot_Impl&quot;));
+</code></pre> 
+<p>The above method <code>findSymbol</code> is defined as follows:</p> 
+<pre><code>public Symbol findSymbol(final Model model, final String name) {
+  final Function1&lt;Symbol, Boolean&gt; _function = (Symbol it) -&gt; {
+    return Boolean.valueOf(it.getName().equals(name));
+  };
+  return IterableExtensions.&lt;Symbol&gt;findFirst(model.getSymbols(), _function);
+}    
+</code></pre> 
+<p>The encoding can be displayed by calling method <code>toString()</code> of the <code>encoder</code>.</p> 
+<pre><code>println(encoder.toString());
+</code></pre> 
+<p>Finally, encoding of <code>Symbol</code>, <code>SymbolDeclaration</code>, <code>NamedType</code> and <code>ImlType</code> can be obtained by invoking their respective APIs as shown at the beginning of this section.</p>
 </body>
 </html>
