@@ -8,6 +8,15 @@
             file="toc.xml"
             primary="true">
       </toc>
+      
+      <toc
+            file="toc_smt.xml">
+      </toc>
+      
+      <toc
+            file="toc_lustre.xml">
+      </toc>
+            
    </extension>
 
 </plugin>

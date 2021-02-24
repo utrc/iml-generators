@@ -1,0 +1,718 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_lustre_output.md.html</title>
+
+
+<style type="text/css">
+body {
+	color: #333;
+	font: 13px/1.4 "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+	padding: 0;
+	margin: 0;
+}
+
+a {
+	background: transparent;
+	color: #4183c4;
+	text-decoration: none;
+}
+
+a:active,
+a:hover {
+	outline: 0 none;
+	text-decoration: underline;
+}
+
+abbr[title] {
+	border-bottom: 1px dotted;
+}
+
+b,
+strong {
+	font-weight: bold;
+}
+
+dfn {
+	font-style: italic;
+}
+h1 {
+	font-size: 2em;
+	margin: 0.67em 0;
+}
+mark {
+	background: #ff0;
+	color: #000;
+}
+small {
+	font-size: 80%;
+}
+sub, sup {
+	font-size: 75%;
+	line-height: 0;
+	position: relative;
+	vertical-align: baseline;
+}
+sup {
+	top: -0.5em;
+}
+sub {
+	bottom: -0.25em;
+}
+img {
+	border: 0 none;
+}
+svg:not(:root) {
+	overflow: hidden;
+}
+figure {
+	margin: 1em 40px;
+}
+hr {
+	box-sizing: content-box;
+	height: 0;
+}
+
+code,
+kbd,
+pre,
+samp {
+	font-family: monospace,monospace;
+	font-size: 1em;
+}
+
+pre {
+	overflow: auto;
+	font: 12px Consolas,"Liberation Mono",Menlo,Courier,monospace;
+	margin-bottom: 0;
+	margin-top: 0;
+}
+
+.markdown-body {
+	padding: 30px;
+	font-size: 16px;
+	line-height: 1.6;
+	word-wrap: break-word;
+}
+
+.markdown-body>*:first-child {
+	margin-top: 0 !important;
+}
+
+.markdown-body>*:last-child {
+	margin-bottom: 0 !important;
+}
+
+.markdown-body .absent {
+	color: #c00;
+}
+
+.markdown-body .anchor {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	display: block;
+	padding-right: 6px;
+	padding-left: 30px;
+	margin-left: -30px;
+}
+
+.markdown-body .anchor:focus {
+	outline: none;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+	position: relative;
+	margin-top: 1em;
+	margin-bottom: 16px;
+	font-weight: bold;
+	line-height: 1.4;
+}
+
+.markdown-body h1 .octicon-link,
+.markdown-body h2 .octicon-link,
+.markdown-body h3 .octicon-link,
+.markdown-body h4 .octicon-link,
+.markdown-body h5 .octicon-link,
+.markdown-body h6 .octicon-link {
+	display: none;
+	color: #000;
+	vertical-align: middle;
+}
+
+.markdown-body h1:hover .anchor,
+.markdown-body h2:hover .anchor,
+.markdown-body h3:hover .anchor,
+.markdown-body h4:hover .anchor,
+.markdown-body h5:hover .anchor,
+.markdown-body h6:hover .anchor {
+	padding-left: 8px;
+	margin-left: -30px;
+	line-height: 1;
+	text-decoration: none;
+}
+
+.markdown-body h1:hover .anchor .octicon-link,
+.markdown-body h2:hover .anchor .octicon-link,
+.markdown-body h3:hover .anchor .octicon-link,
+.markdown-body h4:hover .anchor .octicon-link,
+.markdown-body h5:hover .anchor .octicon-link,
+.markdown-body h6:hover .anchor .octicon-link {
+	display: inline-block;
+}
+
+.markdown-body h1 tt,
+.markdown-body h1 code,
+.markdown-body h2 tt,
+.markdown-body h2 code,
+.markdown-body h3 tt,
+.markdown-body h3 code,
+.markdown-body h4 tt,
+.markdown-body h4 code,
+.markdown-body h5 tt,
+.markdown-body h5 code,
+.markdown-body h6 tt,
+.markdown-body h6 code {
+	font-size: inherit;
+}
+
+.markdown-body h1 {
+	padding-bottom: 0.3em;
+	font-size: 2.25em;
+	line-height: 1.2;
+	border-bottom: 1px solid #eee;
+}
+
+.markdown-body h2 {
+	padding-bottom: 0.3em;
+	font-size: 1.75em;
+	line-height: 1.225;
+	border-bottom: 1px solid #eee;
+}
+
+.markdown-body h3 {
+	font-size: 1.5em;
+	line-height: 1.43;
+}
+
+.markdown-body h4 {
+	font-size: 1.25em;
+}
+
+.markdown-body h5 {
+	font-size: 1em;
+}
+
+.markdown-body h6 {
+	font-size: 1em;
+	color: #777;
+}
+
+.markdown-body p,.markdown-body blockquote,
+.markdown-body ul,.markdown-body ol,
+.markdown-body dl,.markdown-body table,
+.markdown-body pre {
+	margin-top: 0;
+	margin-bottom: 16px;
+}
+
+.markdown-body hr {
+	height: 4px;
+	padding: 0;
+	margin: 16px 0;
+	background-color: #e7e7e7;
+	border: 0 none;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+	padding-left: 2em;
+}
+
+.markdown-body ul.no-list,
+.markdown-body ol.no-list {
+	padding: 0;
+	list-style-type: none;
+}
+
+.markdown-body ul ul,
+.markdown-body ul ol,
+.markdown-body ol ol,
+.markdown-body ol ul {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.markdown-body li>p {
+	margin-top: 16px;
+}
+
+.markdown-body dl {
+	padding: 0;
+}
+
+.markdown-body dl dt {
+	padding: 0;
+	margin-top: 16px;
+	font-size: 1em;
+	font-style: italic;
+	font-weight: bold;
+}
+
+.markdown-body dl dd {
+	padding: 0 16px;
+	margin-bottom: 16px;
+}
+
+.markdown-body blockquote {
+	padding: 0 15px;
+	color: #777;
+	border-left: 4px solid #ddd;
+}
+
+.markdown-body blockquote>:first-child {
+	margin-top: 0;
+}
+
+.markdown-body blockquote>:last-child {
+	margin-bottom: 0;
+}
+
+.markdown-body table {
+	display: block;
+	width: 100%;
+	overflow: auto;
+	word-break: normal;
+	word-break: keep-all;
+}
+
+.markdown-body table th {
+	font-weight: bold;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+	padding: 6px 13px;
+	border: 1px solid #ddd;
+}
+
+.markdown-body table tr {
+	background-color: #fff;
+	border-top: 1px solid #ccc;
+}
+
+.markdown-body table tr:nth-child(2n) {
+	background-color: #f8f8f8;
+}
+
+.markdown-body img {
+	max-width: 100%;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.markdown-body span.frame {
+	display: block;
+	overflow: hidden;
+}
+
+.markdown-body span.frame>span {
+	display: block;
+	float: left;
+	width: auto;
+	padding: 7px;
+	margin: 13px 0 0;
+	overflow: hidden;
+	border: 1px solid #ddd;
+}
+
+.markdown-body span.frame span img {
+	display: block;
+	float: left;
+}
+
+.markdown-body span.frame span span {
+	display: block;
+	padding: 5px 0 0;
+	clear: both;
+	color: #333;
+}
+
+.markdown-body span.align-center {
+	display: block;
+	overflow: hidden;
+	clear: both;
+}
+
+.markdown-body span.align-center>span {
+	display: block;
+	margin: 13px auto 0;
+	overflow: hidden;
+	text-align: center;
+}
+
+.markdown-body span.align-center span img {
+	margin: 0 auto;
+	text-align: center;
+}
+
+.markdown-body span.align-right {
+	display: block;
+	overflow: hidden;
+	clear: both;
+}
+
+.markdown-body span.align-right>span {
+	display: block;
+	margin: 13px 0 0;
+	overflow: hidden;
+	text-align: right;
+}
+
+.markdown-body span.align-right span img {
+	margin: 0;
+	text-align: right;
+}
+
+.markdown-body span.float-left {
+	display: block;
+	float: left;
+	margin-right: 13px;
+	overflow: hidden;
+}
+
+.markdown-body span.float-left span {
+	margin: 13px 0 0;
+}
+
+.markdown-body span.float-right {
+	display: block;
+	float: right;
+	margin-left: 13px;
+	overflow: hidden;
+}
+
+.markdown-body span.float-right>span {
+	display: block;
+	margin: 13px auto 0;
+	overflow: hidden;
+	text-align: right;
+}
+
+.markdown-body code,.markdown-body tt {
+	padding: 0;
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
+	margin: 0;
+	font-size: 85%;
+	background-color: rgba(0,0,0,0.04);
+	border-radius: 3px;
+}
+
+.markdown-body code:before,
+.markdown-body code:after,
+.markdown-body tt:before,
+.markdown-body tt:after {
+	letter-spacing: -0.2em;
+	content: "\00a0";
+}
+
+.markdown-body code br,
+.markdown-body tt br {
+	display: none;
+}
+
+.markdown-body del code {
+	text-decoration: inherit;
+}
+
+.markdown-body pre>code {
+	padding: 0;
+	margin: 0;
+	font-size: 100%;
+	word-break: normal;
+	white-space: pre;
+	background: transparent;
+	border: 0;
+}
+
+.markdown-body .highlight {
+	margin-bottom: 16px;
+}
+
+.markdown-body .highlight pre,
+.markdown-body pre {
+	padding: 16px;
+	overflow: auto;
+	font-size: 85%;
+	line-height: 1.45;
+	background-color: #f7f7f7;
+	border-radius: 3px;
+}
+
+.markdown-body .highlight pre {
+	margin-bottom: 0;
+	word-break: normal;
+}
+
+.markdown-body pre {
+	word-wrap: normal;
+}
+
+.markdown-body pre code,
+.markdown-body pre tt {
+	display: inline;
+	max-width: initial;
+	padding: 0;
+	margin: 0;
+	overflow: initial;
+	line-height: inherit;
+	word-wrap: normal;
+	background-color: transparent;
+	border: 0;
+}
+
+.markdown-body pre code:before,
+.markdown-body pre code:after,
+.markdown-body pre tt:before,
+.markdown-body pre tt:after {
+	content: normal;
+}
+
+.highlight .pl-coc,
+.highlight .pl-entl,
+.highlight .pl-entm,
+.highlight .pl-eoa,
+.highlight .pl-mai .pl-sf,
+.highlight .pl-mm,
+.highlight .pl-pdv,
+.highlight .pl-sc,
+.highlight .pl-som,
+.highlight .pl-sr,
+.highlight .pl-v,
+.highlight .pl-vpf {
+	color: #0086b3;
+}
+.highlight .pl-eoac,
+.highlight .pl-mdht,
+.highlight .pl-mi1,
+.highlight .pl-mri,
+.highlight .pl-va,
+.highlight .pl-vpu {
+	color: #008080;
+}
+.highlight .pl-c,
+.highlight .pl-pdc {
+	color: #b4b7b4;
+	font-style: italic;
+}
+.highlight .pl-k,
+.highlight .pl-ko,
+.highlight .pl-kolp,
+.highlight .pl-mc,
+.highlight .pl-mr,
+.highlight .pl-ms,
+.highlight .pl-s,
+.highlight .pl-sok,
+.highlight .pl-st {
+	color: #6e5494;
+}
+.highlight .pl-ef,
+.highlight .pl-enf,
+.highlight .pl-enm,
+.highlight .pl-entc,
+.highlight .pl-eoi,
+.highlight .pl-sf,
+.highlight .pl-smc {
+	color: #d12089;
+}
+.highlight .pl-ens,
+.highlight .pl-eoai,
+.highlight .pl-kos,
+.highlight .pl-mh .pl-pdh,
+.highlight .pl-mp,
+.highlight .pl-pde,
+.highlight .pl-stp {
+	color: #458;
+}
+.highlight .pl-enti {
+	color: #d12089;
+	font-weight: bold;
+}
+.highlight .pl-cce,
+.highlight .pl-enc,
+.highlight .pl-kou,
+.highlight .pl-mq {
+	color: #f93;
+}
+.highlight .pl-mp1 .pl-sf {
+	color: #458;
+	font-weight: bold;
+}
+.highlight .pl-cos,
+.highlight .pl-ent,
+.highlight .pl-md,
+.highlight .pl-mdhf,
+.highlight .pl-ml,
+.highlight .pl-pdc1,
+.highlight .pl-pds,
+.highlight .pl-s1,
+.highlight .pl-scp,
+.highlight .pl-sol {
+	color: #df5000;
+}
+.highlight .pl-c1,
+.highlight .pl-cn,
+.highlight .pl-pse,
+.highlight .pl-pse .pl-s2,
+.highlight .pl-vi {
+	color: #a31515;
+}
+.highlight .pl-mb,
+.highlight .pl-pdb {
+	color: #df5000;
+	font-weight: bold;
+}
+.highlight .pl-mi,
+.highlight .pl-pdi {
+	color: #6e5494;
+	font-style: italic;
+}
+.highlight .pl-ms1 {
+	background-color: #f5f5f5;
+}
+.highlight .pl-mdh,
+.highlight .pl-mdi {
+	font-weight: bold;
+}
+.highlight .pl-mdr {
+	color: #0086b3;
+	font-weight: bold;
+}
+.highlight .pl-s2 {
+	color: #333;
+}
+.highlight .pl-ii {
+	background-color: #df5000;
+	color: #fff;
+}
+.highlight .pl-ib {
+	background-color: #f93;
+}
+.highlight .pl-id {
+	background-color: #a31515;
+	color: #fff;
+}
+.highlight .pl-iu {
+	background-color: #b4b7b4;
+}
+.highlight .pl-mo {
+	color: #969896;
+}
+
+</style>
+
+
+<script type="text/javascript">
+
+function getDocumentScrollTop() 
+{
+   var res = document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || 0;
+   // alert(res);
+   return res;
+}
+
+function setDocumentScrollTop(ypos) 
+{
+	window.scrollTo(0, ypos);
+}
+
+</script>
+
+
+</head>
+<body class="markdown-body">
+<h1> <a id="iml-to-lustre-generator-output" class="anchor" href="#iml-to-lustre-generator-output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to Lustre Generator: Output</h1> 
+<p>The Lustre generator of HERMES emits Lustre encoding of the input model in IML. The Lustre language is a declarative synchronous data flow language designed by the Synchrone Team at Verimag to program reactive systems.</p> 
+<p>A lustre program can be used to describe system properties in terms of a set of equations of the program variables, which always hold valid during the course of execution of the system. In the following, we briefly recap its syntax in V4 and V6. Lustre supports comments in the following three styles:</p> 
+<pre><code>-- single line comment
+
+/* multi-line 
+    comments */
+
+(* Pascal-style 
+    comments *)
+</code></pre> 
+<p>A Lustre porgram consists of declarations of types and nodes. The following code illustrates the structure of a Lustre program.</p> 
+<pre><code>01  type iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__ = struct { 
+02      direction : iml_dot_systems_dot_Direction;
+03      data : int
+04  };
+
+05  type iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__ = struct { 
+06      direction : iml_dot_systems_dot_Direction;
+07      data : int
+08  };
+
+09  type iml_dot_systems_dot_Direction = enum {
+10      iml_dot_systems_dot_Direction_dot_IN,
+11      iml_dot_systems_dot_Direction_dot_OUT,
+12      iml_dot_systems_dot_Direction_dot_INOUT
+13  };
+
+14  node imported agree_dot_example_dot_B (Input : iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__)
+15  returns (Output : iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__)
+16  (*@contract
+17      guarantee &quot;REQ2&quot; Output.data &lt; Input.data + 15;
+18      assume &quot;REQ1&quot; Input.data  &lt; 20;
+19  *) 
+
+20  node imported agree_dot_example_dot_C (Input1 : iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__; 
+21                                         Input2 : iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__)
+22  returns (Output : iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__)
+23  (*@contract
+24      guarantee &quot;REQ1&quot; Output.data = Input1.data + Input2.data;
+25  *) 
+
+26  node imported agree_dot_example_dot_A (Input : iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__)
+27  returns (Output : iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__)
+28  (*@contract
+29      guarantee &quot;REQ2&quot; Output.data &lt; 2 * Input.data;
+30      assume &quot;REQ1&quot; Input.data &lt; 20;
+31  *) 
+
+32  node agree_dot_example_dot_top_level_dot_Impl (Input : iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__)
+33  returns (Output : iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__)
+34  (*@contract
+35      guarantee &quot;REQ2&quot; Output.data &lt; 50;
+36      assume &quot;REQ1&quot; Input.data &lt; 10;
+37  *) 
+38  var A_sub_Output : iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__; 
+39  var B_sub_Output : iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__; 
+40  let
+41      (A_sub_Output) = agree_dot_example_dot_A ( Input);
+42      (Output) = agree_dot_example_dot_C ( A_sub_Output, B_sub_Output);
+43      (B_sub_Output) = agree_dot_example_dot_B ( A_sub_Output);
+44      --%MAIN; 
+45  tel
+</code></pre> 
+<p>At the beginning of this example, two record types (<code>iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__</code> and <code>iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__</code>) and one enumerated type (<code>iml_dot_systems_dot_Direction</code>) are introduced.</p> 
+<p>Then four node declarations, namely, <code>agree_dot_example_dot_B</code>, <code>agree_dot_example_dot_C</code>, <code>agree_dot_example_dot_A</code> and <code>agree_dot_example_dot_top_level_dot_Impl</code> are given. A node declaration starts with the keyword <code>node</code>, and then is followed by its signature: node name, input arguments, the keyword <code>returns</code>, and output arguments.</p> 
+<p>A node contract is specified right after its signature. Sets of assumptions, guarantees, and modes together define a contract for a node. Contracts can be specified locally in an inline format as shown in the above example or externally in a node, which makes it a contract node. A local contract of a node is specified as a comment between after its signature and before its <code>let</code> body. The contact in the comment is annotated with <code>@contract</code>. In contrast to a local contract, an external contract is specified as a contract node, which starts with the keyword <code>contract</code>. The body of a contract node can only consist of contract items, including ghost variables, ghost constants, assumptions, guarantees, and modes. A contract node is used via importing in an inline contract. Assumptions are annotated with the keyword <code>assume</code>. An assumption of a node is a Boolean expression in terms of the inputs of the node and possibly the previous state values of its outputs via the operator <code>pre</code> of Lustre. Similarly, guarantees are annotated with the keyword <code>guarantee</code>. A guarantee of a node is a Boolean expression in terms of its inputs and outputs. Modes can be considered as a combination of assumptions and guarantees. The semantics of assume-guarantee contracts is that the assumptions of a node specify how the node should be used while its guarantees specify the behavior of the node. The contract of a node is respected when all of its executions satisfy the following LTL formula: <code>G A imply G B</code>. In other words, the guarantees hold if the assumptions always hold.</p> 
+<p>A contract can be imported by another contract. The resulted contract is defined by the union of assumption, guarantee and mode of the respective contracts.</p> 
+<p>Following the contract section are local declarations and the body of the node. Local declarations may introduce constants and variables, both of which are optional. Notice that for the node <code>agree_dot_example_dot_top_level_dot_Impl</code>, only two local variables are declared. The node body is enclosed by keywords <code>let</code> and <code>tel</code>. Node equations are introduced in the node body. Assignment can be made to a list expressed in parentheses. Note that node equations are optional as well. A node can end with <code>tel;</code>, <code>tel.</code> or <code>tel</code>.</p> 
+<p>The main node annotation, <code>--%MAIN ;</code>, is used to specify the top-level node of a Lustre program. It can be placed anywhere in the node body. If the annotation <code>--%MAIN ;</code> was not specified, the default top-level node is the last node in the program. In the above example, the main node annotation is explicitly used to specify node <code>agree_dot_example_dot_top_level_dot_Impl</code> to be the top-level node. Even without this annotation, by default, node <code>agree_dot_example_dot_top_level_dot_Impl</code> still serves as the main node since it is the last node in the program. Notice that the main node annotation is terminated by <code>;</code>.</p> 
+<p>Besides nodes, functions can also be declared. But functions are stateless and therefore temporal operators such as the followed-by operator (<code>-&gt;</code>), the delay operator (<code>pre</code>), and the sampling operator (<code>when</code>), etc. cannot be used in functions.</p> 
+<p>A node or function can be declared using the keyword <code>imported</code>. An imported node or function does not have a let body. An imported node is abstracted by its contract. When no contract is specified, the default one is the weakest contract, i.e., <code>assume true</code> and <code>guarantee true</code>. In the above example, the nodes <code>agree_dot_example_dot_B</code>, <code>agree_dot_example_dot_C</code> and <code>agree_dot_example_dot_A</code> are declared <code>imported</code>. Notice that they only have a contract section.</p> 
+<p>You may wonder why the names of some of the identifiers in the above example are so long. The above Lustre program actually is the Lustre-encoding that our Lustre generator produced for the example shown in Section <a href="./.gen_lustre_input.md.html">IML to Lustre Generator: Input</a>. Fully-qualified names (formed by concatenating names of scope hierarchies) are used to guarantee unique identifiers in the encoding.</p> 
+<p>Comparing the above generated Lustre encoding to the input description in IML as shown in Section <a href="./.gen_lustre_input.md.html">IML to Lustre Generator: Input</a>, it is not difficult to conclude that the generated Lustre encoding is structually similar to the original IML description. Record type <code>iml_dot_systems_dot_OutDataPort__iml_dot_lang_dot_Int__</code> (Lines 01 - 04 in the above encoding) is generated for the IML constrained type <code>InDataPort&lt;Int&gt;</code> that is used in Lines 08, 17, 27, 34, 47, 49, 51 and 53 of the IML description. Similarly, record type <code>iml_dot_systems_dot_InDataPort__iml_dot_lang_dot_Int__</code> (Lines 05 - 08 in the above encoding) is generated for the IML constrained type <code>InDataPort&lt;Int&gt;</code> that is used in Lines 07, 16, 25, 26, 33, 45, 47, 49 and 51 of the IML description. Enumerated type <code>iml_dot_systems_dot_Direction</code> (Lines 09 - 13 in the above encoding) is generated for the enumeration type <code>Direction</code> defined in package <code>iml.systems</code> that is used in the above two record types. Node <code>agree_dot_example_dot_B</code> (Lines 14 - 19 in the above encoding) is generated for the constrained type <code>B</code> used in Line 43 and defined in Line 23 of the IML description. Notice that the input and output variables in trait <code>BTrait</code> that <code>B</code> exhibits are rewritten as input and output arguments of node <code>imported agree_dot_example_dot_B</code> to preserve the component interface. Moreover, the assume and guarantee statements from Line 09 to Line 12 of the IML description are captured by the inlined node contract from Line 16 to Line 19 of the above encoding. Constrained type <code>C</code> and <code>A</code> are similarly encoded with node <code>agree_dot_example_dot_C</code> and node <code>agree_dot_example_dot_A</code>, respectively.</p> 
+<p>Finally, constrained type <code>top_level_dot_Impl</code> defined in Line 41 of the IML description is encoded with node <code>agree_dot_example_dot_top_level_dot_Impl</code>. Besides a contract section, this node contains implementation details on its sub-components and the connections among them. Right after its contract section, local variables <code>A_sub_Output</code> (Line 38 of the encoding) and <code>B_sub_Output</code> (Line 39 of the encoding) are respectively introduced for the output of <code>agree_dot_example_dot_A</code> and <code>agree_dot_example_dot_B</code>. The encoding of node <code>agree_dot_example_dot_top_level_dot_Impl</code> is completed by a <code>let</code> section (Lines 40 - 45 of the encoding), which lists the assignment constraints reflecting the connections among the subcomponents and optionally annotates the node as top-level.</p>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>C:\Projects\hermes\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_lustre.md.html</title>
+<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_lustre_api.md.html</title>
 
 
 <style type="text/css">
@@ -639,6 +639,36 @@ function setDocumentScrollTop(ypos)
 
 </head>
 <body class="markdown-body">
-<h1> <a id="iml-to-lustre-generator" class="anchor" href="#iml-to-lustre-generator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to Lustre generator</h1>
+<h1> <a id="iml-to-lustre-generator-api" class="anchor" href="#iml-to-lustre-generator-api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to Lustre Generator: API</h1> 
+<p><code>package com.utc.utrc.hermes.iml.gen.lustre.df.generator;</code></p> 
+<p>Class <code>LustreGenerator</code> provides <code>public String serialize(LustreModel m)</code>, which utilizes services offered by class <code>LustreGeneratorServices</code> to emit Lustre encoding for programs in IML.</p> 
+<p>In the rest of this section, the example shown in Section <a href="./.gen_lustre_input.md.html">IML to Lustre Generator: Input</a> is used to illustrate the steps of producing Lustre encoding. Assume the IML program is in a single file whose path is <code>pathString</code>. The following code reads in the content of an IML file.</p> 
+<pre><code>CharSequence mt = FileUtil.readFileContent(&quot;pathString&quot;);
+</code></pre> 
+<p>For systems consisting of multiple IML files, please follow what is discussed in Section <a href="./.gen_smt_api.md.html">IML to SMT Generator: API</a>.</p> 
+<p>Next an in-memory image of the system can be created by parsing the content of the file. For example, the following code segment will generate a synchronous dataflow system and attach it to a Lustre generator.</p> 
+<pre><code>ImlParseHelper imlParseHelper;
+SystemsServices systemServices;
+IQualifiedNameProvider qnp;
+SynchDf sdf;
+LustreGenerator gen;
+
+final Systems sys = new Systems(systemServices, qnp);
+Model m = imlParseHelper.parse(mt, true);
+sys.process(m);
+sdf.setSystems(sys);
+sdf.process(m);
+gen.setSdf(sdf);
+</code></pre> 
+<p>At this point, <code>LustreGenerator</code> <code>gen</code> has been furnished with a dataflow model. The following code segment illustrates how to construct a Lustre model.</p> 
+<pre><code>Symbol _findSymbol = findSymbol(m, &quot;top_level_dot_Impl&quot;);
+NamedType nodetype = ((NamedType) _findSymbol);
+LustreModel lus = new LustreModel();
+gen.generateLustreNode(lus, sdf.getNode(ImlCustomFactory.INST.createSimpleTypeReference(nodetype)));
+</code></pre> 
+<p>Refer to Section <a href="./.gen_smt_api.md.html">IML to SMT Generator: API</a> for the definition of method <code>findSymbol</code>.</p> 
+<p>Now a Lustre model for the constrained type <code>top_level_dot_Impl</code> has been generated. Finally its Lustre encoding can by obtained as follows:</p> 
+<pre><code>String output = gen.serialize(lus);
+</code></pre>
 </body>
 </html>

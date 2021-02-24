@@ -69,8 +69,8 @@ public class SimpleSort extends AbstractSort {
 		} else if (tupleElements != null && !tupleElements.isEmpty()) {
 			return String.format("(declare-datatypes () ((%s (|mk_%s| %s))))", getQuotedName(), getName(), getTupleListTypes());
 		} else if (enumList != null && !enumList.isEmpty()) {
-//			return String.format("(declare-datatypes () ((%s %s)))", getQuotedName(), enumList.stream().reduce((acc, curr) ->  acc + " " + curr).orElse(""));  // Z3 style
-			return String.format("(declare-datatypes ((%s 0)) ((%s)))", getQuotedName(), enumList.stream().reduce("",(acc, curr) ->  acc + " (" + curr + ")")); 
+			return String.format("(declare-datatypes () ((%s %s)))", getQuotedName(), enumList.stream().reduce((acc, curr) ->  acc + " " + curr).orElse(""));  // Z3 style
+//			return String.format("(declare-datatypes ((%s 0)) ((%s)))", getQuotedName(), enumList.stream().reduce("",(acc, curr) ->  acc + " (" + curr + ")")); // CVC4 style
 		} else {
 			return "(declare-sort " + getQuotedName() + " 0)";
 		}

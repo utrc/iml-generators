@@ -92,7 +92,38 @@ class ModelSmtEncodingTest {
 		}
 		
 	}
+
 	
+	@Test
+	def void testDocumentationExample() {
+		
+		val files = FileUtil.readAllFilesUnderDir("./res/docExample/UTRC_Explain_yes.iml");
+		var ResourceSet rs;
+		for (file : files) {
+			if (rs !== null) {
+				rs = file.parse(rs).eResource.resourceSet			 
+			} else {
+				rs = file.parse.eResource.resourceSet
+			}
+		}
+		var Model swModel = null;
+		for (resource : rs.resources) {
+			if (resource.contents !== null && resource.contents.size > 0) {
+				val model = resource.contents.get(0);
+				if (model instanceof Model) {
+					model.assertNoErrors
+					if ((model as Model).name.equals("smt.example")) {
+						swModel = model;
+					}
+				}
+			}
+		}
+		if (swModel !== null) {
+			encode(swModel as Model, "top_level_dot_Impl")
+			println(encoder.toString)
+		}
+		
+	}	
 	@Test
 	def void testAssessment3FlattenIml() {
 		
