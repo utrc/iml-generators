@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>C:\Projects\hermes\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_smt.md.html</title>
+<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_lustre_intro.md.html</title>
 
 
 <style type="text/css">
@@ -639,6 +639,105 @@ function setDocumentScrollTop(ypos)
 
 </head>
 <body class="markdown-body">
-<h1> <a id="iml-to-smt-generator" class="anchor" href="#iml-to-smt-generator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to SMT generator</h1>
+<h1> <a id="iml-to-lustre-generator-introduction" class="anchor" href="#iml-to-lustre-generator-introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to Lustre Generator: Introduction</h1> 
+<p>The Lustre generator class <code>LustreGenerator</code> is defined in the following package:</p> 
+<pre><code>package com.utc.utrc.hermes.iml.gen.lustre.df.generator;
+</code></pre> 
+<p>Programs described in IML are first read, parsed and stored in an in-memory model of type <code>Model</code>. A new object of type <code>Systems</code> is constructed. The class <code>Systems</code> is defined in the following package:</p> 
+<pre><code>package com.utc.utrc.hermes.iml.gen.common.systems;
+</code></pre> 
+<p><a href="../fig/genCommonSystemsDS.png" target="_blank" rel="noopener noreferrer"><img src="../fig/genCommonSystemsDS.png" alt="example sub-components" style="max-width:100%;" /></a></p> 
+<p>Type <code>Systems</code> maintains an internal data structure that maps from string identifiers to objects of <code>ComponentType</code>. Class <code>ComponentType</code> maintains the following private fields;</p> 
+<ul> 
+ <li> <code>name</code>, type of <code>String</code>, denotes the name of <code>ComponentType</code>.</li> 
+ <li> <code>subs</code>, type of <code>Map&lt;String, ComponentInstance&gt;</code>, stores the composed sub-components.</li> 
+ <li> <code>connections</code>, type of <code>Map&lt;String, Connection&gt; connections</code>, stores its connections.</li> 
+ <li> <code>ports</code>, type of <code>Map&lt;String, Port&gt;</code>, stores its communication ports.</li> 
+ <li> <code>type</code>, type of <code>ImlType</code>, records its corresponding IML type.</li> 
+</ul> 
+<p>Type <code>ComponentInstance</code> maintains the following private fields:</p> 
+<ul> 
+ <li> <code>sd</code>, type of <code>SymbolDeclaration</code>, records its corresponding symbol of type of <code>SymbolDeclaration</code>.</li> 
+ <li> <code>ctype</code>, type of <code>ComponentType</code>, records this component instance's corresponding <code>ComponentType</code>.</li> 
+</ul> 
+<p>Type <code>Connection</code> maintains the following private fields;</p> 
+<ul> 
+ <li> <code>sd</code>, type of <code>SymbolDeclaration</code>, stores its corresponding IML symbol.</li> 
+ <li> <code>sourceComponent</code> and <code>targetComponent</code>, type of <code>ComponentInstance</code>, denotes the source component instance and target component instance of the connection, respectively.</li> 
+ <li> <code>sourcePort</code> and <code>targetPort</code>, type of <code>Port</code>, denotes the source port and target port of the connection, respectively.</li> 
+</ul> 
+<p>Type <code>Port</code> maintains the following private fields;</p> 
+<ul> 
+ <li> <code>sd</code>, type of <code>SymbolDeclaration</code>, stores its corresponding IML symbol.</li> 
+ <li> <code>direction</code>, type of <code>Direction</code>, denotes whether the port is <code>IN</code>, <code>OUT</code> or <code>INOUT</code>.</li> 
+ <li> <code>data</code> and <code>event</code>, type of <code>boolean</code>, indicates whether it is a data port and even port, respectively.</li> 
+ <li> <code>dataType</code> and <code>eventType</code>, type of <code>ImlType</code>, denotes its corresponding ImlType of data and event, respectively.</li> 
+</ul> 
+<p>Type <code>Direction</code> is an <code>enum</code> of three values: <code>IN</code>, <code>OUT</code>, and <code>INOUT</code>, which respectively denotes a port is an input port, an output port, and both an input and output port, respectively.</p> 
+<p><a href="../fig/dfDS.png" target="_blank" rel="noopener noreferrer"><img src="../fig/dfDS.png" alt="example sub-components" style="max-width:100%;" /></a></p> 
+<p>The class <code>SynchDf</code> is defined in the following package:</p> 
+<pre><code>package com.utc.utrc.hermes.iml.gen.lustre.df;
+</code></pre> 
+<p>Type <code>SynchDf</code> maintains the following private fields:</p> 
+<ul> 
+ <li> <code>sys</code>, type of <code>Systems</code>, records all components, qualified name provider, etc.</li> 
+ <li> <code>nodes</code>, type of <code>Map&lt;String, Node&gt;</code>, stores the information of nodes in the context of Lustre.</li> 
+ <li> <code>otherTypes</code>, type of <code>Map&lt;String, ImlType&gt;</code> </li> 
+</ul> 
+<p>The class <code>Node</code> is defined in the following package:</p> 
+<pre><code>package com.utc.utrc.hermes.iml.gen.lustre.df;
+</code></pre> 
+<p>Type <code>Node</code> maintains the following private fields:</p> 
+<ul> 
+ <li> <code>nodeType</code>, type of <code>SimpleTypeReference</code>, records its corresponding IML type reference.</li> 
+ <li> <code>lets</code>, type of <code>Map&lt;String, FolFormula&gt;</code>, records the assignment constraints of the <code>let</code> body.</li> 
+ <li> <code>component</code>, type of <code>boolean</code>, indicate whether it is exhibits or refines trait <code>Component</code>.</li> 
+ <li> <code>ctype</code>, type of <code>ComponentType</code>, records its corresponding IML type.</li> 
+</ul> 
+<p><a href="../fig/lustreModelDS.png" target="_blank" rel="noopener noreferrer"><img src="../fig/lustreModelDS.png" alt="example sub-components" style="max-width:100%;" /></a></p> 
+<p>The class <code>LustreModel</code> is defined in the following package:</p> 
+<pre><code>package com.utc.utrc.hermes.iml.gen.lustre.df.model;
+</code></pre> 
+<p>Type <code>LustreModel</code> maintains the following private fields:</p> 
+<ul> 
+ <li> <code>nodes</code>, type of <code>Map&lt;String, LustreNode&gt;</code>, denotes all nodes of a Lustre model.</li> 
+ <li> <code>last_id</code>, type of <code>int</code>, used for unique identifier generation.</li> 
+</ul> 
+<p>The class <code>LustreType</code> is defined in the same package. It maintains the following private fields:</p> 
+<ul> 
+ <li> <code>name</code>, type of <code>String</code>, denotes the name of Lustre type.</li> 
+ <li> <code>is_enum</code> and <code>is_struct</code>, type of <code>boolean</code>, denotes it is an enumeration type and record type, respectively.</li> 
+ <li> <code>literals</code>, type of <code>List&lt;String&gt;</code>, denotes all enum values if it is enumeration type.</li> 
+ <li> <code>fields</code>, type of <code>Map&lt;String, LustreSymbol&gt;</code>, records its Lustre symbols.</li> 
+</ul> 
+<p>The class <code>LustreTypeInstance</code> is defined in the same package. It maintains the following private fields:</p> 
+<ul> 
+ <li> <code>type</code>, type of <code>LustreNode</code>, records its corresponding Lustre node.</li> 
+ <li> <code>params</code> and <code>outParams</code>, type of <code>List&lt;LustreVariable&gt;</code>, denotes the input arguments and output arguments, respectively.</li> 
+</ul> 
+<p>The class <code>LustreNode</code> is defined in the same package. It is a sub-class of <code>LustreType</code> and maintains the following additional private fields:</p> 
+<ul> 
+ <li> <code>parameters</code> and <code>returns</code>, type of <code>List&lt;LustreSymbol&gt;</code>, denotes the input arguments and output arguments, respectively.</li> 
+ <li> <code>variables</code>,<code>components</code>, and <code>lets</code>, type of <code>Map&lt;String, LustreSymbol&gt;</code>, denotes variables, components, and lets of Lustre symbols, respectively.</li> 
+</ul> 
+<p>The class <code>LustreSymbol</code> is defined in the same package. It maintains the following private fields:</p> 
+<ul> 
+ <li> <code>elementType</code>, type of <code>LustreElementType</code>, denotes what element type it is.</li> 
+ <li> <code>name</code> and <code>definition</code>, type of <code>String</code>, denotes the symbol's name.</li> 
+ <li> <code>type</code>, type of <code>LustreTypeInstance</code>, denotes its corresponding LustreTypeInstance.</li> 
+ <li> <code>parameters</code>, type of <code>List&lt;LustreVariable&gt;</code>, denotes its list of parameters.</li> 
+ <li> <code>isAssume</code> and <code>isGuarantee</code>, type of <code>boolean</code>, denotes that it is an assumption and a guarantee, respectively.</li> 
+</ul> 
+<p>The class <code>LustreVariable</code> is defined in the same package. It maintains the following private fields:</p> 
+<ul> 
+ <li> <code>name</code>, type of <code>String</code>, denotes its name.</li> 
+ <li> <code>type, type of </code>LustreTypeInstance`, denotes its corresponding LustreTypeIntance.</li> 
+ <li> <code>definition</code>, type of <code>FolFormula</code>, denotes its definition in first-order logic format.</li> 
+</ul> 
+<p>The class <code>LustreConstraint</code> is defined in the same package. It maintains the following private fields:</p> 
+<ul> 
+ <li> <code>f</code>, type of <code>FolFormula</code>, denotes its first-order formula constraint.</li> 
+</ul> 
+<p>Type <code>LustreElementType</code> is an <code>enum</code> of seven values: <code>PARAMETER</code>, <code>RETURN</code>, <code>VAR</code>, <code>COMPONENT</code>, <code>LET</code>, <code>FIELD</code>, <code>ASSERTION</code>.</p>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.main.md.html</title>
+<title>D:\Projects\Hermes\repo\iml-generators\com.utc.utrc.hermes.iml.gen.docs\html\.gen_smt_input.md.html</title>
 
 
 <style type="text/css">
@@ -639,6 +639,74 @@ function setDocumentScrollTop(ypos)
 
 </head>
 <body class="markdown-body">
-<h1> <a id="iml-generators" class="anchor" href="#iml-generators" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML Generators</h1>
+<h1> <a id="iml-to-smt-generator-input" class="anchor" href="#iml-to-smt-generator-input" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>IML to SMT Generator: Input</h1> 
+<p>The SMT generator of HERMES takes in a program described in IML. The following is an example package defining a hierarchical system.</p> 
+<pre><code>01  package smt.example;
+02  import iml.systems.*;
+03  import iml.software.*;
+04  import iml.contracts.*;
+ 
+05  trait ATrait refines(Component, Thread, Contract) {
+06      Input: InDataPort&lt;Int&gt;;
+07      Output: OutDataPort&lt;Int&gt;;
+08      [Assume{comment=&quot;A input domain&quot;}] REQ1 : Bool := Input.data &lt; 20;
+09      [Guarantee{comment=&quot;A output range&quot;}] REQ2 : Bool := Output.data &lt; 2 * Input.data;
+10      assumption: Bool := REQ1;
+11      guarantee: Bool := REQ2;	
+12  };
+13  type A exhibits(ATrait);
+
+14  trait BTrait refines(Component, Thread, Contract) {
+15      Input: InDataPort&lt;Int&gt;;
+16      Output: OutDataPort&lt;Int&gt;;
+17      [Assume{comment=&quot;B input domain&quot;}] REQ1 : Bool := Input.data &lt; 20;
+18      [Guarantee{comment=&quot;B output range&quot;}] REQ2 : Bool := Output.data &lt; Input.data + 15;
+19      assumption: Bool := REQ1;
+20      guarantee: Bool := REQ2;	
+21  };
+22  type B exhibits(BTrait);
+
+23  trait CTrait refines(Component, Thread, Contract) {
+24      Input1: InDataPort&lt;Int&gt;;
+25      Input2: InDataPort&lt;Int&gt;;
+26      Output: OutDataPort&lt;Int&gt;;
+27      [Guarantee{comment=&quot;C output range&quot;}] REQ1 : Bool := Output.data = Input1.data + Input2.data;
+28      guarantee: Bool := REQ1;	
+29  };
+30  type C exhibits(CTrait);
+
+31  trait top_levelTrait refines(Component, Process, Contract) {
+32      Input: InDataPort&lt;Int&gt;;
+33      Output: OutDataPort&lt;Int&gt;;
+34      [Assume{comment=&quot;System input domain&quot;}] REQ1 : Bool := Input.data &lt; 10;
+35      [Guarantee{comment=&quot;System output range&quot;}] REQ2 : Bool := Output.data &lt; 50;
+36      assumption: Bool := REQ1;
+37      guarantee: Bool := REQ2;		
+38  };
+39  type top_level exhibits(top_levelTrait);
+
+40  type top_level_dot_Impl exhibits(top_levelTrait, Implements&lt;top_level&gt;){
+41      A_sub : A;
+42      B_sub : B;
+43      C_sub : C;
+44      IN_TO_A : Connector&lt;InDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt; := connect&lt;InDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt;(Input, A_sub.Input);
+45      assert{Input.data = A_sub.Input.data};
+46      A_TO_B : Connector&lt;OutDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt; := connect&lt;OutDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt;(A_sub.Output, B_sub.Input);
+47      assert{A_sub.Output.data = B_sub.Input.data};
+48      A_TO_C : Connector&lt;OutDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt; := connect&lt;OutDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt;(A_sub.Output, C_sub.Input1);
+49      assert{A_sub.Output.data = C_sub.Input1.data};
+50      B_TO_C : Connector&lt;OutDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt; := connect&lt;OutDataPort&lt;Int&gt;, InDataPort&lt;Int&gt;&gt;(B_sub.Output, C_sub.Input2);
+51      assert{B_sub.Output.data = C_sub.Input2.data};
+52      C_TO_Output : Connector&lt;OutDataPort&lt;Int&gt;, OutDataPort&lt;Int&gt;&gt; := connect&lt;OutDataPort&lt;Int&gt;, OutDataPort&lt;Int&gt;&gt;(C_sub.Output, Output);
+53      assert{C_sub.Output.data = Output.data};
+54  };
+</code></pre> 
+<p>Similar to the Java programming language, the package <code>package smt.example</code> is declared at the beginning of the program. Then those relevant packages that are needed are imported. In this example, three library packages (<code>iml.systems</code>, <code>iml.software</code> and <code>iml.contracts</code>) are imported.</p> 
+<p>An IML <code>Model</code> consists of its own package name, zero or more imports of type <code>Import</code> and zero or more symbols of type <code>Symbol</code>. Similar to the Java programming language, an IML <code>Import</code> is introduced by keyword <code>import</code>. An IML <code>Symbol</code> can be a <code>SymbolDeclaration</code>, a <code>NamedType</code>, an <code>Annotation</code>, a <code>Trait</code>, a <code>dataType</code> or an <code>Assertion</code>. A <code>SymbolDeclaration</code> can be a template with type parameters and its property list is optional. A <code>NameType</code>, <code>Datatype</code> or <code>Trait</code> can be a template with type parameters. They are introduced respectively by the keyword <code>type</code>, <code>datatype</code> and <code>trait</code>, followed by an optional property list, name identifier, template information if template, zero or more relations of <code>Relation</code>. Its main body, enclosed by <code>{</code> and <code>}</code>, includes zero or more symbols of <code>SymbolDeclaration</code> and <code>Assertion</code>. An <code>Assertion</code> is introduced by the keyword <code>assert</code>, followed by an optional property list, an optional comment, an optional identifier and a definition. A <code>Relation</code> can be an <code>Inclusion</code> (introduced by the keyword <code>includes</code>), a <code>Refinement</code> (introduced by the keyword <code>refines</code>), an <code>Alias</code> (introduced by the keyword <code>is</code>) or a <code>TraitExhibition</code> (introduced by the keyword <code>exhibits</code>).</p> 
+<p>There are four traits (<code>ATrait</code>, <code>BTrait</code>, <code>CTrait</code> and <code>top_levelTrait</code>) in the above example. All of them refine <code>Component</code> and <code>Contract</code>, which are respectively traits defined in packages <code>iml.systems</code> and <code>iml.contracts</code>. Furthermore, traits <code>ATrait</code>, <code>BTrait</code> and <code>CTrait</code> all refine <code>Thread</code> while trait <code>top_levelTrait</code> refines <code>Process</code>. In their bodies, their communication interfaces are first defined via <code>SymbolDeclaration</code>. All their input ports are template type <code>InDataPort&lt;DataType&gt;</code>, as defined in package <code>iml.systems</code>, with template parameter to be <code>Int</code>. Similarly, all their output ports are template type <code>OutDataPort&lt;DataType&gt;</code> with template parameter to be <code>Int</code>. A <code>SymbolDeclaration</code>, preceded with a property list with annotation <code>Assume</code> as defined in package <code>iml.contracts</code>, introduces a variable of type <code>Bool</code> to specify the required legitimate domain of an input. Similarly, a 'SymbolDeclaration', preceded with a property list with annotation <code>Guarantee</code> as defined in package <code>iml.contracts</code>, introduces a variable of type <code>Bool</code> to specify the required legitimate range of an output. Lastly, the <code>assumption</code> and <code>guarantee</code> inherited from <code>trait Contract</code> are initialized as the corresponding variables introduced above.</p> 
+<p><a href="../fig/individual.png" target="_blank" rel="noopener noreferrer"><img src="../fig/individual.png" alt="example sub-components" style="max-width:100%;" /></a></p> 
+<p>Four types (<code>A</code>, <code>B</code>, <code>C</code>, and <code>top_level</code>) are defined via the respective <code>exhibits</code> relation. The above figure shows the schematics of the types of the corresponding example.</p> 
+<p><a href="../fig/composite.png" target="_blank" rel="noopener noreferrer"><img src="../fig/composite.png" alt="example top-level" style="max-width:100%;" /></a></p> 
+<p>The above figure shows the hierarchical composition information of the system <code>top_level_dot_Impl</code>.</p>
 </body>
 </html>
