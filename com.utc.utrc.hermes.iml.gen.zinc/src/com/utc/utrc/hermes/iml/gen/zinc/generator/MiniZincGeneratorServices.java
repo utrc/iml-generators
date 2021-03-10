@@ -521,6 +521,10 @@ public class MiniZincGeneratorServices {
 			
 				QualifiedName receiver_name = getQualifiedName(prefix, ((TermMemberSelection) e).getReceiver());
 				if (((TermMemberSelection) e).getMember() instanceof SymbolReferenceTerm) {
+//					
+//					SymbolReferenceTerm t = (SymbolReferenceTerm) ((TermMemberSelection) e).getReceiver();
+//					String qNmae =qnp.getFullyQualifiedName(t).toString();
+					String vName = getName(receiver_name, ((SymbolReferenceTerm) ((TermMemberSelection) e).getMember() ).getSymbol());
 					TypeInst<?, ?> typeinst = builder
 							.getElementByName(getName(receiver_name, ((SymbolReferenceTerm) ((TermMemberSelection) e).getMember() ).getSymbol()));
 					if (typeinst instanceof IntegerVariable) {

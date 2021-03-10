@@ -53,6 +53,9 @@ public class MiniZincModel extends ModelBuilder {
 		this.name = name;
 	}
 	
+	public String getName() {
+		return this.name;
+	}
 	public void add(IntegerFunction f) {
 	
 		functions.put(f.getName(),f);

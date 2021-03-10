@@ -98,17 +98,57 @@ import at.siemens.ct.jmz.expressions.integer.BasicInteger
 import at.siemens.ct.jmz.elements.Variable
 import at.siemens.ct.jmz.elements.solving.Optimize
 import at.siemens.ct.jmz.elements.solving.OptimizationType
+import at.siemens.ct.jmz.expressions.integer.IntegerExpression
+import org.eclipse.emf.ecore.resource.ResourceSet
+import com.utc.utrc.hermes.iml.ImlParseHelper
+import com.utc.utrc.hermes.iml.util.FileUtil
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
+	
 	
 	@Inject private MiniZincGeneratorServices mzGeneratorSevices;
 	@Inject private ImlStdLib stdLibs;
 	@Inject private IQualifiedNameProvider qnp;
 	@Inject private ImlTypeProvider typeProvider;
-	val LAMBDA_EXPRESSION_SUFFIX = ".lambdaExpression"
+	@Inject private ImlParseHelper parser;
+	private String LAMBDA_EXPRESSION_SUFFIX = ".lambdaExpression"
+	
+	private String pathIML;
+	private ResourceSet allResources;
 	
 	private Map<String, MiniZincModel> subModelBuilders = new HashMap<String, MiniZincModel>();
 
+	def public void parseIMLModel(String pathIML, String modelName) {
+		this.pathIML = pathIML
+		allResources = parser.parseDir(pathIML, true);
+		parser.assertNoErrors(allResources);
+		val model = ImlUtil.findModel(allResources, modelName);
+		caseModel(model as Model);
+	}
+		
+	def public void ExportModel(String queryName){
+		val mzModel = getModel(queryName);
+		val writer = new ModelWriter(mzModel as MiniZincModel)
+		val fileName = queryName.replace(".", "_");
+	
+		val directoryName = pathIML + "\\mzn" 
+		val directory = new File(directoryName);
+		if (! directory.exists())
+        	directory.mkdir();
+        
+        val mznFileName = directory+ "\\" + fileName +".mzn"	
+		FileUtil.writeFileContent(mznFileName, writer.toString());
+		
+		//minizinc -c optimization_happiness_happiness.mzn
+		val cmd = "minizinc -c "+mznFileName;
+		val p = Runtime.getRuntime().exec(cmd);
+		
+		val stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+		val stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	}
+	
 	def public Map<String, MiniZincModel>  getSubModelbuilders(){
 		subModelBuilders
 	}
@@ -161,6 +201,11 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 		}
 		modeltxt
 	}
+	
+	def public MiniZincModel getModel(String subModelName){
+		return subModelBuilders.get(subModelName)
+	}
+
 	
 	def public String cloneSubModel(String subModelName){
 		val mb = subModelBuilders.get(subModelName)
@@ -285,7 +330,7 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				addPrimitiveVariable(mb, object);
 			}
 		}else{	
-			System.out.println("object: " + object)	
+//			System.out.println("object: " + object)	
 			addVariable(qnp.getFullyQualifiedName(object).toString(), object.getType() , mb)
 		}
 
@@ -297,13 +342,20 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 	){
 		
 		if (stdLibs.isPrimitive(type)) {
-//			if (right instanceof SymbolReferenceTerm){
+			if (right instanceof SymbolReferenceTerm || (left_name=="output" && right_name=="output")){
 				val v1Name = getCPConventionalName(left_prefix+"."+left_name)	
 				val v2Name = getCPConventionalName(right_prefix+"."+right_name)	
 				addPrimitiveEqualityConstraints(v1Name, v2Name, mb)
-//			}else{
-//				//TODO: handle expressions 
-//			}
+			}else{ //SignedAtomicFormula		
+				val qName= QualifiedName.create(right_prefix+"."+right_name);
+				val cpExpression = mzGeneratorSevices.processIntegerExpression(qName, mb, type as SimpleTypeReference, (right as SignedAtomicFormula).left as FolFormula, new HashMap());
+				val v1Name = getCPConventionalName(left_prefix+"."+left_name)
+				val x1 = mb.getElementByName(v1Name)
+				if (x1 != null && cpExpression != null){
+					val constraintEQ = new RelationalOperation(x1, RelationalOperator.EQ, cpExpression)
+					mb.add(new Constraint(constraintEQ))
+				}
+			}
 		}
 		
 		if (type instanceof SimpleTypeReference){
@@ -319,7 +371,7 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				if(numParms == 1){
 					val p = right.parameters.get(0)
 					val lPrefix = left_prefix +"."+left_name
-					val rPrefix = right_prefix +"."+right_name+".input"
+					val rPrefix = right_prefix +"."+right_name +".input"
 					addObjectEqualityConstraints(lPrefix, "input", 
 							p, rPrefix, p.name, 
 							p.type , mb
@@ -342,9 +394,7 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				val loPrefix = left_prefix +"."+left_name
 				val roPrefix = right_prefix +"."+right_name
 				addObjectEqualityConstraints(loPrefix, "output", 
-							(right.getDefinition() as SequenceTerm).getReturn(), roPrefix,  "output", 
-							type.range , mb
-						)
+							(right.getDefinition() as SequenceTerm).getReturn(), roPrefix,  "output", type.range , mb)
 			}
 		}
 		
@@ -369,7 +419,7 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 	    // parse all variables
 	    for (Element element : allElements) {  
 	    	if (element instanceof Variable){
-	    		System.out.println(element.name);
+//	    		System.out.println(element.name);
 	    		if (element.name.startsWith(model1_perfix)){
 	    			val sufix = element.name.replace(model1_perfix, "")
 	    			val v1Name = model1_perfix  + sufix
@@ -396,6 +446,8 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				val x2_name = getCPConventionalName((right as SymbolReferenceTerm).symbol)			
 				addPrimitiveEqualityConstraints(x1_name, x2_name, mb)
 			}else{
+				
+				System.out.println("right isPrimitive: "+right)
 				//TODO: handle expressions 
 			}
 		}else  if (type instanceof SimpleTypeReference){
@@ -416,10 +468,11 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				} 
 			}else {//if (right instanceof NamedType){
 				//TODO: handle expressions 
+				System.out.println("right isNotPrimitive: "+right)
 			}
 		}else  if (type instanceof FunctionType){
 			//TODO: inputs are == and outputs are equal left == right
-			System.out.println("type.range: "+  type.range)
+//			System.out.println("type.range: "+  type.range)
 			val left_model_input_name =  getCPConventionalName(qnp.getFullyQualifiedName(left).toString()+".input")
 			val left_model_output_name =  getCPConventionalName(qnp.getFullyQualifiedName(left).toString()+".output")
 			if (right instanceof LambdaExpression){
@@ -432,6 +485,7 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				//}
 			}else if (right instanceof NamedType){
 				//TODO: handle expressions 
+				System.out.println("type isNotPrimitive: "+right)
 			}
 		}
 	}
@@ -497,9 +551,9 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 		addVariables(object, mzModelBuilder)		
 	}
 	
-	def static String print(EObject object) {
-		new MiniZincGeneratorBasedImlSwitch().doSwitch(object)
-	}
+//	def static String print(EObject object) {
+//		new MiniZincGeneratorBasedImlSwitch().doSwitch(object)
+//	}
 
 	override String caseModel(Model object) {
 //		modelWriter = new ModelWriter(mzModelBuilder);
@@ -817,20 +871,8 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 		if(object.left instanceof SymbolReferenceTerm) {
 			val symbol = (object.left as SymbolReferenceTerm).symbol
 			val tqName = qnp.getFullyQualifiedName(symbol).toString(); 		
-////			System.out.println("left model name: "+ tqName)
-//			val tmb = subModelBuilders.get(tqName.toString());
-//			if (tmb == null )
-//				//the model does not exist
-//				for (var i = 0 ; i < (object.left as SymbolReferenceTerm).typeBinding.size() ; i++){
-//					val tb =(object.left as SymbolReferenceTerm).typeBinding.get(i)
-//					val nm = (symbol as SymbolDeclaration).typeParameter.get(i)
-//					
-//					val rootModel = getRootModelBuilder(tb as SimpleTypeReference)
-//					val newName = qnp.getFullyQualifiedName(nm).toString()
-//					subModelBuilders.put(newName, new MiniZincModel(newName))
-//				}
 				
-			if (tqName == "iml.queries.max")
+			if (tqName == "iml.queries.max" || tqName == "iml.queries.min")
 			{
 				//create new model
 				val mb = createNewSubModel(tqName)
@@ -840,15 +882,29 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 				tmb.copyInto(mb) 
 				
 				val cost_var_name = getCPConventionalName(rqName+"."+"output")
-				val cost_var = tmb.getElementByName("optimization___happiness___happiness___lambdaExpression___output")
-				//TODO: insert optimization statements
-				val opt = new Optimize(OptimizationType.MAX, cost_var as IntegerVariable)
-				tmb.add(opt)
-				
-//				val modelWriter = new ModelWriter(tmb);
-//				modelWriter.setSolvingStrategy(opt);
-//				
-//				System.out.println(modelWriter.toString())
+				val cost_var = tmb.getElementByName(cost_var_name)
+				if (cost_var instanceof IntegerVariable){
+					if (tqName == "iml.queries.max"){
+						val opt = new Optimize(OptimizationType.MAX, cost_var)
+						tmb.add(opt)
+					}else{
+						val opt = new Optimize(OptimizationType.MIN, cost_var)
+						tmb.add(opt)
+					}
+				}else{
+					val objName = getCPConventionalName(tmb.getName+".objective")
+					val objVar = new IntegerVariable(objName);
+					tmb.add(objVar);
+					addPrimitiveEqualityConstraints(objName, cost_var_name, tmb)
+					
+					if (tqName == "iml.queries.max"){
+						val opt = new Optimize(OptimizationType.MAX, objVar)
+						tmb.add(opt)
+					}else{
+						val opt = new Optimize(OptimizationType.MIN, objVar)
+						tmb.add(opt)
+					}
+				}
 			}
 		}
 		doSwitch(object.left) + doSwitch(object.tail)
@@ -888,7 +944,8 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 	override String caseLambdaExpression(LambdaExpression object) {	
 		val qcname = getLambdaExpressionQName(object)
 		//Create a lambdaExpression model
-		createNewSubModel(qcname)
+		val mb = createNewSubModel(qcname)
+		
 		//Create input variables
 		if (object.parameters != null){
 			for (p: object.parameters)
@@ -896,13 +953,28 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 		}
 				
 		//Create output variables
+		//var type = null
 		if (object.returnType != null){
-			addVariable(qcname+".output", object.returnType as ImlType, subModelBuilders.get(qcname))
+			val type = object.returnType as ImlType
+			addVariable(qcname+".output", type, subModelBuilders.get(qcname))
+			//return expression
+			addObjectEqualityConstraints(qcname, "output", 
+				(object.getDefinition() as SequenceTerm).getReturn(), qcname,  "input", 
+				type, mb
+				)			
 		}else{
-			System.out.println("(object.getDefinition() as SequenceTerm).getReturn(): "+(object.getDefinition() as SequenceTerm).getReturn())
-			addVariable(qcname+".output", typeProvider.termExpressionType((object.getDefinition() as SequenceTerm).getReturn()) as ImlType, subModelBuilders.get(qcname))
-			
+			val type = typeProvider.termExpressionType((object.getDefinition() as SequenceTerm).getReturn()) as ImlType
+			addVariable(qcname+".output", type, subModelBuilders.get(qcname))
+			//return expression
+			addObjectEqualityConstraints(qcname, "output", 
+				(object.getDefinition() as SequenceTerm).getReturn(), qcname,  "input", 
+				type, mb
+				)			
 		}
+		
+
+		
+		//IntegerExpression costfunction = server.processIntegerExpression(QualifiedName.EMPTY, builder, ctx, formula.getLeft(), new HashMap<>());
 //		 '''fun «scopeParamsString(object.parameters)»«IF object.returnType !== null»:«object.returnType.doSwitch»«ENDIF»«object.definition.doSwitch»'''
 		 '''fun «IF object.returnType !== null»:«object.returnType.doSwitch»«ENDIF»«object.definition.doSwitch»'''
 

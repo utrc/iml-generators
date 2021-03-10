@@ -18,34 +18,12 @@ import java.util.Map
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
-class MiniZincGeneratorBasedImlSwitchTests  {
-	
-	@Inject
-	ImlParseHelper parser;
-	
-//	@Inject extension ImlParseHelper
-//	
-//	@Inject extension ValidationTestHelper
-//	
-//	@Inject extension TestHelper
-	
-	@Inject
-	MiniZincGenerator gen ;
-	
-	@Inject
-	MiniZincGeneratorServices generatorServices;
-	
+class MiniZincGeneratorBasedImlSwitchTests  {	
 	@Inject MiniZincGeneratorBasedImlSwitch mzModelVisitor;
-	//@Inject AbstractModelAcceptor modelAcceptor;
 	
 	@Test
 	def void testModelTranslation1() {
-		val rs = parser.parseDir("models/happiness/", true);
-		parser.assertNoErrors(rs);
-		var query = ImlUtil.findModel(rs, "optimization.happiness.optimalWeek")
-		var model = mzModelVisitor.caseModel(query as Model);
-//		System.out.println("====================IML Model=====================");
-//		System.out.println(model.toString);		
+		mzModelVisitor.parseIMLModel("models/happiness/", "optimization.happiness.optimalWeek"); 	
 		System.out.println("====================CP SubModels======================");	
 		for(String subModelName : mzModelVisitor.getSubModelList()){	
 			System.out.println();
@@ -54,14 +32,9 @@ class MiniZincGeneratorBasedImlSwitchTests  {
 		}
 	}
 	
-		@Test
+	@Test
 	def void testModelCloning() {
-		val rs = parser.parseDir("models/happiness/", true);
-		parser.assertNoErrors(rs);
-		var query = ImlUtil.findModel(rs, "optimization.happiness.optimalWeek")
-		var model = mzModelVisitor.caseModel(query as Model);
-//		System.out.println("====================IML Model=====================");
-//		System.out.println(model.toString);		
+		mzModelVisitor.parseIMLModel("models/happiness/", "optimization.happiness.optimalWeek"); 
 		System.out.println("====================CP SubModels======================");	
 		for(String subModelName : mzModelVisitor.getSubModelList()){	
 			System.out.println();
@@ -72,6 +45,13 @@ class MiniZincGeneratorBasedImlSwitchTests  {
 			System.out.println(mzModelVisitor.cloneSubModel(subModelName));
 		}
 	}
+	
+	@Test
+	def void testFlatzincModelExport() {		
+		mzModelVisitor.parseIMLModel("models/happiness/", "optimization.happiness.optimalWeek"); 
+		mzModelVisitor.ExportModel("optimization.happiness.happiness");		
+	}
+	
 		
 }
 
