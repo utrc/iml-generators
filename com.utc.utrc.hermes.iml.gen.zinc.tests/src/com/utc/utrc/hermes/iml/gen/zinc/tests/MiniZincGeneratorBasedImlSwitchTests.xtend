@@ -5,25 +5,25 @@ import org.eclipse.xtext.testing.XtextRunner
 import org.eclipse.xtext.testing.InjectWith
 import com.utc.utrc.hermes.iml.tests.ImlInjectorProvider
 import com.google.inject.Inject
-import com.utc.utrc.hermes.iml.ImlParseHelper
 import org.junit.Test
-import com.utc.utrc.hermes.iml.iml.Model
-import com.utc.utrc.hermes.iml.util.ImlUtil
-import com.utc.utrc.hermes.iml.gen.zinc.generator.MiniZincGenerator
-import com.utc.utrc.hermes.iml.gen.zinc.generator.MiniZincGeneratorServices
+
 
 import com.utc.utrc.hermes.iml.gen.zinc.generator.MiniZincGeneratorBasedImlSwitch
-import java.util.Map
+import com.utc.utrc.hermes.iml.gen.zinc.utils.MiniZincQuerySolver
 
+import java.io.File
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 @RunWith(XtextRunner)
 @InjectWith(ImlInjectorProvider)
 class MiniZincGeneratorBasedImlSwitchTests  {	
 	@Inject MiniZincGeneratorBasedImlSwitch mzModelVisitor;
+	@Inject MiniZincQuerySolver mzQuerySolver;
 	
 	@Test
 	def void testModelTranslation1() {
-		mzModelVisitor.parseIMLModel("models/happiness/", "optimization.happiness.optimalWeek"); 	
+		mzModelVisitor.translateIMLModel2CPModel("models/happiness/", "optimization.happiness.optimalWeek"); 	
 		System.out.println("====================CP SubModels======================");	
 		for(String subModelName : mzModelVisitor.getSubModelList()){	
 			System.out.println();
@@ -34,7 +34,7 @@ class MiniZincGeneratorBasedImlSwitchTests  {
 	
 	@Test
 	def void testModelCloning() {
-		mzModelVisitor.parseIMLModel("models/happiness/", "optimization.happiness.optimalWeek"); 
+		mzModelVisitor.translateIMLModel2CPModel("models/happiness/", "optimization.happiness.optimalWeek"); 
 		System.out.println("====================CP SubModels======================");	
 		for(String subModelName : mzModelVisitor.getSubModelList()){	
 			System.out.println();
@@ -47,11 +47,33 @@ class MiniZincGeneratorBasedImlSwitchTests  {
 	}
 	
 	@Test
-	def void testFlatzincModelExport() {		
-		mzModelVisitor.parseIMLModel("models/happiness/", "optimization.happiness.optimalWeek"); 
-		mzModelVisitor.ExportModel("optimization.happiness.happiness");		
+	def void testFlatzincModelExport() {
+		//Convert the IML models to CP models
+		val pathIML = "models/happiness/";	
+		val modelName = "optimization.happiness.optimalWeek";
+		mzModelVisitor.translateIMLModel2CPModel(pathIML, modelName); 
+		//Export and compile the CP model of a given query
+		val queryName = "optimization.happiness.happiness";
+		mzModelVisitor.ExportModel(queryName);
+		
+//		val directoryName = pathIML + "\\mzn" 
+//		val directory = new File(directoryName);
+//      val fileName = queryName.replace(".", "_");
+//      val mznFileName = directory+ "\\" + fileName +".mzn"	
+		
+		//assert whether the file exists
+
 	}
 	
+	@Test
+	def void testRunMinizincModel() {
+		val pathIML = "models/happiness/";	
+		val modelName = "optimization.happiness.optimalWeek";
+		mzQuerySolver.initilize(pathIML, modelName);
+		 	
+		val queryName = "optimization.happiness.happiness";
+		mzQuerySolver.SolveQuery("optimization.happiness.happiness");
+	}
 		
 }
 

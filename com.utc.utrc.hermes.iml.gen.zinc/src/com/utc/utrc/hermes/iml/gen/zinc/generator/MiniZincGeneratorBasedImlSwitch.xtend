@@ -120,7 +120,7 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 	
 	private Map<String, MiniZincModel> subModelBuilders = new HashMap<String, MiniZincModel>();
 
-	def public void parseIMLModel(String pathIML, String modelName) {
+	def public void translateIMLModel2CPModel(String pathIML, String modelName) {
 		this.pathIML = pathIML
 		allResources = parser.parseDir(pathIML, true);
 		parser.assertNoErrors(allResources);
@@ -128,17 +128,22 @@ public class MiniZincGeneratorBasedImlSwitch extends ImlSwitch<String> {
 		caseModel(model as Model);
 	}
 		
-	def public void ExportModel(String queryName){
-		val mzModel = getModel(queryName);
-		val writer = new ModelWriter(mzModel as MiniZincModel)
-		val fileName = queryName.replace(".", "_");
-	
-		val directoryName = pathIML + "\\mzn" 
-		val directory = new File(directoryName);
+	def public void ExportModel(String queryName){		
+		val directoryName = pathIML + "\\mzn"         	
+        ExportModel(queryName, directoryName);	
+	}
+			
+	def public void ExportModel(String queryName, String outputFolder){
+        val directory = new File(outputFolder);
 		if (! directory.exists())
         	directory.mkdir();
+        	
+        val mzModel = getModel(queryName);
+		val writer = new ModelWriter(mzModel as MiniZincModel)
+		
+        val fileName = queryName.replace(".", "_");
+        val mznFileName = outputFolder+ "\\" + fileName +".mzn"	
         
-        val mznFileName = directory+ "\\" + fileName +".mzn"	
 		FileUtil.writeFileContent(mznFileName, writer.toString());
 		
 		//minizinc -c optimization_happiness_happiness.mzn
