@@ -1,25 +1,34 @@
-package com.utc.utrc.hermes.iml.gen.common;
+package com.utc.utrc.hermes.iml.gen.common.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.utc.utrc.hermes.iml.gen.common.IImlGeneratorResult;
+import com.utc.utrc.hermes.iml.gen.common.ModelClass;
 
 /**
  * 
  * @author Ayman Elkfrawy
  *
  */
-public class ImlGeneratorResult {
+public class AbstractImlGeneratorResult implements IImlGeneratorResult{
 	
 	private String generatedModel;
 	private Map<String, String> originalToGeneratedNames;
 	private Map<String, String> generatedToOriginalNames;
 	
-	public ImlGeneratorResult() {
+	private ModelClass modelClass;
+	
+	public AbstractImlGeneratorResult(ModelClass modelClass) {
 		originalToGeneratedNames = new HashMap<>();
 		generatedToOriginalNames = new HashMap<>();
+		this.modelClass = modelClass;
 	}
 	
 	
+	@Override
 	public String getGeneratedModel() {
 		return generatedModel;
 	}
@@ -45,6 +54,7 @@ public class ImlGeneratorResult {
 	 * @param generatedName the name of the variable in the generated model
 	 * @return the name of the variable in the original model, null if it doesn't exist
 	 */
+	@Override
 	public String getOriginalNameOf(String generatedName) {
 		return generatedToOriginalNames.get(generatedName);
 	}
@@ -54,8 +64,15 @@ public class ImlGeneratorResult {
 	 * @param originalName the name of the variable in the original input model
 	 * @return the name of the variable in the generated model, null if it doesn't exist
 	 */
+	@Override
 	public String getGeneratedNameOf(String originalName) {
 		return originalToGeneratedNames.get(originalName);
+	}
+
+
+	@Override
+	public ModelClass getModelClass() {
+		return modelClass;
 	}
 
 }

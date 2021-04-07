@@ -2,7 +2,7 @@ package com.utc.utrc.hermes.iml.gen.smt;
 
 import com.google.inject.Inject;
 import com.utc.utrc.hermes.iml.gen.common.IImlGenerator;
-import com.utc.utrc.hermes.iml.gen.common.ImlGeneratorResult;
+import com.utc.utrc.hermes.iml.gen.common.impl.AbstractImlGeneratorResult;
 import com.utc.utrc.hermes.iml.gen.smt.encoding.ImlSmtEncoder;
 import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleFunDeclaration;
 import com.utc.utrc.hermes.iml.gen.smt.model.simplesmt.SimpleSmtFormula;
@@ -19,8 +19,8 @@ public class ImlSmtGenerator implements IImlGenerator {
 	}
 
 	@Override
-	public ImlGeneratorResult generate(Symbol query) {
-		ImlGeneratorResult result = new ImlGeneratorResult();
+	public AbstractImlGeneratorResult generate(Symbol query) {
+		AbstractImlGeneratorResult result = new AbstractImlGeneratorResult();
 		encoder.encode(query);
 		result.setGeneratedModel(encoder.toString());
 		return result;
