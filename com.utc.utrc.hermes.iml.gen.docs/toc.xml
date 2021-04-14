@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?NLS TYPE="org.eclipse.help.toc"?>
 
-<toc label="IML Generators"  link_to="../com.utc.utrc.hermes.docs/toc.xml#generators">
+<toc label="IML Generators"  link_to="../com.utc.utrc.hermes.docs/toc.xml#extensions">
 
 	<topic label="SMT Generator">
         <anchor id="smtG"/>
@@ -13,6 +13,8 @@
 	   
 	<topic label="NuSMV Generator" href="html/.gen_nusmv.md.html">
 	</topic>
+	
+	
 	
    <!--anchor id="extensions"/-->
 

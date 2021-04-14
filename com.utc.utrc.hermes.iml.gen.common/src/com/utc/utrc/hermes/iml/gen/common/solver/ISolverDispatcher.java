@@ -1,5 +1,8 @@
 package com.utc.utrc.hermes.iml.gen.common.solver;
 
+import java.util.Map;
+
+import com.utc.utrc.hermes.iml.gen.common.UnsupportedQueryException;
 import com.utc.utrc.hermes.iml.iml.FolFormula;
 import com.utc.utrc.hermes.iml.iml.SymbolDeclaration;
 
@@ -23,7 +26,8 @@ public interface ISolverDispatcher {
 	/**
 	 * Given a query formula, dispatch the correct solver to solve that query
 	 * @param query
+	 * @param args list of arguments to send to the solver
 	 * @return result of solving the given query.
 	 */
-	public ISolverResult dispatchSolver(FolFormula query);
+	public ISolverResult dispatchSolver(FolFormula query, Map<String, String> args) throws UnsupportedQueryException;
 }

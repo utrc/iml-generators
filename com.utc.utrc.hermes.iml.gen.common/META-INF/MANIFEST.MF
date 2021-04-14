@@ -13,4 +13,8 @@ Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
  org.eclipse.emf.ecore,
  org.eclipse.xtext.xbase.lib
 Export-Package: com.utc.utrc.hermes.iml.gen.common,
+ com.utc.utrc.hermes.iml.gen.common.impl,
+ com.utc.utrc.hermes.iml.gen.common.interpretation,
+ com.utc.utrc.hermes.iml.gen.common.solver,
+ com.utc.utrc.hermes.iml.gen.common.solver.impl,
  com.utc.utrc.hermes.iml.gen.common.systems

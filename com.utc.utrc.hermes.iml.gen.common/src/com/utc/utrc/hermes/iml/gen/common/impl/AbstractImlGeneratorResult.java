@@ -1,8 +1,6 @@
 package com.utc.utrc.hermes.iml.gen.common.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.utc.utrc.hermes.iml.gen.common.IImlGeneratorResult;

@@ -26,9 +26,9 @@ public interface IImlGenerator {
 	 * @param query the formula representing the query to generate
 	 * @param params any generator specific parameters needed
 	 * @return the generation result as an object of {@link IImlGeneratorResult}. See {@link AbstractImlGeneratorResult}.
-	 * @throws UnsupportedSymbolException if the given symbol is not supported by this generator. See {@link #canGenerate(Symbol)}.
+	 * @throws UnsupportedQueryException if the given symbol is not supported by this generator. See {@link #canGenerate(Symbol)}.
 	 */
-	public IImlGeneratorResult generate(FolFormula query, Map<String, String> params) throws UnsupportedSymbolException;
+	public IImlGeneratorResult generate(FolFormula query, Map<String, String> params) throws UnsupportedQueryException;
 	
 	/**
 	 * Generates a formula fragment that doesn't require generate a whole encoded model, but rather just string representation 
