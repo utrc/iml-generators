@@ -47,4 +47,15 @@ public class BasicSolverDispatcher extends AbstractSolverDispatcher {
 		return null;
 	}
 
+	@Override
+	public ISolverResult dispatchSolver(SymbolDeclaration queryFunction, FolFormula property, Map<String, String> args) 
+			throws UnsupportedQueryException {
+		List<ISolver> solvers = getRegisteredSolvers(queryFunction);
+		if (!solvers.isEmpty()) {
+			return solvers.get(0).runSolver(property, args);
+		} else {
+			throw new UnsupportedQueryException("Couldn't find solver for the given query: " + queryFunction);
+		}
+	}
+
 }

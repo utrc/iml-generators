@@ -30,4 +30,14 @@ public interface ISolverDispatcher {
 	 * @return result of solving the given query.
 	 */
 	public ISolverResult dispatchSolver(FolFormula query, Map<String, String> args) throws UnsupportedQueryException;
+	
+	/**
+	 * Given a query function and property, dispatch the correct solver to verify the give property give the query function
+	 * @param queryFunction a symbol that is annotated with "iml.queries.QueryFunction". I.e. sat, min, max, ... symbols.
+	 * @param property the property to verify with the given query function
+	 * @param args list of arguments to send to the solver
+	 * @return result of solving the given query.
+	 * @throws UnsupportedQueryException 
+	 */
+	public ISolverResult dispatchSolver(SymbolDeclaration queryFunction, FolFormula property, Map<String, String> args) throws UnsupportedQueryException;
 }
