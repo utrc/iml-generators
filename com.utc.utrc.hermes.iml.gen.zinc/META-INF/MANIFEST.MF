@@ -16,10 +16,13 @@ Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
  org.eclipse.xtext.xbase.lib,
  org.slf4j.api;bundle-version="1.7.2",
  com.utc.utrc.hermes.sexpr;bundle-version="1.0.0",
- org.eclipse.osgi
+ org.eclipse.osgi,
+ org.eclipse.xtext,
+ org.eclipse.xtend
 Import-Package: com.google.inject, org.eclipse.xtext.naming
 Bundle-ClassPath: libs/core-1.7.jar,
  .
-Export-Package: com.utc.utrc.hermes.iml.gen.zinc.generator,
+Export-Package: com.utc.utrc.hermes.iml.gen.zinc,
+ com.utc.utrc.hermes.iml.gen.zinc.generator,
  com.utc.utrc.hermes.iml.gen.zinc.model,
  com.utc.utrc.hermes.iml.gen.zinc.utils

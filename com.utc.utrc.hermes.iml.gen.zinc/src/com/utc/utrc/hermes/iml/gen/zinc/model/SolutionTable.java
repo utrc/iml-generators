@@ -63,6 +63,9 @@ public class SolutionTable {
 		}
 	}
 	
+	/*
+	 * 
+	 */
 	public void parse(MiniZincModel m, String s) {
 			
 			String[] tokens = s.split(";") ;
@@ -112,6 +115,9 @@ public class SolutionTable {
 		return solution.keySet();
 	}
 	
+	/*
+	 * 
+	 */
 	public Object getValue(String varname) {
 		if (solution.containsKey(varname)) {
 			return solution.get(varname) ;
@@ -119,10 +125,18 @@ public class SolutionTable {
 		return null;
 	}
 	
+	/*
+	 * 
+	 */
 	public Integer getCost() {
 		return cost;
 	}
-
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		if (unsat) {

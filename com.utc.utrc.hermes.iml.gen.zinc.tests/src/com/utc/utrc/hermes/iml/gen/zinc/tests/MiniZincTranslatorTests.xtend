@@ -41,7 +41,7 @@ class MiniZincTranslatorTests  {
 	
 	@Test
 	def void testTranslation1() {
-		val rs = parser.parseDir("models/happiness/happiness.iml", true);
+		val rs = parser.parseDir("models/happiness/", true);
 		parser.assertNoErrors(rs);
 		
 		var query = ImlUtil.findSymbol(rs, "optimization.happiness.optimalWeek") 
@@ -49,8 +49,9 @@ class MiniZincTranslatorTests  {
 		gen.generate(query as SymbolDeclaration);
 		
 		var model = gen.modelAsString;
-		var output  = SolverRunner.run(model,gen.prefixAsString,gen.typeName);
-		System.out.println(output.toString);
+		print(model)
+//		var output  = SolverRunner.run(model,gen.prefixAsString,gen.typeName);
+//		System.out.println(output.toString);
 			
 	}
 	

@@ -5,11 +5,11 @@ import iml.queries.*;
 
 type WeekHours {
 	// Study
-	s : Int ;
+	s : Int;
 	// Party 
 	p : Int ;
 	// Everything else
-	e : Int ;
+	e : Int;
 	
 	//Total number of hours in a week
 	assert {s + p + e = 168} ;
@@ -25,11 +25,25 @@ type WeekHours {
 	assert { p >= 0};
 }
 
-//happiness function
+//type Test {
+//	X : WeekHours;
+//	Y : (WeekHours, WeekHours) -> (Real, WeekHours):=fun(x:WeekHours,y:WeekHours){(x.e, y)};
+//}
 
+//happiness function
+//happiness == fun_unique_form
+//IntVar fun_unique_form == 2*x.p + x.e
 happiness : WeekHours -> Real := 
-	fun(x:WeekHours) {
+	fun(x:WeekHours) { 
 		2*x.p + x.e
-	} ;
+	};
 
 optimalWeek : WeekHours := max<WeekHours>(happiness);
+
+//x1: T1; // SimpleTypeReference, x1 = x2[1]
+//x2: T1[10]; // ArrayType, x2[1]
+//x3: T1 -> Int; // FunctionType. x3(x1)
+//x4: (T1, b: Int); // TupleType, x4[1], x4.b
+//x5: {a: T1, b: Int}; // RecordType
+
+

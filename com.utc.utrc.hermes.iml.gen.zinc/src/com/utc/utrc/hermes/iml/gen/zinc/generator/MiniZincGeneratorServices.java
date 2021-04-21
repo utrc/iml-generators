@@ -219,11 +219,10 @@ public class MiniZincGeneratorServices {
 			BooleanConstant c = new BooleanConstant(getBooleanConstant(s));
 			builder.add(c.toNamedConstant(getName(prefix, s)));
 		} else if (stdLibs.isInt(s.getType())) {
-			BigInteger val = getIntConstant(s) ;
-			IntegerConstant c = new IntegerConstant(val.intValue());
+			IntegerConstant c = new IntegerConstant(getIntConstant(s));
 			builder.add(c.toNamedConstant(getName(prefix, s)));
 		} else if (stdLibs.isReal(s.getType())) {
-			FloatConstant c = new FloatConstant(getRealConstant(s).floatValue());
+			FloatConstant c = new FloatConstant(getRealConstant(s));
 			builder.add(c.toNamedConstant(getName(prefix, s)));
 		}
 
@@ -402,14 +401,20 @@ public class MiniZincGeneratorServices {
 		return false;
 	}
 
-	public BigInteger getIntConstant(SymbolDeclaration s) {
+	public int getIntConstant(SymbolDeclaration s) {
 		NumberLiteral v = (NumberLiteral) s.getDefinition().getLeft();
-		return v.getValue()  ;
+		if (((NumberLiteral) s.getDefinition().getLeft()).getValue().intValue() < 0) {
+			return (-v.getValue().intValue());
+		}
+		return (v.getValue().intValue());
 	}
 
-	public BigDecimal getRealConstant(SymbolDeclaration s) {
+	public float getRealConstant(SymbolDeclaration s) {
 		FloatNumberLiteral v = (FloatNumberLiteral) s.getDefinition().getLeft();
-		return  v.getValue();	
+		if (((FloatNumberLiteral) s.getDefinition().getLeft()).getValue().floatValue() < 0) {
+			return (-v.getValue().floatValue());
+		}
+		return (v.getValue().floatValue());
 	}
 
 	/*
@@ -518,6 +523,10 @@ public class MiniZincGeneratorServices {
 			
 				QualifiedName receiver_name = getQualifiedName(prefix, ((TermMemberSelection) e).getReceiver());
 				if (((TermMemberSelection) e).getMember() instanceof SymbolReferenceTerm) {
+//					
+//					SymbolReferenceTerm t = (SymbolReferenceTerm) ((TermMemberSelection) e).getReceiver();
+//					String qNmae =qnp.getFullyQualifiedName(t).toString();
+					String vName = getName(receiver_name, ((SymbolReferenceTerm) ((TermMemberSelection) e).getMember() ).getSymbol());
 					TypeInst<?, ?> typeinst = builder
 							.getElementByName(getName(receiver_name, ((SymbolReferenceTerm) ((TermMemberSelection) e).getMember() ).getSymbol()));
 					if (typeinst instanceof IntegerVariable) {
@@ -547,7 +556,11 @@ public class MiniZincGeneratorServices {
 		} else if (e instanceof ParenthesizedTerm) {
 			return processIntegerExpression(prefix, builder, ctx, ((ParenthesizedTerm) e).getSub(), map);
 		} else if (e instanceof NumberLiteral) {
-			return new IntegerConstant(((NumberLiteral) e).getValue().intValue()) ;
+			IntegerConstant c = new IntegerConstant(((NumberLiteral) e).getValue().intValue());
+			if (((NumberLiteral) e).getValue().intValue() < 0) {
+				return new IntegerConstant(-((NumberLiteral) e).getValue().intValue());
+			}
+			return new IntegerConstant(((NumberLiteral) e).getValue().intValue());
 		} else if (e instanceof TailedExpression) {
 			FolFormula left = e.getLeft() ;
 			ExpressionTail tail = ((TailedExpression) e).getTail() ;
