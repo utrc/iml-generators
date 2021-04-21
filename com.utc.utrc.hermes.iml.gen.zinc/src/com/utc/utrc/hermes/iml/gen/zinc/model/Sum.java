@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2021 Raytheon Technologies. All rights reserved.
+ * See License.txt in the project root directory for license information.
+ ******************************************************************************/
 /**
  * Copyright Siemens AG, 2016-2017
  * 
