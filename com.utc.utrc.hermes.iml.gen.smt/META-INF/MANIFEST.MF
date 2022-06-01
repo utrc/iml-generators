@@ -6,9 +6,9 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: UTC
 Automatic-Module-Name: com.utc.utrc.hermes.iml.gen.smt
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: com.utc.utrc.hermes.iml;bundle-version="1.0.0",
- org.eclipse.emf.common;bundle-version="2.13.0",
- org.eclipse.emf.ecore;bundle-version="2.13.0",
+Require-Bundle: com.utc.utrc.hermes.iml,
+ org.eclipse.emf.common,
+ org.eclipse.emf.ecore,
  org.eclipse.xtext,
  com.utc.utrc.hermes.iml.gen.common,
  org.eclipse.core.runtime
